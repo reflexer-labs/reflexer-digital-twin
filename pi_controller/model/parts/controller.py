@@ -1,15 +1,16 @@
 from .helpers import *
 
 def update_target_rate(params, substep, state_history, previous_state, policy_input):
-    error = previous_state['target_price'] - previous_state['market_price']
-    target_rate = params['kp'] * error + params['ki'] * previous_state['time_since_deviation']
-    return ('target_rate', target_rate)
+    error = previous_state['error']
+    error_integral = previous_state['error_integral']
+    target_rate = params['kp'] * error + params['ki'] * error_integral
+    return 'target_rate', target_rate
 
 def update_target_price(params, substep, state_history, previous_state, policy_input):
     target_price = previous_state['target_price'] + (params['blocktime'] * previous_state['target_rate'])
     if (target_price < 0):
         target_price = 0
-    return ('target_price', target_price)
+    return 'target_price', target_price
 
 def update_market_price(params, substep, state_history, previous_state, policy_input):
     add_to_market_price = 0
@@ -18,25 +19,14 @@ def update_market_price(params, substep, state_history, previous_state, policy_i
     elif (previous_state['timestep'] >= 5 and previous_state['timestep'] < 10):
         add_to_market_price = 0.1
     else:
-        delta = previous_state['target_price'] - previous_state['market_price']
-        add_to_market_price = delta * 0.8
-    return ('market_price', previous_state['market_price'] + add_to_market_price)
+        error = previous_state['error']
+        add_to_market_price = error * 0.8
+    return 'market_price', previous_state['market_price'] + add_to_market_price
 
-def update_timestep(params, substep, state_history, previous_state, policy_input):
-    return ('timestep', previous_state['timestep'] + 1)
-
-def update_latest_deviation_type(params, substep, state_history, previous_state, policy_input):
-    deviation_type = 0
-    deviation = previous_state['target_price'] - previous_state['market_price']
-    if (deviation > 0):
-        deviation_type = 1
-    elif (deviation < 0):
-        deviation_type = -1
-    return ('latest_deviation_type', deviation_type)
-
-def update_time_since_deviation(params, substep, state_history, previous_state, policy_input):
-    result = 0
+def update_error(params, substep, state_history, previous_state, policy_input):
     error = previous_state['target_price'] - previous_state['market_price']
-    if (not did_deviation_update(error, previous_state['latest_deviation_type'])):
-        result = previous_state['time_since_deviation'] + params['blocktime']
-    return ('time_since_deviation', result)
+    return 'error', error
+
+def update_error_integral(params, substep, state_history, previous_state, policy_input):
+    error_integral = previous_state['error_integral'] + previous_state['error']
+    return 'error_integral', error_integral
