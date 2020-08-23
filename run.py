@@ -6,12 +6,7 @@ from cadCAD import configs
 import pandas as pd
 
 
-def run(drop_midsteps: bool=True) -> pd.DataFrame:
-    """
-    Run all experiments and return their output on the dataset column.
-    Each line represents an iteration of the parameter-sweep combinations.
-    """
-    
+def run(drop_midsteps: bool=True) -> pd.DataFrame:    
     exec_mode = ExecutionMode()
     exec_context = ExecutionContext(exec_mode.local_mode)
     run = Executor(exec_context=exec_context, configs=configs)
