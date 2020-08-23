@@ -1,6 +1,6 @@
 from cadCAD.engine import ExecutionMode, ExecutionContext, Executor
 
-from pi_controller import config
+from experiment import config
 
 from cadCAD import configs
 import pandas as pd
