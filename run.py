@@ -22,7 +22,7 @@ def run(drop_midsteps: bool=True) -> pd.DataFrame:
         is_droppable &= (df.substep != 0)
         df = df.loc[~is_droppable]
 
-    return df
+    return df.reset_index()
 
 if __name__ == '__main__':
     results = run(True)
