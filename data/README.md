@@ -19,25 +19,31 @@ Use the following code example for reading in the CSV and creating a time series
 	import matplotlib.pyplot as plt
 
 	weth_df = pd.read_csv('./raw_files/dai_weth.csv')
+	weth_df.index = pd.to_datetime(weth_df['__timestamp'], format = '%Y/%m/%d')
+	weth_df = weth_df.drop(columns = ['__timestamp'])
 	weth_df.head()
+	
 	eth_df = pd.read_csv('./raw_files/dai_price_eth.csv')
+	eth_df.index = pd.to_datetime(eth_df['__timestamp'], format = '%Y/%m/%d')
+	eth_df = eth_df.drop(columns = ['__timestamp'])
 	eth_df.head()
+	
 	dai_df = pd.read_csv('./raw_files/dai_minted_burnt.csv')
+	dai_df.index = pd.to_datetime(dai_df['__timestamp'], format = '%Y/%m/%d')
+	dai_df = dai_df.drop(columns = ['__timestamp'])
 	dai_df.head()
+
 	dune_df = pd.read_json('./raw_files/dune_data.json')
-	dune_df['date'] = pd.to_datetime(dune_df['date_trunc'], format = '%Y/%m/%d')
+	dune_df.index = pd.to_datetime(dune_df['date_trunc'], format = '%Y/%m/%d').dt.date
+	dune_df = dune_df.drop(columns = ['date_trunc'])
 	dune_df.head()
 	
-	final = weth_df.join(eth_df, lsuffix='__timestamp', rsuffix='__timestamp')
-	final = final.join(dai_df, lsuffix='__timestamp', rsuffix='__timestamp')
-	final = final.join(dune_df, lsuffix='__timestamp', rsuffix='date')
-	final = final[['date', 'Locked Amount', 'Accumulated Lock', 'Accumulated Free', 'DAI price in ETH', 'Daily Change in DAI Supply', 'Minted DAI', 'Burnt DAI', 'debt_payment', 'usd_fee_paid', 'mkr_burned']]
-
-	final.index = pd.to_datetime(final['date'], format = '%Y/%m/%d')
-	final = final.drop(columns = ['date'])
+	final = weth_df.join(eth_df)
+	final = final.join(dai_df)
+	final = final.join(dune_df)
 
 	final.head()
-	
-	final.to_csv('ts_rai.csv')
+
+	final[(final.index > '2018-07-01') & (final.index < '2019-09-30')].to_csv('ts_rai.csv')
 
 	
