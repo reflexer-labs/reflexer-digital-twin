@@ -6,8 +6,8 @@ Reflexer Labs, RAI
 Use the following code example for reading in the CSV and creating a time series data frame.
 	ts_df = pd.read_csv('./data/ts_rai.csv')
 
-	ts_df.index = pd.to_datetime(ts_df['date'], format = '%m/%d/%Y')
-	ts_df = ts_df.drop(columns = ['date'])
+	ts_df.index = pd.to_datetime(ts_df['__timestamp'], format = '%m/%d/%Y')
+	ts_df = ts_df.drop(columns = ['__timestamp'])
 	##ts_df.head()
 
 	ts_df['DAI Price'].plot()
