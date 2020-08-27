@@ -44,6 +44,6 @@ Use the following code example for reading in the CSV and creating a time series
 
 	final.head()
 
-	final[(final.index > '2018-07-01') & (final.index < '2019-09-30')].to_csv('ts_rai.csv')
+	final[(final.index > '01/01/2018') & (final.index < '2019-09-30')].sort_index().to_csv('ts_rai.csv')
 
 	
