@@ -41,6 +41,9 @@ Use the following code example for reading in the CSV and creating a time series
 	final = weth_df.join(eth_df)
 	final = final.join(dai_df)
 	final = final.join(dune_df)
+	
+	final['minted_dai_daily'] = final['Minted DAI'].diff().fillna(final['Minted DAI'])
+	final['burnt_dai_daily'] = final['Burnt DAI'].diff().fillna(final['Burnt DAI'])
 
 	final.head()
 
