@@ -6,3 +6,5 @@ tabulate
 ipykernel
 ipywidgets>=7.5
 plotly
+scipy
+spfpm==1.4
