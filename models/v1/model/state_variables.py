@@ -12,7 +12,7 @@ state_variables = {
     'error_hat_derivative': FXnum(0.0), #price units per second
     'target_rate': FXnum(0.0), #price units per second
     'target_price': FXnum(1.0), #price units
-    'market_price': FXnum(1.005), #price units
+    'market_price': FXnum(1.0), #price units
     'debt_price': FXnum(1.0), #price units
     'timedelta': int(0), #seconds
     'timestamp': dt.datetime.now(), #datetime
