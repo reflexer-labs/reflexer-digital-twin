@@ -1,4 +1,6 @@
+#from models.v1.config import exp
 from .helpers import *
+from FixedPoint import FXnum
 
 ### Stability Controller blocks
 
@@ -16,7 +18,8 @@ def update_target_rate(params, substep, state_history, state, policy_input):
     return key, value
 
 def update_target_price(params, substep, state_history, state, policy_input):
-    target_price = state['target_price'] + (state['timedelta'] * state['target_rate'])
+    #target_price = state['target_price'] + (state['timedelta'] * state['target_rate']
+    target_price =  state['target_price'] *FXnum(state['target_rate']*state['timedelta']).exp()
     
     if (target_price < 0):
         target_price = 0
