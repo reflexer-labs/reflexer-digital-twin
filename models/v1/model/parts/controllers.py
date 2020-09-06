@@ -2,6 +2,9 @@
 from .helpers import *
 from FixedPoint import FXnum
 
+import model.parts.options as options
+import constants
+
 ### Stability Controller blocks
 
 
@@ -44,14 +47,21 @@ def store_error_star(params, substep, state_history, state, policy_input):
 
 def update_error_star_integral(params, substep, state_history, state, policy_input):
     
+    error_star_integral = state['error_star_integral']
     old_error = state['error_star']
     new_error = policy_input['error_star']
+    mean_error = int((old_error + new_error)/2)
+    timedelta = state['timedelta']
+    area = mean_error * timedelta
 
-    mean_error = (old_error+new_error)/2
-
-    area = mean_error*state['timedelta']
-    
-    error_integral = state['error_star_integral'] + area
+    error_integral = None
+    if params[options.IntegralType.__name__] == options.IntegralType.LEAKY:
+        alpha = params['alpha']
+        remaing_frac = float(alpha / constants.RAY)**timedelta
+        remaining = int(remaing_frac * error_star_integral)
+        error_integral = remaining + area
+    else:
+        error_integral = error_star_integral + area
 
     return 'error_star_integral', error_integral
 

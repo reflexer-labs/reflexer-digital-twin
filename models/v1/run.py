@@ -1,6 +1,6 @@
 from cadCAD.engine import ExecutionMode, ExecutionContext, Executor
 
-from . import config
+import config
 
 from cadCAD import configs
 import pandas as pd

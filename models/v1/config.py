@@ -1,11 +1,11 @@
 from cadCAD.configuration.utils import config_sim
 from cadCAD.configuration import Experiment
 
-from .model.state_variables import state_variables
-from .model.partial_state_update_blocks import partial_state_update_blocks
-from .model.parts.sys_params import params
+from model.state_variables import state_variables
+from model.partial_state_update_blocks import partial_state_update_blocks
+from model.parts.sys_params import params
 
-from .sim_params import SIMULATION_TIME_STEPS, MONTE_CARLO_RUNS
+from sim_params import SIMULATION_TIME_STEPS, MONTE_CARLO_RUNS
 
 sim_config = config_sim (
     {
