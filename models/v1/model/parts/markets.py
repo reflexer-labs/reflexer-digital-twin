@@ -48,29 +48,19 @@ def resolve_debt_price(params, substep, state_history, state):
     driving process
     """
     
-    # TODO: this is causing a bottleneck, see `python3 -m cProfile -s time models/v1/run.py`
-    # if params[options.DebtPriceSource.__name__] == options.DebtPriceSource.EXTERNAL.value:
-    #     # df = params['debt_price_dataframe']
-    #     # timestep = state['timestep']
-    #     # price_move = float(df.iloc[timestep]['price_move'])
-    #     price_move = state['price_move']
-    # else:
-    #     base_var = params['debt_market_std']
-    #     variance = float(base_var*state['timedelta']/3600.0) #converting seconds to hours
-    #     price_move = sts.norm.rvs(loc=0, scale=variance)
-
-    # price_move = state['price_move']
-    # print(price_move)
-    base_var = params['debt_market_std']
-    variance = float(base_var*state['timedelta']/3600.0) #converting seconds to hours
-    price_move = sts.norm.rvs(loc=0, scale=variance)
+    if params[options.DebtPriceSource.__name__] == options.DebtPriceSource.EXTERNAL.value:
+        price_move = state['price_move']
+    else:
+        base_var = params['debt_market_std']
+        variance = float(base_var*state['timedelta']/3600.0) #converting seconds to hours
+        price_move = sts.norm.rvs(loc=0, scale=variance)
 
     return {'price_move':price_move}
 
 def update_debt_price(params, substep, state_history, state, policy_input):
 
     price_move = policy_input['price_move']
-    value = FXnum(state['debt_price']+ price_move)
+    value = FXnum(state['debt_price'] + price_move)
     key = 'debt_price'
 
     return key,value

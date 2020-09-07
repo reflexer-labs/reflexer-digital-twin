@@ -19,5 +19,5 @@ state_variables = {
     'blockheight': int(0), #block offset (init 0 simplicity)
     # Env. process states
     'seconds_passed': int(0), 
-    'price_move': float(1),
+    'price_move': 1.0,
 }
