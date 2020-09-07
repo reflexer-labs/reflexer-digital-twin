@@ -23,7 +23,8 @@ class Config:
         self.T = T
 
         if merge_params:
-            self.M = params.update(M)
+            params.update(M)
+            self.M = params
         else:
             self.M = M
 
