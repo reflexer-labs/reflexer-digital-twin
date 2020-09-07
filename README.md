@@ -33,3 +33,9 @@ from .models.v1.run import run
 drop_midsteps = True
 result = run(drop_midsteps)
 ```
+
+# Simulation Profiling
+
+```python
+python3 -m cProfile -s time models/v1/run.py
+```

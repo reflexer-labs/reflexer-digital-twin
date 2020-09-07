@@ -23,7 +23,6 @@ params = {
     'ki-hat': [FXnum(0)], #integral term for the market process to the debt price: units 1/seconds^2
     'kd-hat': [FXnum(.1)], #derivative term for the market process to the debt price: unitless
     'alpha': [alpha], #in 1/RAY
-    options.DebtPriceSource.__name__: [options.DebtPriceSource.DEFAULT],
-    options.IntegralType.__name__: [options.IntegralType.LEAKY],
-    'datetime_format': ["%m/%d/%Y, %H:%M:%S"]
+    options.DebtPriceSource.__name__: [options.DebtPriceSource.EXTERNAL.value],
+    options.IntegralType.__name__: [options.IntegralType.LEAKY.value],
 }

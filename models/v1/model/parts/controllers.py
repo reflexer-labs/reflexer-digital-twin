@@ -21,7 +21,8 @@ def update_target_rate(params, substep, state_history, state, policy_input):
     return key, value
 
 def update_target_price(params, substep, state_history, state, policy_input):
-    #target_price = state['target_price'] + (state['timedelta'] * state['target_rate']
+    # target_price = state['target_price'] + (state['timedelta'] * state['target_rate'])
+    # TODO: this is causing a bottleneck, see `python3 -m cProfile -s time models/v1/run.py`
     target_price =  state['target_price'] *FXnum(state['target_rate']*state['timedelta']).exp()
     
     if (target_price < 0):

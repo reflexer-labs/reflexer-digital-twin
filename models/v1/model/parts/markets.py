@@ -2,16 +2,21 @@ import scipy.stats as sts
 import datetime as dt
 from FixedPoint import FXnum
 
+import options
+
 def resolve_time_passed(params, substep, state_history, state):
     """
     Time passes 
     """
-    offset = params['minumum_control_period']
-    expected_lag = params['expected_control_delay']
+    
+    if params[options.DebtPriceSource.__name__] == options.DebtPriceSource.EXTERNAL.value:
+        seconds = max(params['minumum_control_period'], state['seconds_passed'])
+    else:
+        offset = params['minumum_control_period']
+        expected_lag = params['expected_control_delay']
+        seconds = int(sts.expon.rvs(loc=offset, scale = expected_lag))
 
-    seconds = int(sts.expon.rvs(loc=offset, scale = expected_lag))
-
-    return {'seconds_passed':seconds}
+    return {'seconds_passed': seconds}
 
 
 def store_timedelta(params, substep, state_history, state, policy_input):
@@ -24,7 +29,7 @@ def store_timedelta(params, substep, state_history, state, policy_input):
 def update_timestamp(params, substep, state_history, state, policy_input):
 
     seconds = policy_input['seconds_passed']
-    value = state['timestamp']+ dt.timedelta(seconds = int(seconds))
+    value = state['timestamp'] + dt.timedelta(seconds = int(seconds))
     key = 'timestamp'
 
     return key,value
@@ -42,10 +47,22 @@ def resolve_debt_price(params, substep, state_history, state):
     """
     driving process
     """
+    
+    # TODO: this is causing a bottleneck, see `python3 -m cProfile -s time models/v1/run.py`
+    # if params[options.DebtPriceSource.__name__] == options.DebtPriceSource.EXTERNAL.value:
+    #     # df = params['debt_price_dataframe']
+    #     # timestep = state['timestep']
+    #     # price_move = float(df.iloc[timestep]['price_move'])
+    #     price_move = state['price_move']
+    # else:
+    #     base_var = params['debt_market_std']
+    #     variance = float(base_var*state['timedelta']/3600.0) #converting seconds to hours
+    #     price_move = sts.norm.rvs(loc=0, scale=variance)
 
+    # price_move = state['price_move']
+    # print(price_move)
     base_var = params['debt_market_std']
     variance = float(base_var*state['timedelta']/3600.0) #converting seconds to hours
-
     price_move = sts.norm.rvs(loc=0, scale=variance)
 
     return {'price_move':price_move}
