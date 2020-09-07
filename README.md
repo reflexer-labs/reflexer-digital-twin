@@ -30,8 +30,7 @@ python3 models/v1/run.py
 or
 ```python
 from .models.v1.run import run
-drop_midsteps = True
-result = run(drop_midsteps)
+result = run(drop_midsteps=True)
 ```
 
 # Simulation Profiling
