@@ -10,7 +10,7 @@ def resolve_time_passed(params, substep, state_history, state):
     """
     
     if params[options.DebtPriceSource.__name__] == options.DebtPriceSource.EXTERNAL.value:
-        seconds = max(params['minumum_control_period'], state['seconds_passed'])
+        seconds = max(params['minumum_control_period'], params['seconds_passed'](state['timestep']))
     else:
         offset = params['minumum_control_period']
         expected_lag = params['expected_control_delay']
@@ -49,7 +49,7 @@ def resolve_debt_price(params, substep, state_history, state):
     """
     
     if params[options.DebtPriceSource.__name__] == options.DebtPriceSource.EXTERNAL.value:
-        price_move = state['price_move']
+        price_move = params['price_move'](state['timestep'])
     else:
         base_var = params['debt_market_std']
         variance = float(base_var*state['timedelta']/3600.0) #converting seconds to hours

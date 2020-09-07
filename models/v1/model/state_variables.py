@@ -17,7 +17,7 @@ state_variables = {
     'timedelta': int(0), #seconds
     'timestamp': dt.datetime.now(), #datetime
     'blockheight': int(0), #block offset (init 0 simplicity)
-    # Env. process states
-    'seconds_passed': int(0), 
-    'price_move': 1.0,
+    # # Env. process states
+    # 'seconds_passed': int(0), 
+    # 'price_move': 1.0,
 }

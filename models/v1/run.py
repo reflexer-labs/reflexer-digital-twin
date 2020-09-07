@@ -1,5 +1,6 @@
 from cadCAD.engine import ExecutionMode, ExecutionContext, Executor
 from config import Config
+import options
 
 import pandas as pd
 
@@ -28,14 +29,30 @@ if __name__ == '__main__':
     debt_price_source_file = './test/data/debt-price-test-data.csv'
     debt_price_dataframe = pd.read_csv(debt_price_source_file)
 
-    SIMULATION_TIMESTEPS = range(debt_price_dataframe.shape[0])
+    test_dfs = [debt_price_dataframe]
 
-    env_processes = {
-        'seconds_passed': lambda state, _sweep, _value, df=debt_price_dataframe.copy(): int(df.iloc[state['timestep'] - 1]['seconds_passed']),
-        'price_move': lambda state, _sweep, _value, df=debt_price_dataframe.copy(): float(df.iloc[state['timestep'] - 1]['price_move']),
+    minimum_timesteps = min([df.shape[0] for df in test_dfs])
+    SIMULATION_TIMESTEPS = range(minimum_timesteps)
+
+    update_params = {
+        options.DebtPriceSource.__name__: [options.DebtPriceSource.EXTERNAL.value],
+        options.IntegralType.__name__: [options.IntegralType.LEAKY.value],
+        'seconds_passed': [
+            lambda timestep, df=df: int(df.iloc[timestep - 1]['seconds_passed'])
+            for df in test_dfs
+        ],
+        'price_move': [
+            lambda timestep, df=df: float(df.iloc[timestep - 1]['price_move'])
+            for df in test_dfs
+        ]
     }
 
-    config = Config(T=SIMULATION_TIMESTEPS, env_processes=env_processes)
+    # env_processes = {
+    #     'seconds_passed': lambda state, _sweep, _value, df=debt_price_dataframe.copy(): int(df.iloc[state['timestep'] - 1]['seconds_passed']),
+    #     'price_move': lambda state, _sweep, _value, df=debt_price_dataframe.copy(): float(df.iloc[state['timestep'] - 1]['price_move']),
+    # }
+
+    config = Config(T=SIMULATION_TIMESTEPS)
 
     results = run(drop_midsteps=True, config=config)
     print(results)
