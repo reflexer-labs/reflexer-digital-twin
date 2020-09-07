@@ -1,12 +1,11 @@
 from cadCAD.engine import ExecutionMode, ExecutionContext, Executor
+from config import Config
 
-import config
-
-from cadCAD import configs
 import pandas as pd
 
 
-def run(drop_midsteps: bool=True) -> pd.DataFrame:    
+def run(clear_configs: bool=False, drop_midsteps: bool=True, config: Config=Config()) -> pd.DataFrame:
+    configs = config.append(clear_configs=clear_configs)
     exec_mode = ExecutionMode()
     exec_context = ExecutionContext(exec_mode.local_mode)
     run = Executor(exec_context=exec_context, configs=configs)

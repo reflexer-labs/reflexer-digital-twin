@@ -1,7 +1,7 @@
 from FixedPoint import FXnum
 import numpy as np
 
-import model.parts.options as options
+import options as options
 from constants import SPY, RAY
 
 #assume
@@ -25,4 +25,5 @@ params = {
     'alpha': [alpha], #in 1/RAY
     options.DebtPriceSource.__name__: [options.DebtPriceSource.DEFAULT],
     options.IntegralType.__name__: [options.IntegralType.LEAKY],
+    'datetime_format': ["%m/%d/%Y, %H:%M:%S"]
 }
