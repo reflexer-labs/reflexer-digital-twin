@@ -1,12 +1,21 @@
 from cadCAD.engine import ExecutionMode, ExecutionContext, Executor
-from config import Config
+from cadCAD.configuration import Experiment
+from config_wrapper import ConfigWrapper
+from cadCAD import configs
+
 import options
 
 import pandas as pd
 
 
-def run(clear_configs: bool=False, drop_midsteps: bool=True, config: Config=Config()) -> pd.DataFrame:
-    configs = config.append(clear_configs=clear_configs)
+def run(clear_configs: bool=False, drop_midsteps: bool=True, configs_: []=[ConfigWrapper()]) -> pd.DataFrame:
+    if clear_configs:
+        del configs[:]
+            
+    # For each unique experiment, append the config
+    for config in configs_:
+        config.append()
+    # configs_[0].append([config.get_config() for config in configs_])
 
     exec_mode = ExecutionMode()
     exec_context = ExecutionContext(exec_mode.local_mode)
@@ -23,7 +32,7 @@ def run(clear_configs: bool=False, drop_midsteps: bool=True, config: Config=Conf
         is_droppable &= (df.substep != 0)
         df = df.loc[~is_droppable]
 
-    return df.reset_index()
+    return (df.reset_index(), tensor_field, sessions)
 
 if __name__ == '__main__':
     debt_price_source_file = './test/data/debt-price-test-data.csv'
@@ -52,7 +61,7 @@ if __name__ == '__main__':
     #     'price_move': lambda state, _sweep, _value, df=debt_price_dataframe.copy(): float(df.iloc[state['timestep'] - 1]['price_move']),
     # }
 
-    config = Config(T=SIMULATION_TIMESTEPS)
+    config = ConfigWrapper(T=SIMULATION_TIMESTEPS)
 
-    results = run(drop_midsteps=True, config=config)
+    results = run(drop_midsteps=True, _configs=[config])
     print(results)

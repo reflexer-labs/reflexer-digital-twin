@@ -12,7 +12,7 @@ def update_target_rate(params, substep, state_history, state, policy_input):
 
     error = -state['error_star']
     error_integral = -state['error_star_integral']
-    
+
     target_rate = params['kp'] * error + params['ki'] * error_integral
     
     key = 'target_rate'
@@ -36,8 +36,8 @@ def update_target_price(params, substep, state_history, state, policy_input):
 
 def observe_errors(params, substep, state_history, state):
 
-    error_star= state['target_price']-state['market_price']
-    error_hat= state['debt_price']-state['market_price']
+    error_star = params['error_term'](state['target_price'], state['market_price'])
+    error_hat = state['debt_price'] - state['market_price']
 
     return {'error_star':error_star, 'error_hat':error_hat}
 
