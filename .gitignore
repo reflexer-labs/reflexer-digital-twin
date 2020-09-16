@@ -140,3 +140,5 @@ cython_debug/
 credentials/
 **/.vscode/*
 scratchpad*
+data/.ipynb_checkpoints
+.ipynb_checkpoints/notebook-checkpoint.ipynb
