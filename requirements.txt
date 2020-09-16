@@ -1,0 +1,12 @@
+cadCAD==0.4.22
+matplotlib==3.3.0
+jupyterlab==2.2.0
+seaborn==0.10.1
+tabulate
+ipykernel
+ipywidgets>=7.5
+plotly==4.9.0
+scipy
+spfpm==1.4
+gspread==3.6.0
+oauth2client==4.1.3
