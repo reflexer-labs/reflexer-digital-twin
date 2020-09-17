@@ -13,8 +13,8 @@ Each model is located under `models/_`, with a unique name for each experiment.
 
 # Models
 
-1. Validation model - `models/market_model`: various debt price test scenarios, used for validating full system model, and tuning PI controller
-2. Verification model - `models/controller_model`: debt market ML model as debt price source, used for verifying Solidity implementation
+1. Validation model - `models/market_model` / `notebook_validation.ipynb`: various debt price test scenarios, used for validating full system model, and tuning PI controller
+2. Verification model - `models/controller_model` / `notebook_verification.ipynb`: debt market ML model as debt price source, used for verifying Solidity implementation
 
 Note: Both models share the same core logic, implemented in `models/market_model`. When custom logic and simulation config needs to be implemented to extend the validation model, this can be implemented in `models/controller_model`.
 
