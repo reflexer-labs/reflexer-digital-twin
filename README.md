@@ -22,6 +22,10 @@ pip install -r requirements.txt
 jupyter-lab
 ```
 
+## System Dependencies
+
+* `swig` for `auto-sklearn` Python library: e.g. `brew install swig`
+
 # Modelling & Simulation
 
 To run simulation:
