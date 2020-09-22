@@ -20,12 +20,14 @@ Note: Both models share the same core logic, implemented in `models/market_model
 
 # Dependencies
 
-You'll need Python 3+ in your environment.
+You'll need Python 3+ and NodeJS/NPM in your environment.
 
 ```bash
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
+jupyter labextension install jupyterlab-plotly@4.9.0 # --minimize=False
+python -m ipykernel install --user --name python-reflexer --display-name "Python (reflexer)"
 jupyter-lab
 ```
 
