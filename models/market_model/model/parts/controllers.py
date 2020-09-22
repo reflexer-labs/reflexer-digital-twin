@@ -21,8 +21,10 @@ def update_target_rate(params, substep, state_history, state, policy_input):
     return key, value
 
 def update_target_price(params, substep, state_history, state, policy_input):
-    # target_price = state['target_price'] + (state['timedelta'] * state['target_rate'])
-    target_price =  state['target_price'] * FXnum(state['target_rate'] * state['timedelta']).exp()
+    # exp(bt) = (1+b)**t for low values of b; but to avoid compounding errors 
+    # we should probably stick to the same implementation as the solidity version
+    # target_price =  state['target_price'] * FXnum(state['target_rate'] * state['timedelta']).exp()
+    target_price =  state['target_price'] * (1+state['target_rate'])**state['timedelta']
     
     if (target_price < 0):
         target_price = 0
