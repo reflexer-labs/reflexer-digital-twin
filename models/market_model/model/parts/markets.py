@@ -11,6 +11,8 @@ def resolve_time_passed(params, substep, state_history, state):
     
     if params[options.DebtPriceSource.__name__] == options.DebtPriceSource.EXTERNAL.value:
         seconds = max(params['minumum_control_period'], params['seconds_passed'](state['timestep']))
+    elif params[options.DebtPriceSource.__name__] == options.DebtPriceSource.DEBT_MARKET_MODEL.value:
+        seconds = max(params['minumum_control_period'], params['seconds_passed'](state['timestep']))
     else:
         offset = params['minumum_control_period']
         expected_lag = params['expected_control_delay']
