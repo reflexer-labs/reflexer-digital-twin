@@ -10,13 +10,13 @@ import constants
 
 def update_target_rate(params, substep, state_history, state, policy_input):
 
-    error = -state['error_star']
-    error_integral = -state['error_star_integral']
+    error = -state['error_star'] # unit USD
+    error_integral = -state['error_star_integral'] # unit USD * seconds
 
     target_rate = params['kp'] * error + params['ki'] * error_integral
     
     key = 'target_rate'
-    value = target_rate
+    value = target_rate # unitless
 
     return key, value
 
@@ -50,22 +50,22 @@ def store_error_star(params, substep, state_history, state, policy_input):
 def update_error_star_integral(params, substep, state_history, state, policy_input):
     
     error_star_integral = state['error_star_integral']
-    old_error = state['error_star']
-    new_error = policy_input['error_star']
-    mean_error = int((old_error + new_error)/2)
-    timedelta = state['timedelta']
-    area = mean_error * timedelta
+    old_error = state['error_star'] # unit: USD
+    new_error = policy_input['error_star'] # unit: USD
+    mean_error = int((old_error + new_error)/2) # unit: USD
+    timedelta = state['timedelta'] # unit: time (seconds)
+    area = mean_error * timedelta # unit: USD * seconds
 
     error_integral = None
     if params[options.IntegralType.__name__] == options.IntegralType.LEAKY.value:
         alpha = params['alpha']
-        remaing_frac = float(alpha / constants.RAY)**timedelta
-        remaining = int(remaing_frac * error_star_integral)
-        error_integral = remaining + area
+        remaing_frac = float(alpha / constants.RAY)**timedelta # unitless
+        remaining = int(remaing_frac * error_star_integral) # unit: USD * seconds
+        error_integral = remaining + area # unit: USD * seconds
     else:
-        error_integral = error_star_integral + area
+        error_integral = error_star_integral + area # unit: USD * seconds
 
-    return 'error_star_integral', error_integral
+    return 'error_star_integral', error_integral # unit: USD * seconds
 
 def update_error_star_derivative(params, substep, state_history, state, policy_input):
     
