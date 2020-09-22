@@ -15,7 +15,7 @@ state_variables = {
     'market_price': (1.0), #price units
     'debt_price': (1.0), #price units
     'timedelta': int(0), #seconds
-    'timestamp': dt.datetime.now(), #datetime
+    'timestamp': dt.datetime.strptime('12/18/18', '%m/%d/%y'), #datetime
     'blockheight': int(0), #block offset (init 0 simplicity)
     # # Env. process states
     # 'seconds_passed': int(0), 
