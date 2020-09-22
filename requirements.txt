@@ -10,3 +10,6 @@ scipy
 spfpm==1.4
 gspread==3.6.0
 oauth2client==4.1.3
+sklearn
+auto-sklearn==0.9.0
+arff==0.9

@@ -50,6 +50,8 @@ def resolve_debt_price(params, substep, state_history, state):
     
     if params[options.DebtPriceSource.__name__] == options.DebtPriceSource.EXTERNAL.value:
         price_move = params['price_move'](state['timestep'])
+    elif params[options.DebtPriceSource.__name__] == options.DebtPriceSource.DEBT_MARKET_MODEL.value:
+        price_move = params['price_move'](state['timestep'])
     else:
         base_var = params['debt_market_std']
         variance = float(base_var*state['timedelta']/3600.0) #converting seconds to hours
@@ -77,7 +79,7 @@ def update_market_price(params, substep, state_history, state, policy_input):
     star_derivative = state['error_star_derivative']
     star_dp = params['kp-star'] * star_error + params['ki-star'] * star_integral + params['kd-star'] * star_derivative
 
-    market_price = state['market_price'] * FXnum((hat_dp + star_dp)*state['timedelta']).exp()
+    market_price = params['k0'] + params['k-autoreg-1']*state['market_price'] + star_dp + hat_dp
 
     if market_price < 0:
         value = 0
