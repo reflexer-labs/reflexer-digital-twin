@@ -104,7 +104,7 @@ def update_market_price(params, substep, state_history, state, policy_input):
     star_derivative = state['error_star_derivative']
     star_dp = params['kp-star'] * star_error + params['ki-star'] * star_integral + params['kd-star'] * star_derivative
 
-    market_price = state['market_price'] * FXnum((hat_dp + star_dp)*state['timedelta']).exp()
+    market_price = params['k0'] + params['k-autoreg-1']*state['market_price'] + star_dp + hat_dp
 
     if market_price < 0:
         value = 0
