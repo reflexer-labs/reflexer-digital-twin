@@ -1,6 +1,6 @@
 import scipy.stats as sts
 import datetime as dt
-from FixedPoint import FXnum
+ 
 
 import options
 
@@ -62,7 +62,7 @@ def resolve_debt_price(params, substep, state_history, state):
 def update_debt_price(params, substep, state_history, state, policy_input):
 
     price_move = policy_input['price_move']
-    value = FXnum(state['debt_price'] + price_move)
+    value = (state['debt_price'] + price_move)
     key = 'debt_price'
 
     return key,value

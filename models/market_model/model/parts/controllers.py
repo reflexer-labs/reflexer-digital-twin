@@ -1,6 +1,6 @@
 #from models.v1.config import exp
 from .helpers import *
-from FixedPoint import FXnum
+ 
 
 import options as options
 import constants
