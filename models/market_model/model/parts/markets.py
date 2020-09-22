@@ -67,31 +67,6 @@ def update_debt_price(params, substep, state_history, state, policy_input):
 
     return key,value
 
-# 'p': 0.72309613,
-# 'e_hat': 0.79603861,
-# 'e_star': -0.72309613,
-# 'cumsum_e_hat': 0.10020752,
-# 'cumsum_e_star': 0.00376792,
-# 'delta_e_hat': 0.10022812,
-# 'delta_e_star': 0.09343981,
-# 'intercept': 0.27520027628864485
-    
-# p = y_hat_prime[-1]
-# e_hat = r['p_hat'] - p
-# e_star = r['p_star'] - p
-# cumsum_e_hat += e_hat
-# cumsum_e_star += e_star
-# delta_e_hat = e_hat - prev_e_hat
-# delta_e_star = e_star - prev_e_star
-# pred = (p * reg.coef_[0] +
-#         e_hat * reg.coef_[1] + 
-#         e_star * reg.coef_[2] +
-#         cumsum_e_hat * reg.coef_[3] +
-#         cumsum_e_star * reg.coef_[4] +
-#         delta_e_hat * reg.coef_[5] +
-#         delta_e_star * reg.coef_[6] +
-#         reg.intercept_)
-
 def update_market_price(params, substep, state_history, state, policy_input):
 
     hat_error = state['error_hat']
