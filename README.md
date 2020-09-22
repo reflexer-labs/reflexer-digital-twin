@@ -27,7 +27,7 @@ python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 jupyter labextension install jupyterlab-plotly@4.9.0 # --minimize=False
-python -m ipykernel install --user --name python-reflexer --display-name "Python (reflexer)"
+python -m ipykernel install --user --name python-reflexer --display-name "Python (Reflexer)"
 jupyter-lab
 ```
 
