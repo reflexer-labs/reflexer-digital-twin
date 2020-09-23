@@ -14,10 +14,8 @@ params = {
     'expected_control_delay': [1200], #seconds
     'derivative_smoothing': [1], #unitless
     'debt_market_std':[.001], #defined price units per hour
-    # TODO: dynamically transform the params with time dimension given the duration of a timestep
-    # ki, ki-star, kd-star, ki-hat, kd-hat
-    'kp': [6.944e-06], #proportional term for the stability controller: units 1/USD
-    'ki': [60.0/(24*3600)], #integral term for the stability controller: units 1/(USD*seconds)
+    'kp': [(6.944e-06)], #proportional term for the stability controller: units 1/USD
+    'ki': [(60.0/(24*3600))], #integral term for the stability controller: units 1/(USD*seconds)
     'kp-star': [(-0.5866)], #proportional term for the market process: unitless
     'ki-star': [(0.0032/(24*3600))], #integral term for the market process to target price: units 1/seconds 
     'kd-star': [(0.4858*(24*3600))], #derivative term for the market process to target price: units seconds
