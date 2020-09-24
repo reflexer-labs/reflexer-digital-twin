@@ -28,4 +28,5 @@ params = {
     'error_term': [lambda target, measured: target - measured],
     options.DebtPriceSource.__name__: [options.DebtPriceSource.DEFAULT.value],
     options.IntegralType.__name__: [options.IntegralType.LEAKY.value],
+    'controller_enabled': [True]
 }
