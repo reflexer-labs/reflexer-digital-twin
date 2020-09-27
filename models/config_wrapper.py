@@ -18,6 +18,7 @@ class ConfigWrapper:
             env_processes={},
             exp=Experiment()
         ):
+        # TODO: consider loading from config object, might end up running other code
         m_state_variables = importlib.import_module(f'{model.__name__}.model.state_variables').state_variables
         m_psubs = importlib.import_module(f'{model.__name__}.model.partial_state_update_blocks').partial_state_update_blocks
         m_params = importlib.import_module(f'{model.__name__}.model.parts.sys_params').params

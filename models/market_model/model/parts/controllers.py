@@ -1,12 +1,9 @@
-#from models.v1.config import exp
 from .helpers import *
- 
 
 import options as options
 import constants
 
 ### Stability Controller blocks
-
 
 def update_target_rate(params, substep, state_history, state, policy_input):
 
@@ -24,7 +21,13 @@ def update_target_price(params, substep, state_history, state, policy_input):
     # exp(bt) = (1+b)**t for low values of b; but to avoid compounding errors 
     # we should probably stick to the same implementation as the solidity version
     # target_price =  state['target_price'] * FXnum(state['target_rate'] * state['timedelta']).exp()
-    target_price =  state['target_price'] * (1+state['target_rate'])**state['timedelta']
+    # target_price =  state['target_price'] * math.exp(state['target_rate'] * state['timedelta'])
+    
+    target_price = state['target_price']
+    try:
+        target_price = state['target_price'] * (1 + state['target_rate'])**state['timedelta']
+    except OverflowError:
+        print(f'Controller target price OverflowError: target price {target_price}; target rate {state["target_rate"]}')
     
     if (target_price < 0):
         target_price = 0
@@ -56,7 +59,6 @@ def update_error_star_integral(params, substep, state_history, state, policy_inp
     timedelta = state['timedelta'] # unit: time (seconds)
     area = mean_error * timedelta # unit: USD * seconds
 
-    error_integral = None
     if params[options.IntegralType.__name__] == options.IntegralType.LEAKY.value:
         alpha = params['alpha']
         remaing_frac = float(alpha / constants.RAY)**timedelta # unitless
