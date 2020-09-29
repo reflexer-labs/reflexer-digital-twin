@@ -35,7 +35,7 @@ def debt_price_data(debt_price_source: options.DebtPriceSource):
             debt_price_dataframe = pd.read_csv('./test/data/default_debt_price_source.csv')
             test_dfs = [debt_price_dataframe]
     elif debt_price_source == options.DebtPriceSource.DEBT_MARKET_MODEL.value:
-        debt_market_df = pd.read_csv('market_model/debt_market_df.csv', index_col='date', parse_dates=True)
+        debt_market_df = pd.read_csv('market_model/data/debt_market_df.csv', index_col='date', parse_dates=True)
         loaded_model = pickle.load(open('market_model/debt_price_estimator.pickle', 'rb'))
         features = ['beta', 'Q', 'v_1', 'v_2 + v_3', 
                     'rho_star', 'C_star',

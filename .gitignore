@@ -142,3 +142,4 @@ credentials/
 scratchpad*
 data/.ipynb_checkpoints
 .ipynb_checkpoints/notebook-checkpoint.ipynb
+.ipynb_checkpoints
