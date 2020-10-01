@@ -9,7 +9,7 @@ import numpy as np
 
 import options
 
-def debt_price_data(debt_price_source: options.DebtPriceSource):
+def load_debt_price_data(debt_price_source: options.DebtPriceSource):
     from sklearn.model_selection import train_test_split
     from sklearn.metrics import mean_squared_error, r2_score
     from autosklearn.regression import AutoSklearnRegressor
