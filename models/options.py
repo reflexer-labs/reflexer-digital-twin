@@ -8,3 +8,7 @@ class DebtPriceSource(Enum):
     DEFAULT = 1
     EXTERNAL = 2
     DEBT_MARKET_MODEL = 3
+
+class MarketPriceSource(Enum):
+    DEFAULT = 1
+    EXTERNAL = 2

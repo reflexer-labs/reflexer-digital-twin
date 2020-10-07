@@ -12,9 +12,9 @@ Each model is located under `models/_`, with a unique name for each experiment.
 
 # Models
 
-1. Validation model - `models/market_model` / `notebook_validation.ipynb`: various debt price test scenarios, used for validating full system model, and tuning PI controller
-   * PI Controller Tuning
-   * Debt Price Model & Market Model Validation
+1. Validation model - `models/system_model` / `notebook_validation.ipynb`: various debt price test scenarios, used for validating full system model, and tuning PI controller
+  * PI Controller Tuning
+  * Debt Price Model & Market Model Validation
 
 # Dependencies
 

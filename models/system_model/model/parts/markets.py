@@ -58,6 +58,9 @@ def resolve_debt_price(params, substep, state_history, state):
         base_var = params['debt_market_std']
         variance = float(base_var*state['timedelta']/3600.0) #converting seconds to hours
         price_move = sts.norm.rvs(loc=0, scale=variance)
+        
+    if params[options.MarketPriceSource.__name__] == options.MarketPriceSource.EXTERNAL.value:
+        price_move = 0
 
     return {'price_move':price_move}
 
@@ -70,23 +73,25 @@ def update_debt_price(params, substep, state_history, state, policy_input):
     return key,value
 
 def update_market_price(params, substep, state_history, state, policy_input):
-
-    hat_error = state['error_hat']
-    hat_integral = state['error_hat_integral']
-    hat_derivative = state['error_hat_derivative']
-    hat_dp = params['kp-hat'] * hat_error + params['ki-hat'] * hat_integral + params['kd-hat'] * hat_derivative
-
-    star_error = state['error_star']
-    star_integral = state['error_star_integral']
-    star_derivative = state['error_star_derivative']
-    star_dp = params['kp-star'] * star_error + params['ki-star'] * star_integral + params['kd-star'] * star_derivative
-
-    market_price = params['k0'] + params['k-autoreg-1']*state['market_price'] + star_dp + hat_dp
-
-    if market_price < 0:
-        value = 0
+    if params[options.MarketPriceSource.__name__] == options.MarketPriceSource.EXTERNAL.value:
+        value = state['market_price'] + params['price_move'](state['timestep'])
     else:
-        value = market_price
+        hat_error = state['error_hat']
+        hat_integral = state['error_hat_integral']
+        hat_derivative = state['error_hat_derivative']
+        hat_dp = params['kp-hat'] * hat_error + params['ki-hat'] * hat_integral + params['kd-hat'] * hat_derivative
+
+        star_error = state['error_star']
+        star_integral = state['error_star_integral']
+        star_derivative = state['error_star_derivative']
+        star_dp = params['kp-star'] * star_error + params['ki-star'] * star_integral + params['kd-star'] * star_derivative
+
+        market_price = params['k0'] + params['k-autoreg-1']*state['market_price'] + star_dp + hat_dp
+
+        if market_price < 0:
+            value = 0
+        else:
+            value = market_price
 
     key = 'market_price'
   
