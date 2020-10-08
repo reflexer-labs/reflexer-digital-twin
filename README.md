@@ -12,9 +12,16 @@ Each model is located under `models/_`, with a unique name for each experiment.
 
 # Models
 
-1. Validation model - `models/market_model` / `notebook_validation.ipynb`: various debt price test scenarios, used for validating full system model, and tuning PI controller
-   * PI Controller Tuning
-   * Debt Price Model & Market Model Validation
+1. `models/system_model` / `notebook_validation.ipynb` - full system model with parameters for selecting & testing subsystems, such as the controller, the debt price regression model, and the fitted market model.
+
+# Notebooks
+
+1. [Market Price Driven Model: PI Controller Tuning](notebook_validation_market_price.ipynb)
+    * The purpose of this experiment is to tune and test the PI controller, by driving the market price directly.
+1. [Debt Price Driven Model: PI Controller Tuning](notebook_validation_debt_price.ipynb)
+    * The purpose of this experiment is to tune and test the PI controller, by driving the debt price directly.
+2. [Debt Price Model & Market Model Validation](notebook_validation_regression.ipynb)
+    * The purpose of this experiment, is to validate the system model, using a debt market regression model trained using historical data.
 
 # Dependencies
 
