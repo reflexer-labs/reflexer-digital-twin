@@ -7,8 +7,8 @@ import constants
 
 def update_target_rate(params, substep, state_history, state, policy_input):
 
-    error = -state['error_star'] # unit USD
-    error_integral = -state['error_star_integral'] # unit USD * seconds
+    error = state['error_star'] # unit USD
+    error_integral = state['error_star_integral'] # unit USD * seconds
 
     target_rate = params['kp'] * error + params['ki'] * error_integral
     
@@ -28,6 +28,7 @@ def update_target_price(params, substep, state_history, state, policy_input):
         target_price = state['target_price'] * (1 + state['target_rate'])**state['timedelta']
     except OverflowError:
         print(f'Controller target price OverflowError: target price {target_price}; target rate {state["target_rate"]}')
+        raise
     
     if (target_price < 0):
         target_price = 0

@@ -59,7 +59,7 @@ def resolve_debt_price(params, substep, state_history, state):
         variance = float(base_var*state['timedelta']/3600.0) #converting seconds to hours
         price_move = sts.norm.rvs(loc=0, scale=variance)
         
-    if params[options.MarketPriceSource.__name__] == options.MarketPriceSource.EXTERNAL.value:
+    if params[options.MarketPriceSource.__name__] == options.MarketPriceSource.EXTERNAL.value or params[options.DebtPriceSource.__name__] == options.DebtPriceSource.DISABLED.value:
         price_move = 0
 
     return {'price_move':price_move}
@@ -67,7 +67,7 @@ def resolve_debt_price(params, substep, state_history, state):
 def update_debt_price(params, substep, state_history, state, policy_input):
 
     price_move = policy_input['price_move']
-    value = (state['debt_price'] + price_move)
+    value = state['debt_price'] + price_move
     key = 'debt_price'
 
     return key,value
@@ -87,11 +87,14 @@ def update_market_price(params, substep, state_history, state, policy_input):
         star_dp = params['kp-star'] * star_error + params['ki-star'] * star_integral + params['kd-star'] * star_derivative
 
         market_price = params['k0'] + params['k-autoreg-1']*state['market_price'] + star_dp + hat_dp
+        
+        if params[options.MarketPriceSource.__name__] == options.MarketPriceSource.HYBRID.value:
+            value = market_price + params['price_move'](state['timestep'])
+        else:
+            value = market_price
 
         if market_price < 0:
             value = 0
-        else:
-            value = market_price
 
     key = 'market_price'
   

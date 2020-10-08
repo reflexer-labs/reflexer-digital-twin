@@ -5,6 +5,7 @@ class IntegralType(Enum):
     LEAKY = 2
 
 class DebtPriceSource(Enum):
+    DISABLED = 0
     DEFAULT = 1
     EXTERNAL = 2
     DEBT_MARKET_MODEL = 3
@@ -12,3 +13,4 @@ class DebtPriceSource(Enum):
 class MarketPriceSource(Enum):
     DEFAULT = 1
     EXTERNAL = 2
+    HYBRID = 3
