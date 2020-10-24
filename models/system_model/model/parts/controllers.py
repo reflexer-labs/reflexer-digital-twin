@@ -1,5 +1,3 @@
-from .helpers import *
-
 import options as options
 import constants
 
@@ -10,7 +8,7 @@ def update_target_rate(params, substep, state_history, state, policy_input):
     error = state['error_star'] # unit USD
     error_integral = state['error_star_integral'] # unit USD * seconds
 
-    target_rate = params['kp'] * error + params['ki'] * error_integral
+    target_rate = params['kp'] * error + params['ki'](state['timedelta']) * error_integral
     
     key = 'target_rate'
     value = target_rate if params['controller_enabled'] else 0 # unitless
@@ -27,11 +25,15 @@ def update_target_price(params, substep, state_history, state, policy_input):
     try:
         target_price = state['target_price'] * (1 + state['target_rate'])**state['timedelta']
     except OverflowError:
-        print(f'Controller target price OverflowError: target price {target_price}; target rate {state["target_rate"]}')
+        # print(f'Controller target price OverflowError: target price {target_price}; target rate {state["target_rate"]}')
+        target_price = state['target_price']
         raise
     
     if (target_price < 0):
         target_price = 0
+    # elif target_price > 10:
+    #     print('Target price capped at 10')
+    #     target_price = state['target_price']
 
     key = 'target_price'
     value = target_price
@@ -56,7 +58,7 @@ def update_error_star_integral(params, substep, state_history, state, policy_inp
     error_star_integral = state['error_star_integral']
     old_error = state['error_star'] # unit: USD
     new_error = policy_input['error_star'] # unit: USD
-    mean_error = int((old_error + new_error)/2) # unit: USD
+    mean_error = (old_error + new_error)/2 # unit: USD
     timedelta = state['timedelta'] # unit: time (seconds)
     area = mean_error * timedelta # unit: USD * seconds
 

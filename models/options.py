@@ -13,4 +13,3 @@ class DebtPriceSource(Enum):
 class MarketPriceSource(Enum):
     DEFAULT = 1
     EXTERNAL = 2
-    HYBRID = 3

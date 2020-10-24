@@ -1,0 +1,15 @@
+{
+  "Kp": "1000000000000000000",
+  "Ki": "77160493827",
+  "lower_precomputed_rate_allowed_deviation": "985000000000000000",
+  "upper_precomputed_rate_allowed_deviation": "980000000000000000",
+  "allowed_deviation_increase": "999970733618363951224236355",
+  "noise_barrier": "998000000000000000",
+  "per_second_leak": "999887377145733145451555483",
+  "min_rate_timeline": "2592000",
+  "oracle_initial_price": "4200000000000000000",
+  "initial_redemption_price": "4200000000000000000000000000",
+  "delta_t": [],
+  "market_prices": [],
+  "save_dir": "test/saved_sims/pi_validator/raw/custom-config-sim.txt"
+}

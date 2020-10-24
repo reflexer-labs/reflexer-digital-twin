@@ -1,0 +1,15 @@
+node_modules
+build
+package-lock.json
+
+# PI saved sims
+# test/saved_sims/pi_setter/big_negative_shock.txt
+# test/saved_sims/pi_setter/big_positive_shock.txt
+# test/saved_sims/pi_setter/big_predefined_scenario.txt
+# test/saved_sims/pi_setter/randomly_generated_prices_and_delays.txt
+
+# P saved sims
+# test/saved_sims/p_setter/big_negative_shock.txt
+# test/saved_sims/p_setter/big_positive_shock.txt
+# test/saved_sims/p_setter/big_predefined_scenario.txt
+# test/saved_sims/p_setter/randomly_generated_prices_and_delays.txt

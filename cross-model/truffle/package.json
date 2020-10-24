@@ -1,0 +1,38 @@
+{
+  "name": "geb-rrfm-truffle-sims",
+  "version": "1.0.0",
+  "description": "Truffle tests that simulate oracle prices and ping on-chain PID validators",
+  "main": "truffle-config.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "install-deps": "npm install",
+    "setup-network": "npx ganache-cli -d -e 100000000000",
+    "test-all": "npx truffle test",
+    "pi-raw-second": "npx truffle test test/pi-raw-second.js",
+    "pi-raw-global-imported-config": "npx truffle test test/pi_raw_global_imported_config.js",
+    "pi-raw-second-imported-config": "npx truffle test test/pi_raw_second_imported_config.js",
+    "pi-scaled-second-imported-config": "npx truffle test test/pi_scaled_second_imported_config.js",
+    "pi-scaled-global-imported-config": "npx truffle test test/pi_scaled_global_imported_config.js",
+    "both-imported-config-sims": "npx truffle test test/pi_raw_validator_imported_config.js && truffle test test/pi_scaled_validator_imported_config.js"
+  },
+  "keywords": [
+    "GEB",
+    "PID",
+    "rai",
+    "Reflexer"
+  ],
+  "author": "Reflexer Labs, INC",
+  "license": "GPLv3",
+  "dependencies": {
+    "blob": "0.1.0",
+    "bn.js": "^5.1.3",
+    "decimal.js": "^10.2.0",
+    "file-saver": "^2.0.2",
+    "fs": "0.0.1-security",
+    "shelljs": "0.8.4",
+    "shelljs.exec": "^1.1.8",
+    "web3": "^1.3.0"
+  }
+}

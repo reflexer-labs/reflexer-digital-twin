@@ -11,9 +11,9 @@ state_variables = {
     'error_star_derivative': (0.0), #price units per second
     'error_hat_derivative': (0.0), #price units per second
     'target_rate': (0.0), #price units per second
-    'target_price': (1.0), #price units
-    'market_price': (1.0), #price units
-    'debt_price': (1.0), #price units
+    'target_price': (2.0), #price units
+    'market_price': (2.0), #price units
+    'debt_price': (2.0), #price units
     'timedelta': int(0), #seconds
     'timestamp': dt.datetime.strptime('12/18/18', '%m/%d/%y'), #datetime
     'blockheight': int(0), #block offset (init 0 simplicity)
