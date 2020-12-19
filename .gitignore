@@ -14,7 +14,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+#lib/
 lib64/
 sdist/
 var/
@@ -148,3 +148,9 @@ scratchpad*
 data/.ipynb_checkpoints
 .ipynb_checkpoints/notebook-checkpoint.ipynb
 .ipynb_checkpoints
+
+models/pickles/*.pickle
+models/apt_model/*.pickle
+
+**/results*/
+**/simulation_results/

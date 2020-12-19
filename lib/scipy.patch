@@ -1,0 +1,20 @@
+753c753,755
+<             callback(sim[0])
+---
+>             print("NM callback")
+>             if callback(sim[0]) is True:
+>                 break
+1882a1885,1887
+> #def _minimize_scalar_bounded(func, bounds, args=(),
+> #                             xatol=1e-5, maxiter=500, disp=0,
+> #                             **unknown_options):
+1884c1889
+<                              xatol=1e-5, maxiter=500, disp=0,
+---
+>                              xatol=1e-3, maxiter=20, disp=0,
+2942c2947,2949
+<             callback(x)
+---
+>             print('entered powell callback')
+>             if callback(x) is True:
+>                 break

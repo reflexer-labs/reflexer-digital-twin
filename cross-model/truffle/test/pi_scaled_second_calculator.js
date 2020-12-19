@@ -5,18 +5,17 @@ const logging             = require("./utils/logging");
 
 const BN                  = require('bn.js');
 var Decimal               = require('decimal.js');
-const fs                  = require('fs');
 
-const PIRawPerSecondCalculator = artifacts.require("PIRawPerSecondCalculator");
-const RateSetter               = artifacts.require("RateSetter");
-const MockOracleRelayer        = artifacts.require("MockOracleRelayer");
-const MockTreasury             = artifacts.require("MockTreasury");
-const MockFeed                 = artifacts.require("MockFeed");
-const ERC20                    = artifacts.require("ERC20");
-const AGUpdater                = artifacts.require("AGUpdater");
-const SeedProposerUpdater      = artifacts.require("SeedProposerUpdater");
+const PIScaledPerSecondCalculator = artifacts.require("PIScaledPerSecondCalculator");
+const RateSetter                  = artifacts.require("RateSetter");
+const MockOracleRelayer           = artifacts.require("MockOracleRelayer");
+const MockTreasury                = artifacts.require("MockTreasury");
+const MockFeed                    = artifacts.require("MockFeed");
+const ERC20                       = artifacts.require("ERC20");
+const AGUpdater                   = artifacts.require("AGUpdater");
+const SeedProposerUpdater         = artifacts.require("SeedProposerUpdater");
 
-contract('PIRawPerSecondCalculator Imported Config', function(accounts) {
+contract('PIScaledPerSecondCalculator', function(accounts) {
   // Default params
   var WAD                              = new BN("1000000000000000000");
   var RAY                              = new BN("1000000000000000000000000000");
@@ -31,21 +30,19 @@ contract('PIRawPerSecondCalculator Imported Config', function(accounts) {
   var treasurySetterPerBlockAllowance  = WAD.mul(WAD.mul(RAY));
 
   // PI Calculator
-  var Kp
-  var Ki
+  var Kp                                    = WAD.div(new BN(4)).div(new BN(144)).div(new BN(3600));
+  var Ki                                    = WAD.div(new BN(4)).div(new BN(156)).div(new BN(3600)).div(new BN(3600));
   var integralPeriodSize                    = 3600;
-  var timeWarpedToIncreaseDeviation         = 3600;
   var baseUpdateCallerReward                = WAD.clone();
   var maxUpdateCallerReward                 = new BN("10000000000000000000");
   var perSecondCallerRewardIncrease         = new BN("1000272489688853849040134023"); // 166.666666667% per hour
-  var perSecondCumulativeLeak;
-  var noiseBarrier;
+  var perSecondCumulativeLeak               = new BN("999887377145733145451555483");  // -33.3333333333% per hour
+  var noiseBarrier                          = new BN("1000000000000000000");
   var feedbackOutputUpperBound              = RAY.mul(WAD);
   var feedbackOutputLowerBound              = RAY.sub(new BN("1")).mul(new BN("-1"));
-  var minRateTimeline;
 
-  var oracleInitialPrice;
-  var initialRedemptionPrice;
+  var oracleInitialPrice                    = new BN(42).mul(WAD).div(new BN(10)); // WAD
+  var initialRedemptionPrice                = new BN(42).mul(RAY).div(new BN(10)); // RAY
 
   var encodedSeedProposer                   = "0x7365656450726f706f736572"
   var feeReceiver                           = "0xF320d7Bf928a8eFda0FF624A02e73E9592A03f2B"
@@ -57,13 +54,11 @@ contract('PIRawPerSecondCalculator Imported Config', function(accounts) {
 
   // Setup
   beforeEach(async () => {
-    await importVariables();
-
     systemCoin    = await ERC20.new(tokenSymbol, tokenSymbol);
     orcl          = await MockFeed.new(oracleInitialPrice, true);
     treasury      = await MockTreasury.new(systemCoin.address);
     oracleRelayer = await MockOracleRelayer.new(initialRedemptionPrice);
-    calculator     = await PIRawPerSecondCalculator.new(
+    calculator     = await PIScaledPerSecondCalculator.new(
       Kp,
       Ki,
       perSecondCumulativeLeak,
@@ -95,22 +90,6 @@ contract('PIRawPerSecondCalculator Imported Config', function(accounts) {
     await treasury.setTotalAllowance(rateSetter.address, treasurySetterTotalAllowance, {from: accounts[0]});
     await treasury.setPerBlockAllowance(rateSetter.address, treasurySetterPerBlockAllowance, {from: accounts[0]});
   });
-
-  // File I/O
-  async function importVariables() {
-    let piParams = fs.readFileSync('test/config/pi_second_raw.json');
-    piParams = JSON.parse(piParams);
-
-    Kp = new BN(piParams.Kp)
-    Ki = new BN(piParams.Ki);
-    noiseBarrier = new BN(piParams.noise_barrier);
-    perSecondCumulativeLeak = new BN(piParams.per_second_leak);
-    oracleInitialPrice = new BN(piParams.oracle_initial_price);
-    initialRedemptionPrice = new BN(piParams.initial_redemption_price);
-    updateDelays = piParams.delta_t;
-    orclPrices = piParams.market_prices;
-    simDataFilePath = piParams.save_dir;
-  }
 
   // Feedback loop
   async function updateOnChainRate(feeReceiver) {
@@ -178,15 +157,38 @@ contract('PIRawPerSecondCalculator Imported Config', function(accounts) {
 
     assert.equal(orclPrice.toString(10), oracleInitialPrice.toString(10));
   })
-  it('simulate the raw per-second PI controller using the custom JSON config', async () => {
-    if (orclPrices.length != updateDelays.length) {
-      console.log("Invalid custom sim array data! Abort");
-      return;
-    }
+  it('should simulate the PI per-second scaled calculator using a predefined scenario', async () => {
+    // Local simulation predefined scenario
+    var orclPrices = [
+      "4200000000000000000",
+      "4300000000000000000",
+      "4300000000000000000",
+      "4300000000000000000",
+      "4200000000000000000",
+      "4200000000000000000",
+      "4200000000000000000",
+      "4200000000000000000",
+      "4100000000000000000",
+      "4100000000000000000",
+      "4100000000000000000",
+      "4100000000000000000",
+      "4200000000000000000",
+      "4200000000000000000",
+      "4200000000000000000",
+      "4200000000000000000",
+      "4200000000000000000",
+      "4200000000000000000",
+      "4200000000000000000",
+      "4200000000000000000",
+      "4199260881094347634",
+      "4199260881094347634",
+      "4199260881094347634"
+    ];
 
     // Logging & data dump
     var printOverview   = false;
     var printStep       = false;
+    var simDataFilePath = "test/saved_sims/pi_second/scaled/predefined_scenario.txt";
 
     // Data arrays
     var marketPrices = [];
@@ -201,14 +203,11 @@ contract('PIRawPerSecondCalculator Imported Config', function(accounts) {
     var integralNoGain = [];
     var integralWithGain = [];
 
-    var cumulativeTime;
-
     for (var i = 0; i < orclPrices.length; i++) {
-      marketPrices.push(orclPrices[i]);
-      delays.push(updateDelays[i]);
-      cumulativeTime += parseInt(updateDelays[i]);
+      marketPrices.push(orclPrices[i].toString(10));
+      delays.push(integralPeriodSize);
 
-      var update = await executePIUpdate(printStep, parseInt(updateDelays[i]), orclPrices[i].toString())
+      var update = await executePIUpdate(printStep, integralPeriodSize, orclPrices[i])
 
       redemptionPrices.push(update.redemptionPrice);
       globalRedemptionRates.push("1");
@@ -234,10 +233,80 @@ contract('PIRawPerSecondCalculator Imported Config', function(accounts) {
       integralNoGain,
       integralWithGain,
       delays,
-      cumulativeTime.toString(),
+      (integralPeriodSize * orclPrices.length).toString(),
 
       simDataFilePath,
       dataDescription
     );
-  })
+  });
+  it('should simulate the per-second PI scaled calculator using randomly generated prices and delays', async () => {
+    // Params
+    var priceLowerBound = 3.7;
+    var priceUpperBound = 4.9;
+    var delayLowerBound = integralPeriodSize;
+    var delayUpperBound = integralPeriodSize;
+    var steps           = 250;
+
+    // Logging & data dump
+    var printOverview   = false;
+    var printStep       = false;
+    var simDataFilePath = "test/saved_sims/pi_second/scaled/randomly_generated_prices_and_delays.txt";
+
+    // Logic
+    var marketPrices = [];
+    var redemptionPrices = [];
+    var globalRedemptionRates = [];
+    var perSecondRedemptionRates = [];
+    var feeReceiverBalances = [];
+    var redemptionRateTimelines = [];
+    var proportionalNoGain = [];
+    var delays = [];
+    var proportionalWithGain = [];
+    var integralNoGain = [];
+    var integralWithGain = [];
+
+    var accumulatedDelay = 0;
+
+    for (var i = 0; i < steps; i++) {
+      var randomPrice = (Math.random() * (priceUpperBound - priceLowerBound) + priceLowerBound).toFixed(18)
+      randomPrice = randomPrice.toString().replace(".", "");
+      marketPrices.push(randomPrice);
+
+      var randomDelay = Math.floor(Math.random() * (delayUpperBound - delayLowerBound + 1) + delayLowerBound);
+      accumulatedDelay += randomDelay;
+
+      delays.push(randomDelay);
+
+      var update = await executePIUpdate(printStep, randomDelay, randomPrice)
+
+      redemptionPrices.push(update.redemptionPrice);
+      globalRedemptionRates.push("1");
+      perSecondRedemptionRates.push(update.contractComputedPerSecondRate);
+      feeReceiverBalances.push(update.feeReceiverBalance);
+      redemptionRateTimelines.push(update.redemptionRateTimeline);
+      proportionalNoGain.push(update.proportionalNoGain);
+      proportionalWithGain.push(update.proportionalWithGain);
+      integralNoGain.push(update.integralNoGain);
+      integralWithGain.push(update.integralWithGain);
+    }
+
+    await logging.printAndSaveSimulation(
+      printOverview,
+
+      marketPrices,
+      redemptionPrices,
+      globalRedemptionRates,
+      perSecondRedemptionRates,
+      redemptionRateTimelines,
+      proportionalNoGain,
+      proportionalWithGain,
+      integralNoGain,
+      integralWithGain,
+      delays,
+      accumulatedDelay.toString(),
+
+      simDataFilePath,
+      dataDescription
+    );
+  });
 });

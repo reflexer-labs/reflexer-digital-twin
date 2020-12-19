@@ -32,11 +32,11 @@ def load_debt_price_data(debt_price_source: options.DebtPriceSource):
             worksheet_list = test_spreadsheet.worksheets()
             test_dfs = [pd.DataFrame(ws.get_all_values()[1:], columns=ws.get_all_values()[0]).copy() for ws in worksheet_list]
         else:
-            debt_price_dataframe = pd.read_csv('./test/data/default_debt_price_source.csv')
+            debt_price_dataframe = pd.read_csv('./tests/data/default_debt_price_source.csv')
             test_dfs = [debt_price_dataframe]
     elif debt_price_source == options.DebtPriceSource.DEBT_MARKET_MODEL.value:
-        debt_market_df = pd.read_csv('market_model/data/debt_market_df.csv', index_col='date', parse_dates=True)
-        loaded_model = pickle.load(open('market_model/debt_price_estimator.pickle', 'rb'))
+        debt_market_df = pd.read_csv('models/models/market_model/data/debt_market_df.csv', index_col='date', parse_dates=True)
+        loaded_model = pickle.load(open('models/market_model/debt_price_estimator.pickle', 'rb'))
         features = ['beta', 'Q', 'v_1', 'v_2 + v_3', 
                     'rho_star', 'C_star',
                     'D_1', 'u_1', 'u_2', 'u_3', 'u_2 + u_3', 

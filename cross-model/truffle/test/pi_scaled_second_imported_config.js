@@ -7,16 +7,16 @@ const BN                  = require('bn.js');
 var Decimal               = require('decimal.js');
 const fs                  = require('fs');
 
-const PIScaledPerSecondValidator = artifacts.require("PIScaledPerSecondValidator");
-const RateSetter                 = artifacts.require("RateSetter");
-const MockOracleRelayer          = artifacts.require("MockOracleRelayer");
-const MockTreasury               = artifacts.require("MockTreasury");
-const MockFeed                   = artifacts.require("MockFeed");
-const ERC20                      = artifacts.require("ERC20");
-const AGUpdater                  = artifacts.require("AGUpdater");
-const SeedProposerUpdater        = artifacts.require("SeedProposerUpdater");
+const PIScaledPerSecondCalculator = artifacts.require("PIScaledPerSecondCalculator");
+const RateSetter                  = artifacts.require("RateSetter");
+const MockOracleRelayer           = artifacts.require("MockOracleRelayer");
+const MockTreasury                = artifacts.require("MockTreasury");
+const MockFeed                    = artifacts.require("MockFeed");
+const ERC20                       = artifacts.require("ERC20");
+const AGUpdater                   = artifacts.require("AGUpdater");
+const SeedProposerUpdater         = artifacts.require("SeedProposerUpdater");
 
-contract('PIScaledPerSecondValidator Imported Config', function(accounts) {
+contract('PIScaledPerSecondCalculator Imported Config', function(accounts) {
   // Default params
   var WAD                              = new BN("1000000000000000000");
   var RAY                              = new BN("1000000000000000000000000000");
@@ -30,7 +30,7 @@ contract('PIScaledPerSecondValidator Imported Config', function(accounts) {
   var treasurySetterTotalAllowance     = WAD.mul(WAD.mul(RAY));
   var treasurySetterPerBlockAllowance  = WAD.mul(WAD.mul(RAY));
 
-  // PI Validator
+  // PI Calculator
   var Kp
   var Ki
   var integralPeriodSize                    = 3600;
@@ -53,7 +53,7 @@ contract('PIScaledPerSecondValidator Imported Config', function(accounts) {
   var dataDescription                       = "Market Price (WAD) | Redemption Price (RAY) | Redemption Rate (%) | Per Second Redemption Rate (RAY) | Redemption Rate Timeline (Seconds) | Proportional (No Gain) | Proportional (With Gain) | Integral (No Gain) | Integral (With Gain) | Delay Since Last Update" + "\n"
 
   // Contracts
-  var systemCoin, orcl, treasury, oracleRelayer, validator, rateSetter, agUpdater, seedProposerUpdater;
+  var systemCoin, orcl, treasury, oracleRelayer, calculator, rateSetter, agUpdater, seedProposerUpdater;
 
   // Setup
   beforeEach(async () => {
@@ -63,7 +63,7 @@ contract('PIScaledPerSecondValidator Imported Config', function(accounts) {
     orcl          = await MockFeed.new(oracleInitialPrice, true);
     treasury      = await MockTreasury.new(systemCoin.address);
     oracleRelayer = await MockOracleRelayer.new(initialRedemptionPrice);
-    validator     = await PIScaledPerSecondValidator.new(
+    calculator     = await PIScaledPerSecondCalculator.new(
       Kp,
       Ki,
       perSecondCumulativeLeak,
@@ -77,7 +77,7 @@ contract('PIScaledPerSecondValidator Imported Config', function(accounts) {
       oracleRelayer.address,
       orcl.address,
       treasury.address,
-      validator.address,
+      calculator.address,
       baseUpdateCallerReward,
       maxUpdateCallerReward,
       perSecondCallerRewardIncrease,
@@ -86,10 +86,10 @@ contract('PIScaledPerSecondValidator Imported Config', function(accounts) {
     agUpdater           = await AGUpdater.new();
     seedProposerUpdater = await SeedProposerUpdater.new();
 
-    await validator.addAuthority(agUpdater.address);
-    await validator.addAuthority(seedProposerUpdater.address);
+    await calculator.addAuthority(agUpdater.address);
+    await calculator.addAuthority(seedProposerUpdater.address);
 
-    await seedProposerUpdater.modifyParameters(validator.address, rateSetter.address);
+    await seedProposerUpdater.modifyParameters(calculator.address, rateSetter.address);
 
     await systemCoin.mint(treasury.address, treasuryAmount, {from: accounts[0]});
     await treasury.setTotalAllowance(rateSetter.address, treasurySetterTotalAllowance, {from: accounts[0]});
@@ -113,8 +113,8 @@ contract('PIScaledPerSecondValidator Imported Config', function(accounts) {
   }
 
   // Feedback loop
-  async function updateOnChainRate(randomRate, feeReceiver) {
-    await rateSetter.updateRate(new BN(randomRate), feeReceiver, {from: accounts[0]});
+  async function updateOnChainRate(feeReceiver) {
+    await rateSetter.updateRate(feeReceiver, {from: accounts[0]});
   }
   async function executePIUpdate(print, randomDelay, randomPrice) {
     await increaseTime.advanceTime(randomDelay);
@@ -126,12 +126,12 @@ contract('PIScaledPerSecondValidator Imported Config', function(accounts) {
     var latestRedemptionPrice = (await oracleRelayer.redemptionPrice.call()).toString();
 
     // Get the next per-second rate
-    var pscl = (await validator.pscl.call()).toString();
-    var tlv = (await validator.tlv.call()).toString();
+    var pscl = (await calculator.pscl.call()).toString();
+    var tlv = (await calculator.tlv.call()).toString();
     var iapcr = (await rateSetter.rpower.call(pscl, tlv, RAY.toString(10))).toString();
-    var nextRateData = (await validator.getNextRedemptionRate.call(randomPrice, latestRedemptionPrice, iapcr))
+    var nextRateData = (await calculator.getNextRedemptionRate.call(randomPrice, latestRedemptionPrice, iapcr))
 
-    var gainAdjustedTerms = await validator.getGainAdjustedTerms(nextRateData[1].toString(10), nextRateData[2].toString(10), {from: accounts[0]});
+    var gainAdjustedTerms = await calculator.getGainAdjustedTerms(nextRateData[1], nextRateData[2], {from: accounts[0]});
 
     if (print) {
       console.log("Contract Computed Per-Second Redemption Rate: " + nextRateData[0].toString(10))
@@ -141,7 +141,7 @@ contract('PIScaledPerSecondValidator Imported Config', function(accounts) {
     }
 
     // Update the rate on-chain
-    await updateOnChainRate("1", feeReceiver)
+    await updateOnChainRate(feeReceiver)
 
     // Get and store the receiver system coin balance
     var currentReceiverBalance = (await systemCoin.balanceOf.call(feeReceiver)).toString()

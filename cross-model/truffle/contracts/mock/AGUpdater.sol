@@ -1,4 +1,4 @@
-pragma solidity ^0.6.7;
+pragma solidity 0.6.7;
 
 abstract contract Setter {
     function modifyParameters(bytes32, uint) virtual public;

@@ -1,0 +1,3 @@
+[submodule "lib/scipy"]
+	path = lib/scipy
+	url = https://github.com/BlockScience/scipy
