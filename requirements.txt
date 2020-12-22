@@ -143,6 +143,10 @@ widgetsnbextension==3.5.1
 xarray==0.16.1
 zict==2.0.0
 
+scikit-optimize==0.8.1
+emcee==3.0.2
+pyDOE==0.3.8
+
 pytest==6.1.2
 #git+git://github.com/BlockScience/scipy@patch-optimize # Forked off scipy==1.5.2
 
