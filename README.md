@@ -174,7 +174,7 @@ result = run(drop_midsteps=True)
 ```bash
 cd ./cross-model/truffle
 npm install
-npm setup-network
+npm run setup-network
 # Open and run notebooks/solidity_cadcad/notebook_solidity_validation.ipynb
 ```
 
