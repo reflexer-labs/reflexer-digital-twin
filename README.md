@@ -191,9 +191,3 @@ python tests/run_shock_tests.py
 Outputs:
 * `exports/_.png` - metric grid for each set of parameters
 * `notebooks/system_model_v1/shock_tests.ipynb` - template notebook for running test and generating grid
-
-## Simulation Profiling
-
-```python
-python3 -m cProfile -s time models/run.py
-```
