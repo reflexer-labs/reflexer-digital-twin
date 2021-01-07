@@ -1,6 +1,6 @@
 # Reflexer, RAI
 
-![RAI laws of motion](diagrams/laws_of_motion.png)
+<p align="center"><img src="diagrams/laws_of_motion.png" alt="RAI laws of motion" width="80%"/></p>
 
 # Where to start?
 
@@ -59,7 +59,7 @@ Full system model with parameters for selecting & stress testing subsystems, suc
 
 ## System Model v2.0: CDP, APT, Secondary Market Subsystems
 
-![Debt dynamics](diagrams/debt_dynamics.png)
+<p align="center"><img src="diagrams/debt_dynamics.png" alt="Debt dynamics" width="80%"/></p>
 
 Full system model with CDP, APT, and secondary market subsystems.
 
