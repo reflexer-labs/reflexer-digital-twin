@@ -19,7 +19,7 @@
 **CDP principal debt**
 * `u_1` -- discrete "draw" event, in RAI; drawing new debt mints new stable tokens
 * `u_2` -- discrete "wipe" event, in RAI; repayment of the principal debt by burning stable tokens
-* `u_3` discrete "bite" event, in RAI; when a CDP is liquidated, its principal debt is cleared and an equivalent amount of debt is minted against the liquidation engine
+* `u_3` -- discrete "bite" event, in RAI; when a CDP is liquidated, its principal debt is cleared and an equivalent amount of debt is minted against the liquidation engine
 
 **Accrued interest**
 * `w_1` -- discrete "drip" event, in RAI

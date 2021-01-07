@@ -151,13 +151,9 @@ jupytext --sync --update notebooks/notebook.ipynb
 
 ## cadCAD Model Simulation
 
-**Out of date, please use relevant notebook to run simulation.**
+See relevant simulation notebooks.
 
-To run simulation:
-```python
-python3 models/run.py
-```
-or
+Example model configuration and simulation execution:
 ```python
 from models.run import run
 from models.config_wrapper import ConfigWrapper

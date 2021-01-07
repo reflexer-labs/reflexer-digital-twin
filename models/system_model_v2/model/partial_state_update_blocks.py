@@ -30,10 +30,10 @@ partial_state_update_blocks = [
             Resolve expected price and store in state
         ''',
         'policies': {
-            'apt': p_resolve_p_expected
+            'apt': p_resolve_expected_market_price
         },
         'variables': {
-            'p_expected': s_store_p_expected
+            'expected_market_price': s_store_expected_market_price
         }
     },
     {
@@ -76,29 +76,6 @@ partial_state_update_blocks = [
             'cdps': s_store_cdps,
         }
     },
-    # Disabled, CDPs closed as part of APT CDP process
-    # {
-    #     'details': '''
-    #         Exogenous u,v activity: close CDPs
-    #     ''',
-    #     'policies': {
-    #         'close_cdps': p_close_cdps,
-    #     },
-    #     'variables': {
-    #         'cdps': s_store_cdps,
-    #         'v_2': s_set_v_2,
-    #         'u_2': s_set_u_2,
-    #         'w_2': s_set_w_2,
-    #     }
-    # },
-    # {
-    #     'policies': {},
-    #     'variables': {
-    #         'eth_freed': s_update_eth_freed,
-    #         'rai_wiped': s_update_rai_wiped,
-    #         'system_revenue': s_update_system_revenue,
-    #     }
-    # },
     #################################################################
     {
         'details': '''
@@ -160,10 +137,10 @@ partial_state_update_blocks = [
             Resolve expected price and store in state
         ''',
         'policies': {
-            'apt': p_resolve_p_debt_expected
+            'apt': p_resolve_expected_debt_price
         },
         'variables': {
-            'p_debt_expected': s_store_p_debt_expected
+            'expected_debt_price': s_store_expected_debt_price
         }
     },
     {

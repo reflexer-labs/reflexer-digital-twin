@@ -22,7 +22,7 @@ from models.config_wrapper import ConfigWrapper
 
 import models.options as options
 from models.run import run
-from models.utils.load_data import step_dataframe, load_debt_price_data
+from models.utils.load_data import load_debt_price_data
 from models.utils.process_results import drop_dataframe_midsteps
 
 # Import models

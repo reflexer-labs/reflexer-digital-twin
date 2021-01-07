@@ -19,20 +19,20 @@ import pandas as pd
 from .utils import get_feature
 from .debt_market import resolve_cdp_positions
 
-def p_resolve_p_debt_expected(params, substep, state_history, state):
+def p_resolve_expected_debt_price(params, substep, state_history, state):
     model = params['model']
     features = params['features']
     feature_0 = get_feature(state_history, features, index=(0 if params['freeze_feature_vector'] else -1))
-    p_debt_expected = model.predict(feature_0)[0]
+    expected_debt_price = model.predict(feature_0)[0]
     
-    logging.debug(f'p_debt_expected: {p_debt_expected}')
+    logging.debug(f'expected_debt_price: {expected_debt_price}')
 
-    return {'p_debt_expected': p_debt_expected}
+    return {'expected_debt_price': expected_debt_price}
 
-def s_store_p_debt_expected(params, substep, state_history, state, policy_input):
-    return 'p_debt_expected', policy_input['p_debt_expected']
+def s_store_expected_debt_price(params, substep, state_history, state, policy_input):
+    return 'expected_debt_price', policy_input['expected_debt_price']
 
-def p_resolve_p_expected(params, substep, state_history, state):
+def p_resolve_expected_market_price(params, substep, state_history, state):
     eth_return = state['eth_return']
     eth_price_mean = params['eth_price_mean']
     market_price_mean = params['market_price_mean']
@@ -53,16 +53,16 @@ def p_resolve_p_expected(params, substep, state_history, state):
     beta_2 = params['beta_2']
         
     # find root of non-arbitrage condition
-    p_expected = (1 / alpha_1) * p * (interest_rate + beta_2 * (eth_price_mean - eth_price * interest_rate)
+    expected_market_price = (1 / alpha_1) * p * (interest_rate + beta_2 * (eth_price_mean - eth_price * interest_rate)
                                  + beta_1 * (market_price_mean - p * interest_rate)
                  ) - (alpha_0/alpha_1)
     
-    logging.debug(f'p_expected terms: {alpha_1, p, interest_rate, beta_2, eth_price_mean, eth_price, beta_1, market_price_mean, alpha_0, p_expected}')
+    logging.debug(f'expected_market_price terms: {alpha_1, p, interest_rate, beta_2, eth_price_mean, eth_price, beta_1, market_price_mean, alpha_0, expected_market_price}')
 
-    return {'p_expected': p_expected}
+    return {'expected_market_price': expected_market_price}
 
-def s_store_p_expected(params, substep, state_history, state, policy_input):
-    return 'p_expected', policy_input['p_expected']
+def s_store_expected_market_price(params, substep, state_history, state, policy_input):
+    return 'expected_market_price', policy_input['expected_market_price']
 
 def p_apt_model(params, substep, state_history, state):
     start_time = time.time()
@@ -78,7 +78,7 @@ def p_apt_model(params, substep, state_history, state):
     optvars = params['optvars']
     features = params['features']
 
-    p_expected = state['p_expected']
+    expected_market_price = state['expected_market_price']
     
     if use_APT_ML_model:
         optindex = [features.index(i) for i in optvars]
@@ -110,14 +110,14 @@ def p_apt_model(params, substep, state_history, state):
     feature_0: {feature_0}
     x0: {x0}
     optvars: {optvars}
-    p_expected: {p_expected}
+    expected_market_price: {expected_market_price}
     ''')
 
     minimize_results = {}
     try:
         if use_APT_ML_model:
             minimize_results = minimize(func, x0, method='Powell', 
-                args=(optindex, feature_0, p_expected, state['timestep']),
+                args=(optindex, feature_0, expected_market_price, state['timestep']),
                 bounds = bounds,
                 options={
                     'disp': True,
@@ -134,7 +134,7 @@ def p_apt_model(params, substep, state_history, state):
             
             x_star = minimize_results['x']
         else:
-            x_star = newton(func, x0, args=(optindex, feature_0, p_expected))
+            x_star = newton(func, x0, args=(optindex, feature_0, expected_market_price))
         # Feasibility check, non-negativity
         negindex = np.where(x_star < 0)[0]
         if len(negindex) > 0:
