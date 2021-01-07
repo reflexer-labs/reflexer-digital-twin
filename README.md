@@ -1,7 +1,6 @@
 # Reflexer, RAI
 
 ![RAI laws of motion](diagrams/laws_of_motion.png)
-![Shock metrics](exports/shock_metrics-tuned.png)
 
 # Where to start?
 
