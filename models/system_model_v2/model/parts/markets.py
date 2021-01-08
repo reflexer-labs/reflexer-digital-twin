@@ -1,7 +1,7 @@
 import scipy.stats as sts
 import numpy as np
 
-import options
+import models.options as options
 from .utils import get_feature
 
 

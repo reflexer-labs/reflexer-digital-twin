@@ -2,7 +2,7 @@ import scipy.stats as sts
 import datetime as dt
 import numpy as np
 
-import options
+import models.options as options
 
 
 def resolve_time_passed(params, substep, state_history, state):

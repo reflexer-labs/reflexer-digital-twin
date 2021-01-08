@@ -25,9 +25,9 @@ class ConfigWrapper:
             exp=Experiment()
         ):
         # Load the default model and simulation configuration from the model module
-        m_state_variables = importlib.import_module(f'{model.__name__}.model.state_variables').state_variables
+        m_state_variables = importlib.import_module(f'{model.__name__}.model.state_variables.init').state_variables
         m_psubs = importlib.import_module(f'{model.__name__}.model.partial_state_update_blocks').partial_state_update_blocks
-        m_params = importlib.import_module(f'{model.__name__}.model.parts.sys_params').params
+        m_params = importlib.import_module(f'{model.__name__}.model.params.init').params
         m_sim_params = importlib.import_module(f'{model.__name__}.sim_params')
         
         # If either of Monte Carlo Runs or timesteps have been passed to the wrapper, override the default values
