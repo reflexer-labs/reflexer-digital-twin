@@ -88,25 +88,27 @@ Full system model with CDP, APT, and secondary market subsystems.
 
 ## Large File Dependencies
 
-The following pickle files in `models/pickles/` should be obtained and copied or linked into the repo. They are ignored in the `.gitignore` file to avoid hitting file size and bandwidth limits:
+The following pickle files in `models/pickles/` should be obtained from the BlockScience/Reflexer shared Google Drive folder, and copied or linked into the repo. They are ignored in the `.gitignore` file to avoid hitting file size and bandwidth limits:
 
 * `apt_debt_model_2020-11-28.pickle`
 
 ## System Dependencies
 
-* `swig` for `auto-sklearn` Python library. Use `brew install swig@3` or:
+You'll need to install `swig` for the `auto-sklearn` Python library:
 
+### macOS
+
+```bash
+brew install swig@3
 ```
+
+### Ubuntu
+
+```bash
 apt-get remove swig
 apt-get install swig3.0
 rm -rf /usr/bin/swig3.0 /usr/bin/swig
 ln -s /usr/bin/swig3.0 /usr/bin/swig
-```
-
-* `truffle` for running the Solidity simulations:
-
-```
-npm install -g truffle
 ```
 
 ## Python Dependencies
@@ -131,19 +133,10 @@ patch venv/lib/python3.8/site-packages/scipy/optimize/optimize.py lib/scipy.patc
 
 # Jupyter Notebook
 
-To start Jupyter Notebook, with all dependencies available:
+To start Jupyter Lab, with all dependencies available:
 ```bash
 source venv/bin/activate
 jupyter-lab
-```
-
-## Jupytext Paired Notebooks
-
-Jupytext allows us to create a notebook paired with a Python script, to more easily keep track of updates, and execute simulation notebooks. In the `notebooks/` directory, check if their is both an `.ipynb` and `.py` file for a notebook, then use the following command to sync the two files when necessary:
-
-```
-# Initialize paired ipynb/py notebook: `jupytext --set-formats ipynb,py:percent notebooks/notebook.ipynb`
-jupytext --sync --update notebooks/notebook.ipynb
 ```
 
 # Modelling & Simulation
@@ -156,9 +149,9 @@ Example model configuration and simulation execution:
 ```python
 from models.run import run
 from models.config_wrapper import ConfigWrapper
-import models.system_model_v1 as system_model_v1
+import models.system_model_v2 as model
 
-simulation = ConfigWrapper(system_model_v1)
+simulation = ConfigWrapper(model)
 simulation.append()
 
 result = run(drop_midsteps=True)
