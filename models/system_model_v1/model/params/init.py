@@ -1,7 +1,7 @@
 import numpy as np
 
-import options as options
-from constants import SPY, RAY
+import models.options as options
+from models.constants import SPY, RAY
 
 #assume
 halflife = SPY / 52 #weeklong halflife
@@ -14,7 +14,7 @@ params = {
     'derivative_smoothing': [1], #unitless
     'debt_market_std':[.001], #defined price units per hour
     'kp': [6.944e-06], #proportional term for the stability controller: units 1/USD
-    'ki': [lambda control_period=3600: 60.0 / control_period], #integral term for the stability controller: units 1/(USD*seconds)
+    'ki': [lambda control_period=3600: 0 / control_period], #integral term for the stability controller: units 1/(USD*seconds)
     'kp-star': [-0.5866], #proportional term for the market process: unitless
     'ki-star': [lambda control_period=3600: 0.0032 / control_period], #integral term for the market process to target price: units 1/seconds 
     'kd-star': [lambda control_period=3600: 0.4858 * control_period], #derivative term for the market process to target price: units seconds

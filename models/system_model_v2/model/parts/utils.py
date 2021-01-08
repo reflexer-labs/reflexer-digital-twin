@@ -3,10 +3,6 @@ import pandas as pd
 import math
 import logging
 
-# features = ['beta', 'Q', 'v_1', 'v_2 + v_3', 
-#                     'D_1', 'u_1', 'u_2', 'u_3', 'u_2 + u_3', 
-#                     'D_2', 'w_1', 'w_2', 'w_3', 'w_2 + w_3',
-#                     'D']
 
 def save_partial_results(params, substep, state_history, state):
     partial_results: pd.DataFrame = pd.read_pickle(params['partial_results'])

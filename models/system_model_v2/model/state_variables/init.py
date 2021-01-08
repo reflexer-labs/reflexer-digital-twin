@@ -1,31 +1,9 @@
+from models.system_model_v2.model.state_variables.cdps import *
+from models.system_model_v2.model.state_variables.debt_market import *
+from models.system_model_v2.model.state_variables.historical_state import *
+
 import datetime as dt
-import pandas as pd
- 
-eth_collateral = 1000.0
-eth_price = 386.71
 
-liquidation_ratio = 1.5 # 150%
-liquidation_buffer = 2
-collateral_value = eth_collateral * eth_price
-target_price = 1.0
-principal_debt = collateral_value / (target_price * liquidation_ratio * liquidation_buffer)
-
-cdps = pd.DataFrame()
-cdps = cdps.append({
-    'time': 0,
-    'locked': eth_collateral,
-    'drawn': principal_debt,
-    'wiped': 0.0,
-    'freed': 0.0,
-    'w_wiped': 0.0,
-    'dripped': 0.0,
-    'u_bitten': 0.0,
-    'v_bitten': 0.0,
-    'w_bitten': 0.0
-}, ignore_index=True)
-
-# Select the start date, chosen for a gradually rising ETH price, and reasonable pool of CDP collateral and debt
-start_date = '2018-04-01' # Rising ETH price
 
 # NB: These initial states may be overriden in the relevant notebook
 state_variables = {
@@ -76,7 +54,7 @@ state_variables = {
     'system_revenue': 0, # "R"; value accrued by protocol token holders as result of contracting supply
     
     # System states
-    'stability_fee': 0.015 / (30 * 24 * 3600), # interest rate used to calculate the accrued interest; per second interest rate (1.5% per month)
+    'stability_fee': stability_fee, # interest rate used to calculate the accrued interest; per second interest rate (1.5% per month)
     'market_price': target_price, # unit: dollars; the secondary market clearing price
     'target_price': target_price, # unit: dollars; equivalent to redemption price
     'target_rate': 0 / (30 * 24 * 3600), # per second interest rate (X% per month), updated by controller
