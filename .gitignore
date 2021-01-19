@@ -154,3 +154,4 @@ models/apt_model/*.pickle
 
 **/results*/
 **/simulation_results/
+exports/system_model_*/*.pickle
