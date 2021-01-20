@@ -1,6 +1,6 @@
-from models.system_modelv3.model.state_variables.cdps import *
-from models.system_modelv3.model.state_variables.debt_market import *
-from models.system_modelv3.model.state_variables.historical_state import *
+from models.system_model_v3.model.state_variables.cdps import *
+from models.system_model_v3.model.state_variables.debt_market import *
+from models.system_model_v3.model.state_variables.historical_state import *
 
 import datetime as dt
 
@@ -10,9 +10,9 @@ state_variables = {
     # Metadata / metrics
     'events': [],
     'cdp_metrics': {},
-    'feature_vector': {},
+    # 'feature_vector': {},
     'optimal_values': {},
-    'minimize_results': {},
+    # 'minimize_results': {},
     
     # Time states
     'timedelta': 0, # seconds

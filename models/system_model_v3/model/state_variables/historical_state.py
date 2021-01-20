@@ -1,8 +1,14 @@
 import pandas as pd
 import numpy as np
 
-from models.system_modelv3.model.params.apt import features
 
+# The full feature vector from the historical MakerDAO Dai dataset
+features = [
+    'beta', 'Q', 'v_1', 'v_2 + v_3', 
+    'D_1', 'u_1', 'u_2', 'u_3', 'u_2 + u_3', 
+    'D_2', 'w_1', 'w_2', 'w_3', 'w_2 + w_3',
+    'D'
+]
 
 # Import the historical MakerDAO market data CSV file
 debt_market_df = pd.read_csv('models/market_model/data/debt_market_df.csv', index_col='date', parse_dates=True)

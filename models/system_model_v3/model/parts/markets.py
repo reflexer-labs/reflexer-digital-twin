@@ -13,6 +13,6 @@ import numpy as np
 # ETH from Uni -> into pocket
 
 
-# TODO: remove
-# def update_market_price(params, substep, state_history, state, policy_input):
-#     return "market_price", clearing_price
+# TODO: update to calculate from Uniswap market
+def update_market_price(params, substep, state_history, state, policy_input):
+    return "market_price", state['market_price']

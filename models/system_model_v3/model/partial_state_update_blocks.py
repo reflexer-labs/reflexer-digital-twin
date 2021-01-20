@@ -41,13 +41,13 @@ partial_state_update_blocks = [
             APT model
         """,
         'policies': {
-            'apt': p_apt_model
+            'arbitrage': p_arbitrageur_model
         },
         'variables': {
             'cdps': s_store_cdps,
-            'feature_vector': s_store_feature_vector,
+            # 'feature_vector': s_store_feature_vector,
             'optimal_values': s_store_optimal_values,
-            'minimize_results': s_store_minimize_results,
+            # 'minimize_results': s_store_minimize_results,
         }
     },
     {
@@ -132,17 +132,17 @@ partial_state_update_blocks = [
             'w_3': s_aggregate_w_3,
         }
     },
-    {
-        'details': '''
-            Resolve expected price and store in state
-        ''',
-        'policies': {
-            'apt': p_resolve_expected_debt_price
-        },
-        'variables': {
-            'expected_debt_price': s_store_expected_debt_price
-        }
-    },
+    # {
+    #     'details': '''
+    #         Resolve expected price and store in state
+    #     ''',
+    #     'policies': {
+    #         'apt': p_resolve_expected_debt_price
+    #     },
+    #     'variables': {
+    #         'expected_debt_price': s_store_expected_debt_price
+    #     }
+    # },
     {
         'policies': {},
         'variables': {
@@ -197,10 +197,4 @@ partial_state_update_blocks = [
             'cdp_metrics': s_update_cdp_metrics,
         }
     },
-    {
-        'policies': {
-            'partial_results': save_partial_results
-        },
-        'variables': {}
-    }
 ]
