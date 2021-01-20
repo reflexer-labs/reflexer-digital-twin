@@ -1,6 +1,6 @@
-from models.system_model_v2.model.state_variables.cdps import *
-from models.system_model_v2.model.state_variables.debt_market import *
-from models.system_model_v2.model.state_variables.historical_state import *
+from models.system_modelv3.model.state_variables.cdps import *
+from models.system_modelv3.model.state_variables.debt_market import *
+from models.system_modelv3.model.state_variables.historical_state import *
 
 import datetime as dt
 

@@ -4,8 +4,8 @@ import pandas as pd
 import models.options as options
 from models.constants import SPY, RAY
 
-from models.system_model_v2.model.params.apt import *
-from models.system_model_v2.model.state_variables.historical_state import \
+from models.system_modelv3.model.params.apt import *
+from models.system_modelv3.model.state_variables.historical_state import \
     start_date, debt_market_df, eth_price_mean, eth_returns_mean, market_price_mean, stability_fee
 
 
@@ -19,7 +19,7 @@ alpha = int(np.power(.5, float(1 / halflife)) * RAY)
 
 # Save partial simulation results as a Pickled dataframe - in the event that a simulation fails mid-way, the results until that point will be available
 partial_results = pd.DataFrame()
-partial_results_file = f'''exports/system_model_v2/partial_results.pickle'''
+partial_results_file = f'''exports/system_modelv3/partial_results.pickle'''
 partial_results.to_pickle(partial_results_file)
 
 # Enabled or disable APT tests - these tests bypass the APT ML model, for quick model validation

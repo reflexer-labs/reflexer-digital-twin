@@ -30,7 +30,7 @@ partial_state_update_blocks = [
             Resolve expected price and store in state
         ''',
         'policies': {
-            'apt': p_resolve_expected_market_price
+            'market': p_resolve_expected_market_price
         },
         'variables': {
             'expected_market_price': s_store_expected_market_price
