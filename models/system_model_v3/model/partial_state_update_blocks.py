@@ -4,6 +4,7 @@ from .parts.debt_market import *
 from .parts.time import *
 from .parts.utils import *
 from .parts.apt_model import *
+from .parts.uniswap import *
 
 partial_state_update_blocks = [
     {
@@ -48,6 +49,9 @@ partial_state_update_blocks = [
             # 'feature_vector': s_store_feature_vector,
             'optimal_values': s_store_optimal_values,
             # 'minimize_results': s_store_minimize_results,
+            'RAI_balance': update_RAI_balance,
+            'ETH_balance': update_ETH_balance,
+            'UNI_supply': update_UNI_supply,
         }
     },
     {
@@ -64,18 +68,18 @@ partial_state_update_blocks = [
         }
     },
     #################################################################
-    {
-        'details': '''
-            Exogenous u,v activity: liquidate CDPs
-        ''',
-        'policies': {
-            'liquidate_cdps': p_liquidate_cdps
-        },
-        'variables': {
-            'events': s_collect_events,
-            'cdps': s_store_cdps,
-        }
-    },
+    # {
+    #     'details': '''
+    #         Exogenous u,v activity: liquidate CDPs
+    #     ''',
+    #     'policies': {
+    #         'liquidate_cdps': p_liquidate_cdps
+    #     },
+    #     'variables': {
+    #         'events': s_collect_events,
+    #         'cdps': s_store_cdps,
+    #     }
+    # },
     #################################################################
     {
         'details': '''
@@ -106,17 +110,17 @@ partial_state_update_blocks = [
         }
     },
     #################################################################
-    {
-        'details': """
-        Rebalance CDPs using wipes and frees 
-        """,
-        'policies': {
-            'rebalance_cdps': p_rebalance_cdps,
-        },
-        'variables': {
-            'cdps': s_store_cdps
-        }
-    },
+    # {
+    #     'details': """
+    #     Rebalance CDPs using wipes and frees 
+    #     """,
+    #     'policies': {
+    #         'rebalance_cdps': p_rebalance_cdps,
+    #     },
+    #     'variables': {
+    #         'cdps': s_store_cdps
+    #     }
+    # },
     #################################################################
     {
         'policies': {},

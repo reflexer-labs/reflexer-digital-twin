@@ -76,7 +76,14 @@ params = {
     # The tuning of this parameter is probably off the average, because we don't have the CDP size distribution matched yet,
     # so although the individual CDPs could have an average debt age of 3 months, the larger CDPs likely had a longer debt age.
     'average_debt_age': [3 * (30 * 24 * 3600)], # delta t (seconds)
+    'debt_ceiling': [1e9],
 
     # System parameters
     'stability_fee': [lambda timestep, df=debt_market_df: stability_fee], # per second interest rate (x% per month)
+
+    # Uniswap parameters
+    'uniswap_fee': [0.003],
+    'gas_price': [100e-9], # 100 gwei, current "fast" transaction
+    'swap_gas_used': [133340], # TODO: confirm gas use
+    'cdp_gas_used': [133340], # TODO: confirm gas use
 }

@@ -68,4 +68,9 @@ state_variables = {
     # Controller states
     'error_star': 0, # price units
     'error_star_integral': 0, # price units x seconds
+
+    # Uniswap states
+    'RAI_balance': 1e6,
+    'ETH_balance': (1e6 * target_price) / eth_price,
+    'UNI_supply': 1e6,
 }
