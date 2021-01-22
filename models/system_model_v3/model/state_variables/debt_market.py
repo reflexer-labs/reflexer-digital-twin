@@ -1,6 +1,7 @@
 import math
 from .historical_state import *
 
+
 # Decompose the debt market collateral initial states
 eth_collateral = historical_initial_state['Q']
 eth_locked = debt_market_df.loc[:start_date]['v_1'].sum()

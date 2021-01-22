@@ -110,17 +110,17 @@ partial_state_update_blocks = [
         }
     },
     #################################################################
-    # {
-    #     'details': """
-    #     Rebalance CDPs using wipes and frees 
-    #     """,
-    #     'policies': {
-    #         'rebalance_cdps': p_rebalance_cdps,
-    #     },
-    #     'variables': {
-    #         'cdps': s_store_cdps
-    #     }
-    # },
+    {
+        'details': """
+        Rebalance CDPs using wipes and draws 
+        """,
+        'policies': {
+            'rebalance_cdps': p_rebalance_cdps,
+        },
+        'variables': {
+            'cdps': s_store_cdps
+        }
+    },
     #################################################################
     {
         'policies': {},

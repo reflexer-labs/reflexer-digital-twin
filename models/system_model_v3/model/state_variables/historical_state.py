@@ -19,7 +19,10 @@ debt_market_df.insert(0, 'seconds_passed', 24 * 3600)
 # Select the start date from historical data to use as the model initial state
 
 # Select the start date; historical state with a minimal pool of CDP collateral and debt
-start_date = '2017-12-25'
+# start_date = '2017-12-25'
+
+# Select the start date, chosen for a gradually rising ETH price, and reasonable pool of CDP collateral and debt
+start_date = '2018-04-01' # Rising ETH price
 
 # Build a feature vector from the historical dataset at the start_date, to be used as the model initial state
 historical_initial_state = {k: debt_market_df.loc[start_date][k] for k in features}

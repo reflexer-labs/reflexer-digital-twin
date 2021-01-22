@@ -51,16 +51,17 @@ def remove_liquidity(reserve_balance, supply_balance, voucher_balance, tokens):
 def get_input_price(dx, x_balance, y_balance, trade_fee=0.01):
     rho = trade_fee
     
-    alpha = dx/x_balance
+    alpha = dx / x_balance
     gamma = 1 - rho
     
-    dy = (alpha*gamma / (1 + alpha*gamma))*y_balance
+    dy = (alpha * gamma / (1 + alpha * gamma)) * y_balance
     
-    _dx = alpha*x_balance
+    _dx = alpha * x_balance
     _dy = -dy
     
-    #new_x = (1 + alpha)*x_balance
-    #new_y = y_balance - dy
+    # Example:
+    # new_x = (1 + alpha)*x_balance
+    # new_y = y_balance - dy
     
     return (_dx, _dy)
 
@@ -68,16 +69,17 @@ def get_input_price(dx, x_balance, y_balance, trade_fee=0.01):
 def get_output_price(dy, x_balance, y_balance, trade_fee=0.01):
     rho = trade_fee
     
-    beta = dy/y_balance
+    beta = dy / y_balance
     gamma = 1 - rho
     
-    dx = (beta / (1 - beta))*(1 / gamma)*x_balance
+    dx = (beta / (1 - beta)) * (1 / gamma) * x_balance
     
     _dx = dx
-    _dy = -beta*y_balance
+    _dy = -beta * y_balance
     
-    #new_x = x_balance + dx
-    #new_y = (1 - beta)*y_balance
+    # Example:
+    # new_x = x_balance + dx
+    # new_y = (1 - beta)*y_balance
     
     return (_dx, _dy)
 
@@ -95,7 +97,8 @@ def token_to_collateral(tokens, reserve_balance, supply_balance, trade_fee):
     if supply_balance == 0: return 0
     dx,dy = get_input_price(tokens, supply_balance, reserve_balance, trade_fee)
     
-    #new_reserve = reserve_balance - dx
-    #new_supply = supply_balance + dy
+    # Example:
+    # new_reserve = reserve_balance - dx
+    # new_supply = supply_balance + dy
     
     return abs(dy)

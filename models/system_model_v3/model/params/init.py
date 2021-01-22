@@ -36,7 +36,7 @@ params = {
     'expected_control_delay': [lambda _timestep: 1200], # seconds
     
     # Controller parameters
-    'controller_enabled': [True],
+    'controller_enabled': [False],
     'kp': [5e-7], # proportional term for the stability controller: units 1/USD
     'ki': [lambda control_period=3600: -1e-7 / control_period], # integral term for the stability controller: units 1/(USD*seconds)
     'alpha': [alpha], # in 1/RAY

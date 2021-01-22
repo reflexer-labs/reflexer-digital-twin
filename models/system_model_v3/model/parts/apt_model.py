@@ -87,7 +87,6 @@ def p_arbitrageur_model(params, substep, state_history, state):
     aggregate_arbitrageur_cdp_index = cdps.query("arbitrage == 1").index[0]
     
     if redemption_price < ((1 - uniswap_fee) / liquidation_ratio) * market_price and expected_market_price < market_price:
-        print("Expensive RAI on Uni 1")
         '''
         Expensive RAI on Uni:
         (put ETH from pocket into additional collateral in CDP)
@@ -100,21 +99,38 @@ def p_arbitrageur_model(params, substep, state_history, state):
         q_deposit = ((liquidation_ratio * redemption_price) / eth_price) * (total_borrowed + d_borrow) - total_deposited
         z = (ETH_balance * d_borrow * (1 - uniswap_fee)) / (RAI_balance + 2 * d_borrow * (1 - uniswap_fee))
 
+        over_collateralized = False
+        if q_deposit < 0:
+            # TODO: 
+            over_collateralized = True
+            print("Over collateralized?")
+            q_deposit = 0
+
+            # Check if d_borrow is valid, add delta d_borrow
+            # using ETH from pocket to fill delta
+            # d_borrow += delta
+
         # Check positive profit condition
         if z - q_deposit - gas_price * (swap_gas_used + cdp_gas_used) > 0:
-            print("Expensive RAI on Uni 2")
+            print("Performing arb. CDP -> UNI")
             borrowed = cdps.at[aggregate_arbitrageur_cdp_index, "drawn"]
             deposited = cdps.at[aggregate_arbitrageur_cdp_index, "locked"]
+
+            assert d_borrow >= 0
+            assert q_deposit >= 0, (q_deposit, redemption_price, eth_price, total_borrowed, d_borrow, total_deposited)
+            
             cdps.at[aggregate_arbitrageur_cdp_index, "drawn"] = borrowed + d_borrow
             cdps.at[aggregate_arbitrageur_cdp_index, "locked"] = deposited + q_deposit
 
             RAI_delta = d_borrow
             assert RAI_delta > 0
+
+            # Swap RAI for ETH
             _, ETH_delta = get_input_price(d_borrow, RAI_balance, ETH_balance, uniswap_fee)
             assert ETH_delta < 0
+            # assert ETH_delta == -z, (ETH_delta, z)
 
     elif redemption_price > (1 / ((1 - uniswap_fee) * liquidation_ratio)) * market_price and expected_market_price > market_price:
-        print("Cheap RAI on Uni 1")
         '''
         Cheap RAI on Uni:
         ETH out of pocket -> Uni
@@ -129,14 +145,21 @@ def p_arbitrageur_model(params, substep, state_history, state):
         
         # Check positive profit condition
         if q_withdraw - z - gas_price * (swap_gas_used + cdp_gas_used) > 0:
-            print("Cheap RAI on Uni 2")
+            print("Performing arb. UNI -> CDP")
             repayed = cdps.at[aggregate_arbitrageur_cdp_index, "wiped"]
             withdrawn = cdps.at[aggregate_arbitrageur_cdp_index, "freed"]
+            
+            assert d_repay >= 0
+            assert q_withdraw >= 0
+            
             cdps.at[aggregate_arbitrageur_cdp_index, "wiped"] = repayed + d_repay
             cdps.at[aggregate_arbitrageur_cdp_index, "freed"] = withdrawn + q_withdraw
 
+            # Deposit ETH, get RAI
             ETH_delta, _ = get_output_price(d_repay, ETH_balance, RAI_balance, uniswap_fee)
             assert ETH_delta > 0
+            # assert ETH_delta == z, (ETH_delta, z)
+
             RAI_delta = -d_repay
             assert RAI_delta < 0
     else:
@@ -147,10 +170,6 @@ def p_arbitrageur_model(params, substep, state_history, state):
         'ETH_delta': ETH_delta,
         'UNI_delta': UNI_delta,
     }
-    
-    # TODO: state update Q, D, cdp positions, actions passed to secondary market
-    # locks and draws - sell
-    # frees and wipes - buy
     
     return {**validate_updated_cdp_state(cdps, cdps_copy), 'optimal_values': {}, **uniswap_state_delta}
 

@@ -5,6 +5,11 @@ from models.system_model_v3.model.state_variables.historical_state import *
 import datetime as dt
 
 
+eth_collateral = cdps.iloc[0]["locked"]
+principal_debt = cdps.iloc[0]["drawn"]
+
+print(eth_collateral, principal_debt)
+
 # NB: These initial states may be overriden in the relevant notebook
 state_variables = {
     # Metadata / metrics
@@ -70,7 +75,7 @@ state_variables = {
     'error_star_integral': 0, # price units x seconds
 
     # Uniswap states
-    'RAI_balance': 1e6,
-    'ETH_balance': (1e6 * target_price) / eth_price,
-    'UNI_supply': 1e6,
+    'RAI_balance': 5e6,
+    'ETH_balance': (5e6 * target_price) / eth_price,
+    'UNI_supply': 5e6,
 }
