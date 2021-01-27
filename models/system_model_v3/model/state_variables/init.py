@@ -2,14 +2,13 @@ from models.system_model_v3.model.state_variables.cdps import *
 from models.system_model_v3.model.state_variables.debt_market import *
 from models.system_model_v3.model.state_variables.historical_state import *
 from models.system_model_v3.model.parts.uniswap_oracle import UniswapOracle
+from models.system_model_v3.model.state_variables.uniswap import *
 
 import datetime as dt
 
 
-eth_collateral = cdps.iloc[0]["locked"]
-principal_debt = cdps.iloc[0]["drawn"]
-
-print(eth_collateral, principal_debt)
+eth_collateral = cdps["locked"].sum()
+principal_debt = cdps["drawn"].sum()
 
 # NB: These initial states may be overriden in the relevant notebook
 state_variables = {
@@ -78,7 +77,7 @@ state_variables = {
 
     # Uniswap states
     'uniswap_oracle': UniswapOracle(),
-    'RAI_balance': 5e6,
-    'ETH_balance': (5e6 * target_price) / eth_price,
-    'UNI_supply': 5e6,
+    'RAI_balance': uniswap_rai_balance,
+    'ETH_balance': uniswap_eth_balance,
+    'UNI_supply': uniswap_rai_balance,
 }
