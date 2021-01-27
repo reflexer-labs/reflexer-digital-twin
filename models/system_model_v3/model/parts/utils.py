@@ -29,6 +29,9 @@ def s_collect_events(params, substep, state_history, state, policy_input):
 def approx_greater_equal_zero(value, rel_tol=0.0, abs_tol=1e-10):
     return value >= 0 or math.isclose(value, 0, rel_tol=rel_tol, abs_tol=abs_tol)
 
+def approx_eq(v1, v2, rel_tol=0.0, abs_tol=1e-10):
+    return math.isclose(v1, v2, rel_tol=rel_tol, abs_tol=abs_tol)
+
 def assert_log(condition, message="", _raise=True):
     try:
         assert condition, message

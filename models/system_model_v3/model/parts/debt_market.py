@@ -203,8 +203,6 @@ def open_cdp_draw(draw, eth_price, target_price, liquidation_ratio):
     }
 
 
-# TODO: set liquidation buffer parameter to 1, or remove
-
 def p_rebalance_cdps(params, substep, state_history, state):
     cdps = state["cdps"]
 
@@ -256,10 +254,6 @@ def resolve_cdp_positions(params, state, policy_input):
 
     cdps = state["cdps"]
     cdps_copy = cdps.copy()
-
-    # TODO: Refactor 
-    # * aggregates or deltas for v, u (see apt_model.py)
-    # * two different possibilities, for locks + draws, wipes + frees - simply set zero
     
     v_1 = policy_input["v_1"]  # Lock
     v_2 = policy_input["v_2 + v_3"]  # Free, no v_3 liquidations
@@ -984,7 +978,7 @@ def s_update_system_revenue(params, substep, state_history, state, policy_input)
     return "system_revenue", system_revenue + w_2
 
 
-## TODO: verify/test logic for negative interest rates
+# TODO: verify/test logic for negative interest rates
 def calculate_accrued_interest(
     stability_fee, target_rate, timedelta, debt, accrued_interest
 ):

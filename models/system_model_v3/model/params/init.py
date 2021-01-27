@@ -11,8 +11,7 @@ from models.system_model_v3.model.state_variables.historical_state import \
 # Set dataframe to start from start date
 debt_market_df = debt_market_df.loc[start_date:]
 
-# Assume
-# TODO: update based on discussion with Stefan
+# TODO: Default assumption, set according to process for deriving per-second alpha
 halflife = SPY / 52 # weeklong halflife
 alpha = int(np.power(.5, float(1 / halflife)) * RAY)
 

@@ -4,7 +4,7 @@ import time
 import logging
 import pandas as pd
 
-from .utils import approx_greater_equal_zero, assert_log
+from .utils import approx_greater_equal_zero, assert_log, approx_eq
 from .debt_market import resolve_cdp_positions, open_cdp_draw, open_cdp_lock
 from .uniswap import get_output_price, get_input_price
 
@@ -28,16 +28,19 @@ def p_resolve_expected_market_price(params, substep, state_history, state):
     beta_0 = params['beta_0']
     beta_1 = params['beta_1']
     beta_2 = params['beta_2']
-        
-    # TODO: derive betas, or proxy based on stoch. process
-    # TODO: maybe assumption, same types of price movements as historical MakerDAO DAI
+
+    """
+    TODO: changed to reflect stoch. process
+    * derive betas, or proxy based on stoch. process
+    * maybe assumption, same types of price movements as historical MakerDAO DAI
+    """    
+
     expected_market_price = (1 / alpha_1) * p * (interest_rate + beta_2 * (eth_price_mean - eth_price * interest_rate)
-                                 + beta_1 * (market_price_mean - p * interest_rate) # TODO: changed to reflect stoch. process
+                                 + beta_1 * (market_price_mean - p * interest_rate)
                  ) - (alpha_0/alpha_1)
     
     logging.debug(f'expected_market_price terms: {alpha_1, p, interest_rate, beta_2, eth_price_mean, eth_price, beta_1, market_price_mean, alpha_0, expected_market_price}')
 
-    # TODO: E_t p(t+1) in hackmd
     return {'expected_market_price': expected_market_price}
 
 def s_store_expected_market_price(params, substep, state_history, state, policy_input):
@@ -45,12 +48,6 @@ def s_store_expected_market_price(params, substep, state_history, state, policy_
 
 def p_arbitrageur_model(params, substep, state_history, state):
     # TODO: possible metric - arb. profits/performance
-    
-    # TODO: calculate v, u for each CDP
-    
-    # Pass optimal values to CDP handler, and receive new initial condition from CDP handler
-    # TODO: locks and draws, frees and wipes - independent
-    # TODO: v, u will be deltas of CDP positions rather than aggregate, refactor
 
     RAI_balance = state['RAI_balance']
     ETH_balance = state['ETH_balance']
@@ -95,13 +92,13 @@ def p_arbitrageur_model(params, substep, state_history, state):
         '''
 
         _g1 = g1(RAI_balance, ETH_balance, uniswap_fee, liquidation_ratio, redemption_price)
-        d_borrow = min(debt_ceiling - total_borrowed, (_g1 - RAI_balance) / (2 * (1 - uniswap_fee)))
+        d_borrow = min(debt_ceiling - total_borrowed, (_g1 - RAI_balance) / (1 - uniswap_fee))
         q_deposit = ((liquidation_ratio * redemption_price) / eth_price) * (total_borrowed + d_borrow) - total_deposited
-        z = (ETH_balance * d_borrow * (1 - uniswap_fee)) / (RAI_balance + 2 * d_borrow * (1 - uniswap_fee))
+        z = (ETH_balance * d_borrow * (1 - uniswap_fee)) / (RAI_balance + d_borrow * (1 - uniswap_fee))
 
         over_collateralized = False
         if q_deposit < 0:
-            # TODO: 
+            # TODO: complete logic
             over_collateralized = True
             print("Over collateralized?")
             q_deposit = 0
@@ -128,7 +125,7 @@ def p_arbitrageur_model(params, substep, state_history, state):
             # Swap RAI for ETH
             _, ETH_delta = get_input_price(d_borrow, RAI_balance, ETH_balance, uniswap_fee)
             assert ETH_delta < 0
-            # assert ETH_delta == -z, (ETH_delta, z)
+            assert approx_eq(ETH_delta, -z, abs_tol=1e-10), (ETH_delta, -z)
 
     elif redemption_price > (1 / ((1 - uniswap_fee) * liquidation_ratio)) * market_price and expected_market_price > market_price:
         '''
@@ -139,8 +136,8 @@ def p_arbitrageur_model(params, substep, state_history, state):
         '''
         
         _g2 = g2(RAI_balance, ETH_balance, uniswap_fee, liquidation_ratio, redemption_price)
-        z = (_g2 - ETH_balance) / (2 * (1 - uniswap_fee))
-        d_repay = (RAI_balance * z * (1 - uniswap_fee)) / (ETH_balance + 2 * z * (1 - uniswap_fee))
+        z = (_g2 - ETH_balance) / (1 - uniswap_fee)
+        d_repay = (RAI_balance * z * (1 - uniswap_fee)) / (ETH_balance + z * (1 - uniswap_fee))
         q_withdraw = total_deposited - (liquidation_ratio * redemption_price / eth_price) * (total_borrowed - d_repay)
         
         # Check positive profit condition
@@ -158,7 +155,7 @@ def p_arbitrageur_model(params, substep, state_history, state):
             # Deposit ETH, get RAI
             ETH_delta, _ = get_output_price(d_repay, ETH_balance, RAI_balance, uniswap_fee)
             assert ETH_delta > 0
-            # assert ETH_delta == z, (ETH_delta, z)
+            assert approx_eq(ETH_delta, z, abs_tol=1e-10), (ETH_delta, z)
 
             RAI_delta = -d_repay
             assert RAI_delta < 0
@@ -213,7 +210,7 @@ def validate_updated_cdp_state(cdps, previous_cdps, raise_on_assert=False):
         "w_2": w_2,
     }
 
-# TODO: remove
+# TODO: remove or implement
 # def s_store_feature_vector(params, substep, state_history, state, policy_input):
 #     return 'feature_vector', policy_input['feature_vector']
 
