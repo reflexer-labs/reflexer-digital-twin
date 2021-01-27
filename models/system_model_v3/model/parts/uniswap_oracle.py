@@ -1,5 +1,10 @@
 from collections import namedtuple
 
+'''
+Reflexer implementation: https://github.com/reflexer-labs/geb-uniswap-median/blob/master/src/UniswapConsecutiveSlotsPriceFeedMedianizer.sol
+See https://uniswap.org/docs/v2/core-concepts/oracles/
+'''
+
 UniswapObservation = namedtuple('UniswapObservation', ['timestamp', 'price_0_cumulative', 'price_1_cumulative'])
 ConverterFeedObservation = namedtuple('ConverterFeedObservation', ['timestamp', 'time_adjusted_price'])
 
