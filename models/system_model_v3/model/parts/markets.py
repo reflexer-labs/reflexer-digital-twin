@@ -9,11 +9,6 @@ def p_market_price(params, substep, state_history, state):
     uniswap_oracle.update_result(state)
     median_price = uniswap_oracle.median_price
 
-    print(market_price)
-    print(median_price)
-    print(uniswap_oracle.uniswap_observations[-1])
-    print(uniswap_oracle.converter_feed_observations[-1])
-
     return {"market_price": market_price, "market_price_twap": median_price, "uniswap_oracle": uniswap_oracle}
 
 def s_uniswap_oracle(params, substep, state_history, state, policy_input):

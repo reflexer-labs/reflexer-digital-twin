@@ -70,7 +70,7 @@ params = {
     # 'new_cdp_collateral': [2500], # The average CDP collateral for opening a new CDP, based on historical CDP collateral statistics
     'liquidation_ratio': [1.5], # Configure the liquidation ratio parameter e.g. 150%
     'liquidation_buffer': [1.0], # Configure the liquidation buffer parameter: the multiplier for the liquidation ratio, that users apply as a buffer
-    'liquidation_penalty': [0], # Percentage added on top of collateral needed to liquidate CDP
+    'liquidation_penalty': [0.11], # Percentage added on top of collateral needed to liquidate CDP. This is needed in order to avoid auction grinding attacks.
     # Average CDP duration == 3 months: https://www.placeholder.vc/blog/2019/3/1/maker-network-report
     # The tuning of this parameter is probably off the average, because we don't have the CDP size distribution matched yet,
     # so although the individual CDPs could have an average debt age of 3 months, the larger CDPs likely had a longer debt age.
