@@ -14,6 +14,7 @@ def update_UNI_supply(params, substep, state_history, state, policy_input):
     return "UNI_supply", UNI_supply + UNI_delta
 
 # Uniswap functions
+# See https://github.com/runtimeverification/verified-smart-contracts/blob/uniswap/uniswap/x-y-k.pdf for original v1 specification
 
 def add_liquidity(reserve_balance, supply_balance, voucher_balance, tokens, value):
     if voucher_balance <= 0:        
