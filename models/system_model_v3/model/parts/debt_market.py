@@ -697,7 +697,7 @@ def p_liquidate_cdps(params, substep, state_history, state):
     liquidated_cdps = pd.DataFrame()
     if len(cdps) > 0:
         try:
-            liquidated_cdps = cdps.query("open == 1").query(
+            liquidated_cdps = cdps.query("open == 1 and arbitrage == 0").query(
                 f"(locked - freed - v_bitten) * {eth_price} < (drawn - wiped - u_bitten) * {target_price} * {liquidation_ratio}"
             )
         except:

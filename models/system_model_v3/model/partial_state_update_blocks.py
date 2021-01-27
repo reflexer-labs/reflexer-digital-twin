@@ -5,11 +5,18 @@ from .parts.time import *
 from .parts.utils import *
 from .parts.apt_model import *
 from .parts.uniswap import *
+from .parts.governance import p_enable_controller
 
 partial_state_update_blocks = [
     {
         'policies': {
             'free_memory': p_free_memory,
+        },
+        'variables': {}
+    },
+    {
+        'policies': {
+            'governance': p_enable_controller,
         },
         'variables': {}
     },
@@ -68,18 +75,18 @@ partial_state_update_blocks = [
         }
     },
     #################################################################
-    # {
-    #     'details': '''
-    #         Exogenous u,v activity: liquidate CDPs
-    #     ''',
-    #     'policies': {
-    #         'liquidate_cdps': p_liquidate_cdps
-    #     },
-    #     'variables': {
-    #         'events': s_collect_events,
-    #         'cdps': s_store_cdps,
-    #     }
-    # },
+    {
+        'details': '''
+            Exogenous u,v activity: liquidate CDPs
+        ''',
+        'policies': {
+            'liquidate_cdps': p_liquidate_cdps
+        },
+        'variables': {
+            'events': s_collect_events,
+            'cdps': s_store_cdps,
+        }
+    },
     #################################################################
     {
         'details': '''

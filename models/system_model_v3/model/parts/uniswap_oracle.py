@@ -105,7 +105,6 @@ class UniswapOracle():
             return self.converter_compute_amount_out(time_since_first, uniswap_amount_out)
         return self.median_price
 
-
     def update_result(self, state):
         now = state['cumulative_time']
 

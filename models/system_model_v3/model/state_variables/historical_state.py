@@ -51,8 +51,7 @@ eth_price = eth_price_df.loc[start_date][0]
 # Set the initial market price state
 market_price = debt_market_df.loc[start_date]['p']
 # Set the initial target price, in Dollars
-# We chose this number because it symbolizes the year when Ethereum launched (2015)
-target_price = 2.015
+target_price = 1
 
 # Configure the initial stability fee parameter, as a scaled version of the historical data beta at the start date
 stability_fee = (historical_initial_state['beta'] * 30 / 365) / (30 * 24 * 3600)

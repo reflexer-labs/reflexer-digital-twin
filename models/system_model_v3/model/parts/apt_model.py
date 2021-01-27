@@ -96,20 +96,18 @@ def p_arbitrageur_model(params, substep, state_history, state):
         q_deposit = ((liquidation_ratio * redemption_price) / eth_price) * (total_borrowed + d_borrow) - total_deposited
         z = (ETH_balance * d_borrow * (1 - uniswap_fee)) / (RAI_balance + d_borrow * (1 - uniswap_fee))
 
-        over_collateralized = False
         if q_deposit < 0:
-            q_deposit = 0
-            # TODO: Complete logic & review w/ Jamsheed
-            over_collateralized = True
             print("Over collateralized!")
             
             cdp = cdps.loc[aggregate_arbitrageur_cdp_index]
             _d_borrow = draw_to_liquidation_ratio(cdp, eth_price, redemption_price, liquidation_ratio)
-            # Check if d_borrow is valid, add delta d_borrow
-            if d_borrow != _d_borrow:
-                # using ETH from pocket to fill delta
-                delta_d_borrow = 0
-                d_borrow += delta_d_borrow
+            # Check if d_borrow is valid, add delta_d_borrow, using ETH from pocket
+            if d_borrow > _d_borrow:
+                delta_d_borrow = d_borrow - _d_borrow
+                q_deposit = ((liquidation_ratio * redemption_price) / eth_price) * (total_borrowed + delta_d_borrow) - total_deposited
+                print(q_deposit, delta_d_borrow)
+            else:
+                q_deposit = 0
 
         # Check positive profit condition
         if z - q_deposit - gas_price * (swap_gas_used + cdp_gas_used) > 0:

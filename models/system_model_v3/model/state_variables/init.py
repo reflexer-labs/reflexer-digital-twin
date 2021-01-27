@@ -62,7 +62,7 @@ state_variables = {
     # System states
     'stability_fee': stability_fee, # interest rate used to calculate the accrued interest; per second interest rate (1.5% per month)
     'market_price': target_price, # unit: dollars; the secondary market clearing price
-    'market_price_twap': target_price,
+    'market_price_twap': 0,
     'target_price': target_price, # unit: dollars; equivalent to redemption price
     'target_rate': 0 / (30 * 24 * 3600), # per second interest rate (X% per month), updated by controller
     
