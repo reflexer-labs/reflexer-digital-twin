@@ -5,7 +5,7 @@ import logging
 import pandas as pd
 
 from .utils import approx_greater_equal_zero, assert_log, approx_eq
-from .debt_market import resolve_cdp_positions, open_cdp_draw, open_cdp_lock
+from .debt_market import resolve_cdp_positions, open_cdp_draw, open_cdp_lock, draw_to_liquidation_ratio
 from .uniswap import get_output_price, get_input_price
 
 
@@ -98,14 +98,18 @@ def p_arbitrageur_model(params, substep, state_history, state):
 
         over_collateralized = False
         if q_deposit < 0:
-            # TODO: complete logic
-            over_collateralized = True
-            print("Over collateralized?")
             q_deposit = 0
-
+            # TODO: Complete logic & review w/ Jamsheed
+            over_collateralized = True
+            print("Over collateralized!")
+            
+            cdp = cdps.loc[aggregate_arbitrageur_cdp_index]
+            _d_borrow = draw_to_liquidation_ratio(cdp, eth_price, redemption_price, liquidation_ratio)
             # Check if d_borrow is valid, add delta d_borrow
-            # using ETH from pocket to fill delta
-            # d_borrow += delta
+            if d_borrow != _d_borrow:
+                # using ETH from pocket to fill delta
+                delta_d_borrow = 0
+                d_borrow += delta_d_borrow
 
         # Check positive profit condition
         if z - q_deposit - gas_price * (swap_gas_used + cdp_gas_used) > 0:

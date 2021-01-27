@@ -7,6 +7,9 @@ from models.constants import SPY, RAY
 from models.system_model_v3.model.state_variables.historical_state import \
     start_date, debt_market_df, eth_price_mean, eth_returns_mean, market_price_mean, stability_fee
 
+'''
+See https://medium.com/reflexer-labs/introducing-proto-rai-c4cf1f013ef for current/launch values
+'''
 
 # Set dataframe to start from start date
 debt_market_df = debt_market_df.loc[start_date:]
