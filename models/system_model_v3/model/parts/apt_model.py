@@ -96,16 +96,13 @@ def p_arbitrageur_model(params, substep, state_history, state):
         q_deposit = ((liquidation_ratio * redemption_price) / eth_price) * (total_borrowed + d_borrow) - total_deposited
         z = (ETH_balance * d_borrow * (1 - uniswap_fee)) / (RAI_balance + d_borrow * (1 - uniswap_fee))
 
-        if q_deposit < 0:
-            print("Over collateralized!")
-            
+        if q_deposit < 0:            
             cdp = cdps.loc[aggregate_arbitrageur_cdp_index]
-            _d_borrow = draw_to_liquidation_ratio(cdp, eth_price, redemption_price, liquidation_ratio)
+            available_to_borrow = draw_to_liquidation_ratio(cdp, eth_price, redemption_price, liquidation_ratio)
             # Check if d_borrow is valid, add delta_d_borrow, using ETH from pocket
-            if d_borrow > _d_borrow:
-                delta_d_borrow = d_borrow - _d_borrow
+            if d_borrow > available_to_borrow:
+                delta_d_borrow = d_borrow - available_to_borrow
                 q_deposit = ((liquidation_ratio * redemption_price) / eth_price) * (total_borrowed + delta_d_borrow) - total_deposited
-                print(q_deposit, delta_d_borrow)
             else:
                 q_deposit = 0
 
