@@ -148,9 +148,13 @@ partial_state_update_blocks = [
     #     }
     # },
     {
-        'policies': {},
+        'policies': {
+            'market_price': p_market_price
+        },
         'variables': {
-            'market_price': update_market_price
+            'uniswap_oracle': s_uniswap_oracle,
+            'market_price': s_market_price,
+            'market_price_twap': s_market_price_twap,
         }
     },
     #################################################################

@@ -1,6 +1,7 @@
 from models.system_model_v3.model.state_variables.cdps import *
 from models.system_model_v3.model.state_variables.debt_market import *
 from models.system_model_v3.model.state_variables.historical_state import *
+from models.system_model_v3.model.parts.uniswap_oracle import UniswapOracle
 
 import datetime as dt
 
@@ -61,6 +62,7 @@ state_variables = {
     # System states
     'stability_fee': stability_fee, # interest rate used to calculate the accrued interest; per second interest rate (1.5% per month)
     'market_price': target_price, # unit: dollars; the secondary market clearing price
+    'market_price_twap': target_price,
     'target_price': target_price, # unit: dollars; equivalent to redemption price
     'target_rate': 0 / (30 * 24 * 3600), # per second interest rate (X% per month), updated by controller
     
@@ -75,6 +77,7 @@ state_variables = {
     'error_star_integral': 0, # price units x seconds
 
     # Uniswap states
+    'uniswap_oracle': UniswapOracle(),
     'RAI_balance': 5e6,
     'ETH_balance': (5e6 * target_price) / eth_price,
     'UNI_supply': 5e6,
