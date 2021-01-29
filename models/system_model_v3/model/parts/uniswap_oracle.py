@@ -111,8 +111,8 @@ class UniswapOracle():
         last_update_time = self.last_update_time
         time_elapsed_since_latest = (now - last_update_time) if len(self.uniswap_observations) == 0 else (now - self.uniswap_observations[len(self.uniswap_observations) - 1].timestamp)
         
-        if len(self.uniswap_observations) > 0:
-            assert time_elapsed_since_latest >= self.period_size
+        if len(self.uniswap_observations) > 0 and not time_elapsed_since_latest >= self.period_size:
+            return
 
         # See https://github.com/Uniswap/uniswap-v2-periphery/blob/master/contracts/libraries/UniswapV2OracleLibrary.sol
         self.price_0_cumulative += (state['ETH_balance'] / state['RAI_balance']) * time_elapsed_since_latest

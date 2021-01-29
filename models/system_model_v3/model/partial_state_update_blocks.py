@@ -14,12 +14,12 @@ partial_state_update_blocks = [
         },
         'variables': {}
     },
-    {
-        'policies': {
-            'governance': p_enable_controller,
-        },
-        'variables': {}
-    },
+    # {
+    #     'policies': {
+    #         'governance': p_enable_controller,
+    #     },
+    #     'variables': {}
+    # },
     {
         'details': '''
             This block observes (or samples from data) the amount of time passed between events
@@ -53,9 +53,7 @@ partial_state_update_blocks = [
         },
         'variables': {
             'cdps': s_store_cdps,
-            # 'feature_vector': s_store_feature_vector,
             'optimal_values': s_store_optimal_values,
-            # 'minimize_results': s_store_minimize_results,
             'RAI_balance': update_RAI_balance,
             'ETH_balance': update_ETH_balance,
             'UNI_supply': update_UNI_supply,
@@ -125,7 +123,7 @@ partial_state_update_blocks = [
             'rebalance_cdps': p_rebalance_cdps,
         },
         'variables': {
-            'cdps': s_store_cdps
+            'cdps': s_store_cdps,
         }
     },
     #################################################################
@@ -141,27 +139,6 @@ partial_state_update_blocks = [
             'w_1': s_aggregate_w_1,
             'w_2': s_aggregate_w_2,
             'w_3': s_aggregate_w_3,
-        }
-    },
-    # {
-    #     'details': '''
-    #         Resolve expected price and store in state
-    #     ''',
-    #     'policies': {
-    #         'apt': p_resolve_expected_debt_price
-    #     },
-    #     'variables': {
-    #         'expected_debt_price': s_store_expected_debt_price
-    #     }
-    # },
-    {
-        'policies': {
-            'market_price': p_market_price
-        },
-        'variables': {
-            'uniswap_oracle': s_uniswap_oracle,
-            'market_price': s_market_price,
-            'market_price_twap': s_market_price_twap,
         }
     },
     #################################################################
@@ -203,6 +180,16 @@ partial_state_update_blocks = [
             'eth_price': s_update_eth_price,
             'eth_return': s_update_eth_return,
             'eth_gross_return': s_update_eth_gross_return
+        }
+    },
+    {
+        'policies': {
+            'market_price': p_market_price
+        },
+        'variables': {
+            'uniswap_oracle': s_uniswap_oracle,
+            'market_price': s_market_price,
+            'market_price_twap': s_market_price_twap,
         }
     },
     #################################################################

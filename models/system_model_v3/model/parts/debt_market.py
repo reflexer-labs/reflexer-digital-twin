@@ -88,7 +88,7 @@ def wipe_to_liquidation_ratio(
     )
     assert_log(
         approx_greater_equal_zero(wipe, abs_tol=1e-3),
-        f"wipe: {wipe} ~ cdp: {cdp}",
+        f"wipe: {locals()}",
         _raise=_raise,
     )
     wipe = max(wipe, 0)
