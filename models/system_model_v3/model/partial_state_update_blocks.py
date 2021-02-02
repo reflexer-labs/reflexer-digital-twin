@@ -2,7 +2,7 @@ from .parts.controllers import *
 from .parts.markets import *
 from .parts.debt_market import *
 from .parts.time import *
-from .parts.utils import *
+from .parts.utils import s_update_sim_metrics, p_free_memory, s_collect_events
 from .parts.apt_model import *
 from .parts.uniswap import *
 from .parts.governance import p_enable_controller
@@ -25,6 +25,18 @@ partial_state_update_blocks = [
             'timedelta': store_timedelta,
             'timestamp': update_timestamp,
             'cumulative_time': update_cumulative_time
+        }
+    },
+    #################################################################
+    # {}, shock for ETH, RAI
+    {
+        'policies': {
+            'market_price': p_market_price
+        },
+        'variables': {
+            'uniswap_oracle': s_uniswap_oracle,
+            'market_price': s_market_price,
+            'market_price_twap': s_market_price_twap,
         }
     },
     {
@@ -56,16 +68,41 @@ partial_state_update_blocks = [
     #################################################################
     {
         'details': '''
-            Exogenous u,v activity: liquidate CDPs
+            Aggregate states
         ''',
-        'policies': {
-            'liquidate_cdps': p_liquidate_cdps
-        },
+      'policies': {},
+      'variables': {
+        'eth_locked': s_update_eth_locked,
+        'eth_freed': s_update_eth_freed,
+        'eth_bitten': s_update_eth_bitten,
+        'rai_drawn': s_update_rai_drawn,
+        'rai_wiped': s_update_rai_wiped,
+        'rai_bitten': s_update_rai_bitten,
+      }
+    },
+    {
+        'details': '''
+            Update debt market state
+        ''',
+        'policies': {},
         'variables': {
-            'events': s_collect_events,
-            'cdps': s_store_cdps,
+            'eth_collateral': s_update_eth_collateral,
+            'principal_debt': s_update_principal_debt,
         }
     },
+    #################################################################
+    # {
+    #     'details': '''
+    #         Exogenous u,v activity: liquidate CDPs
+    #     ''',
+    #     'policies': {
+    #         'liquidate_cdps': p_liquidate_cdps
+    #     },
+    #     'variables': {
+    #         'events': s_collect_events,
+    #         'cdps': s_store_cdps,
+    #     }
+    # },
     {
         'details': """
         Rebalance CDPs using wipes and draws 
@@ -75,6 +112,9 @@ partial_state_update_blocks = [
         },
         'variables': {
             'cdps': s_store_cdps,
+            'RAI_balance': update_RAI_balance,
+            'ETH_balance': update_ETH_balance,
+            'UNI_supply': update_UNI_supply,
         }
     },
     #################################################################
@@ -126,18 +166,11 @@ partial_state_update_blocks = [
     {
         'policies': {},
         'variables': {
-            'v_1': s_aggregate_v_1,
-            'v_2': s_aggregate_v_2,
-            'v_3': s_aggregate_v_3,
-            'u_1': s_aggregate_u_1,
-            'u_2': s_aggregate_u_2,
-            'u_3': s_aggregate_u_3,
             'w_1': s_aggregate_w_1,
             'w_2': s_aggregate_w_2,
             'w_3': s_aggregate_w_3,
         }
     },
-    #################################################################
     {
         'details': '''
             Aggregate states
@@ -165,6 +198,7 @@ partial_state_update_blocks = [
             'stability_fee': s_update_stability_fee,
         }
     },
+    #################################################################
     {
         'details': '''
             Exogenous ETH price process
@@ -178,21 +212,12 @@ partial_state_update_blocks = [
             'eth_gross_return': s_update_eth_gross_return
         }
     },
-    {
-        'policies': {
-            'market_price': p_market_price
-        },
-        'variables': {
-            'uniswap_oracle': s_uniswap_oracle,
-            'market_price': s_market_price,
-            'market_price_twap': s_market_price_twap,
-        }
-    },
     #################################################################
     {
         'policies': {},
         'variables': {
             'cdp_metrics': s_update_cdp_metrics,
+            'sim_metrics': s_update_sim_metrics
         }
     },
 ]

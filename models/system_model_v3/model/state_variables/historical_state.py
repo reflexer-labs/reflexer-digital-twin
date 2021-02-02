@@ -26,8 +26,8 @@ env_process_df = pd.read_csv('models/market_model/data/ETH_1H.csv', index_col='D
 env_process_df.insert(0, 'seconds_passed', 3600)
 env_process_df = env_process_df.sort_values(by=['Date'])
 
-start_date = '2017-09-14'
-end_date = '2018-09-12'
+start_date = '2018-04-01'
+end_date = '2018-08-01'
 
 env_process_df = env_process_df.loc[start_date:end_date]
 

@@ -2,6 +2,8 @@ import scipy.stats as sts
 import numpy as np
 
 
+# TODO: stochastic process liquidity demand
+
 def p_market_price(params, substep, state_history, state):
     market_price = (state['ETH_balance'] / state['RAI_balance']) * state['eth_price']
 

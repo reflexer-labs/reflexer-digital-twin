@@ -17,12 +17,35 @@ See https://medium.com/reflexer-labs/introducing-proto-rai-c4cf1f013ef for curre
 halflife = SPY / 52 # weeklong halflife
 alpha = int(np.power(.5, float(1 / halflife)) * RAY)
 
+'''
+Deliverables:
+Sweep of alpha
+Kp
+Ki
+liquidation_ratio
+liquidity threshold
+TWAP:
+window_size=15*3600, # 15 hours
+granularity=5
+
+max_window_size=21*3600, # 21 hours
+
+Metrics:
+liquidity threshold: (metric + deliverable) reserves of RAI in Uniswap (as fraction of total supply)
+
+debt_ceiling setter
+
+Control period 3 hours
+TWAP 6 hours
+'''
+
+
 
 params = {
     # Admin parameters
     'debug': [True], # Print debug messages (see APT model)
     'raise_on_assert': [True], # See assert_log() in utils.py
-    'free_memory_states': [['cdps', 'events']],
+    'free_memory_states': [['cdps', 'events', 'uniswap_oracle']],
 
     # Configuration options
     options.IntegralType.__name__: [options.IntegralType.LEAKY.value],
@@ -33,6 +56,7 @@ params = {
 
     # Time parameters
     'expected_blocktime': [15], # seconds
+    # TODO: implement control period
     'minumum_control_period': [lambda _timestep: 3600], # seconds
     'expected_control_delay': [lambda _timestep: 1200], # seconds
     
@@ -44,7 +68,7 @@ params = {
     'error_term': [lambda target, measured: target - measured],
     
     # APT model
-    'interest_rate': [1.0], # Real-world expected interest rate, for determining profitable arbitrage opportunities
+    'interest_rate': [1.03], # Real-world expected interest rate, for determining profitable arbitrage opportunities
     'eth_price_mean': [eth_price_mean],
     'eth_returns_mean': [eth_returns_mean],
     'market_price_mean': [market_price_mean],
@@ -68,6 +92,6 @@ params = {
     # Uniswap parameters
     'uniswap_fee': [0.003], # 0.3%
     'gas_price': [100e-9], # 100 gwei, current "fast" transaction
-    'swap_gas_used': [133340], # TODO: confirm gas use
-    'cdp_gas_used': [133340], # TODO: confirm gas use
+    'swap_gas_used': [133340],
+    'cdp_gas_used': [133340],
 }

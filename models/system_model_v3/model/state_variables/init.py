@@ -11,9 +11,8 @@ state_variables = {
     # Metadata / metrics
     'events': [],
     'cdp_metrics': {},
-    # 'feature_vector': {},
     'optimal_values': {},
-    # 'minimize_results': {},
+    'sim_metrics': {},
     
     # Time states
     'timedelta': 0, # seconds

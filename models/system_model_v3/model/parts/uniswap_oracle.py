@@ -75,7 +75,6 @@ class UniswapOracle():
     def converter_compute_amount_out(self, time_elapsed, amount_in):
         assert time_elapsed > 0
         price_average = self.converter_price_cumulative / time_elapsed
-        # TODO: review and confirm that scaling factor is for Solidity fixed point calculations
         amount_out = amount_in * price_average # / converterFeedScalingFactor
         return amount_out
 

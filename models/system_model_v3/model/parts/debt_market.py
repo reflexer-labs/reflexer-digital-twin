@@ -2,6 +2,7 @@ import scipy.stats as sts
 import pandas as pd
 import math
 from .utils import approx_greater_equal_zero, assert_log
+from .uniswap import get_output_price, get_input_price
 
 import logging
 
@@ -210,17 +211,25 @@ def p_rebalance_cdps(params, substep, state_history, state):
     target_price = state["target_price"]
     liquidation_ratio = params["liquidation_ratio"]
     liquidation_buffer = params["liquidation_buffer"]
+    
+    RAI_balance = state['RAI_balance']
+    ETH_balance = state['ETH_balance']
+    uniswap_fee = params['uniswap_fee']
 
-    for index, cdp in cdps.query("open == 1 and arbitrage == 0").iterrows(): # and arbitrage == 0
-        # TODO: discuss arb. rebalancing
-        # if cdp['arbitrage'] == 1:
-        #     liquidation_buffer = 1.0
+    RAI_delta = 0
+    ETH_delta = 0
+    UNI_delta = 0
+
+    for index, cdp in cdps.query("open == 1").iterrows():
+        if cdp['arbitrage'] == 1:
+            liquidation_buffer = 1.0
         
         cdp_above_liquidation_buffer = is_cdp_above_liquidation_ratio(
             cdp, eth_price, target_price, liquidation_ratio * liquidation_buffer
         )
 
         if not cdp_above_liquidation_buffer:
+            # Wipe debt, using RAI from Uniswap
             wiped = cdps.at[index, "wiped"]
             wipe = wipe_to_liquidation_ratio(
                 cdp,
@@ -229,8 +238,15 @@ def p_rebalance_cdps(params, substep, state_history, state):
                 liquidation_ratio * liquidation_buffer,
                 params["raise_on_assert"],
             )
+            # Exchange ETH for RAI
+            ETH_delta, _ = get_output_price(wipe, ETH_balance, RAI_balance, uniswap_fee)
+            assert ETH_delta >= 0, ETH_delta
+            assert ETH_delta <= ETH_balance, ETH_delta
+            RAI_delta = -wipe
+            assert RAI_delta <= 0, RAI_delta
             cdps.at[index, "wiped"] = wiped + wipe
         else:
+            # Draw debt, exchanging RAI for ETH in Uniswap
             drawn = cdps.at[index, "drawn"]
             draw = draw_to_liquidation_ratio(
                 cdp,
@@ -239,6 +255,11 @@ def p_rebalance_cdps(params, substep, state_history, state):
                 liquidation_ratio * liquidation_buffer,
                 params["raise_on_assert"],
             )
+            # Exchange RAI for ETH
+            _, ETH_delta = get_input_price(draw, RAI_balance, ETH_balance, uniswap_fee)
+            assert ETH_delta <= 0, ETH_delta
+            RAI_delta = draw
+            assert RAI_delta >= 0, RAI_delta
             cdps.at[index, "drawn"] = drawn + draw
 
     open_cdps = len(cdps.query("open == 1"))
@@ -247,7 +268,13 @@ def p_rebalance_cdps(params, substep, state_history, state):
         f"p_rebalance_cdps() ~ Number of open CDPs: {open_cdps}; Number of closed CDPs: {closed_cdps}"
     )
 
-    return {"cdps": cdps}
+    uniswap_state_delta = {
+        'RAI_delta': RAI_delta,
+        'ETH_delta': ETH_delta,
+        'UNI_delta': UNI_delta,
+    }
+
+    return {"cdps": cdps, **uniswap_state_delta}
 
 
 def p_liquidate_cdps(params, substep, state_history, state):
@@ -261,6 +288,7 @@ def p_liquidate_cdps(params, substep, state_history, state):
     liquidated_cdps = pd.DataFrame()
     if len(cdps) > 0:
         try:
+            # The aggregate arbitrage CDP is assumed to never be liquidated
             liquidated_cdps = cdps.query("open == 1 and arbitrage == 0").query(
                 f"(locked - freed - v_bitten) * {eth_price} < (drawn - wiped - u_bitten) * {target_price} * {liquidation_ratio}"
             )
@@ -340,7 +368,7 @@ def p_liquidate_cdps(params, substep, state_history, state):
         f"{len(liquidated_cdps)} CDPs liquidated with v_2 {v_2} v_3 {v_3} u_3 {u_3} w_3 {w_3}"
     )
 
-    return {"cdps": cdps, "v_2": v_2, "v_3": v_3, "u_3": u_3, "w_3": w_3}
+    return {"cdps": cdps}
 
 
 ############################################################################################################################################
@@ -362,36 +390,12 @@ def get_cdps_state_change(state, state_history, key):
     return cdps[key].sum() - previous_cdps[key].sum()
 
 
-def s_aggregate_v_1(params, substep, state_history, state, policy_input):
-    return "v_1", get_cdps_state_change(state, state_history, "locked")
-
-
-def s_aggregate_u_1(params, substep, state_history, state, policy_input):
-    return "u_1", get_cdps_state_change(state, state_history, "drawn")
-
-
 def s_aggregate_w_1(params, substep, state_history, state, policy_input):
     return "w_1", get_cdps_state_change(state, state_history, "dripped")
 
 
-def s_aggregate_v_2(params, substep, state_history, state, policy_input):
-    return "v_2", get_cdps_state_change(state, state_history, "freed")
-
-
-def s_aggregate_u_2(params, substep, state_history, state, policy_input):
-    return "u_2", get_cdps_state_change(state, state_history, "wiped")
-
-
 def s_aggregate_w_2(params, substep, state_history, state, policy_input):
     return "w_2", get_cdps_state_change(state, state_history, "w_wiped")
-
-
-def s_aggregate_v_3(params, substep, state_history, state, policy_input):
-    return "v_3", get_cdps_state_change(state, state_history, "v_bitten")
-
-
-def s_aggregate_u_3(params, substep, state_history, state, policy_input):
-    return "u_3", get_cdps_state_change(state, state_history, "u_bitten")
 
 
 def s_aggregate_w_3(params, substep, state_history, state, policy_input):
@@ -399,49 +403,6 @@ def s_aggregate_w_3(params, substep, state_history, state, policy_input):
 
 
 ############################################################################################################################################
-"""
-Set the state values temporarily
-"""
-
-
-def s_set_v_1(params, substep, state_history, state, policy_input):
-    return "v_1", policy_input["v_1"]
-
-
-def s_set_v_2(params, substep, state_history, state, policy_input):
-    return "v_2", policy_input["v_2"]
-
-
-def s_set_v_3(params, substep, state_history, state, policy_input):
-    return "v_3", policy_input["v_3"]
-
-
-def s_set_u_1(params, substep, state_history, state, policy_input):
-    return "u_1", policy_input["u_1"]
-
-
-def s_set_u_2(params, substep, state_history, state, policy_input):
-    return "u_2", policy_input["u_2"]
-
-
-def s_set_u_3(params, substep, state_history, state, policy_input):
-    return "u_3", policy_input["u_3"]
-
-
-def s_set_w_1(params, substep, state_history, state, policy_input):
-    return "w_1", policy_input["w_1"]
-
-
-def s_set_w_2(params, substep, state_history, state, policy_input):
-    return "w_2", policy_input["w_2"]
-
-
-def s_set_w_3(params, substep, state_history, state, policy_input):
-    return "w_3", policy_input["w_3"]
-
-
-############################################################################################################################################
-
 
 def s_update_eth_collateral(params, substep, state_history, state, policy_input):
     eth_locked = state["eth_locked"]
@@ -483,57 +444,27 @@ def s_update_principal_debt(params, substep, state_history, state, policy_input)
 
 
 def s_update_eth_locked(params, substep, state_history, state, policy_input):
-    eth_locked = state["eth_locked"]
-    v_1 = state["v_1"]
-
-    assert_log(v_1 >= 0, v_1, params["raise_on_assert"])
-
-    return "eth_locked", eth_locked + v_1
+    return "eth_locked", state['cdps']["locked"].sum()
 
 
 def s_update_eth_freed(params, substep, state_history, state, policy_input):
-    eth_freed = state["eth_freed"]
-    v_2 = state["v_2"]
-
-    assert_log(v_2 >= 0, v_2, params["raise_on_assert"])
-
-    return "eth_freed", eth_freed + v_2
+    return "eth_freed", state['cdps']["freed"].sum()
 
 
 def s_update_eth_bitten(params, substep, state_history, state, policy_input):
-    eth_bitten = state["eth_bitten"]
-    v_3 = state["v_3"]
-
-    assert_log(v_3 >= 0, v_3, params["raise_on_assert"])
-
-    return "eth_bitten", eth_bitten + v_3
+    return "eth_bitten", state['cdps']["v_bitten"].sum()
 
 
 def s_update_rai_drawn(params, substep, state_history, state, policy_input):
-    rai_drawn = state["rai_drawn"]
-    u_1 = state["u_1"]
-
-    assert_log(u_1 >= 0, u_1, params["raise_on_assert"])
-
-    return "rai_drawn", rai_drawn + u_1
+    return "rai_drawn", state['cdps']["drawn"].sum()
 
 
 def s_update_rai_wiped(params, substep, state_history, state, policy_input):
-    rai_wiped = state["rai_wiped"]
-    u_2 = state["u_2"]
-
-    assert_log(u_2 >= 0, u_2, params["raise_on_assert"])
-
-    return "rai_wiped", rai_wiped + u_2
+    return "rai_wiped", state['cdps']["wiped"].sum()
 
 
 def s_update_rai_bitten(params, substep, state_history, state, policy_input):
-    rai_bitten = state["rai_bitten"]
-    u_3 = state["u_3"]
-
-    assert_log(u_3 >= 0, u_3, params["raise_on_assert"])
-
-    return "rai_bitten", rai_bitten + u_3
+    return "rai_bitten", state['cdps']["u_bitten"].sum()
 
 
 def s_update_system_revenue(params, substep, state_history, state, policy_input):
@@ -542,11 +473,9 @@ def s_update_system_revenue(params, substep, state_history, state, policy_input)
     return "system_revenue", system_revenue + w_2
 
 
-# TODO: verify/test logic for negative interest rates
 def calculate_accrued_interest(
     stability_fee, target_rate, timedelta, debt, accrued_interest
 ):
-    # (1 + target_rate)
     return (((1 + stability_fee)) ** timedelta - 1) * (debt + accrued_interest)
 
 

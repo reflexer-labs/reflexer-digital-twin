@@ -93,8 +93,8 @@ def p_arbitrageur_model(params, substep, state_history, state):
     total_borrowed = aggregate_arbitrageur_cdp['drawn'] - aggregate_arbitrageur_cdp['wiped'] - aggregate_arbitrageur_cdp['u_bitten']
     total_deposited = aggregate_arbitrageur_cdp['locked'] - aggregate_arbitrageur_cdp['freed'] - aggregate_arbitrageur_cdp['v_bitten']
 
-    assert total_borrowed > 0, total_borrowed
-    assert total_deposited > 0, total_deposited
+    assert total_borrowed >= 0, total_borrowed
+    assert total_deposited >= 0, total_deposited
     
     if redemption_price < ((1 - uniswap_fee) / liquidation_ratio) * market_price and expected_market_price < market_price:
         '''
@@ -161,13 +161,16 @@ def p_arbitrageur_model(params, substep, state_history, state):
         _g2 = g2(RAI_balance, ETH_balance, uniswap_fee, liquidation_ratio, redemption_price)
         z = (_g2 - ETH_balance) / (1 - uniswap_fee)
         d_repay = (RAI_balance * z * (1 - uniswap_fee)) / (ETH_balance + z * (1 - uniswap_fee))
-
-        if d_repay > total_borrowed:
-           d_repay = total_borrowed
-           z, _ = get_output_price(d_repay, ETH_balance, RAI_balance, uniswap_fee)
-
         q_withdraw = total_deposited - (liquidation_ratio * redemption_price / eth_price) * (total_borrowed - d_repay)
         
+        if d_repay > total_borrowed:
+           print("Arb. CDP closed!")
+           logging.warning(f"{d_repay=} {q_withdraw=} {_g2=} {RAI_balance=} {ETH_balance=} {total_borrowed=} {total_deposited=} {z=} {eth_price=} {redemption_price=} {market_price=}")
+           d_repay = total_borrowed
+           z, _ = get_output_price(d_repay, ETH_balance, RAI_balance, uniswap_fee)
+           q_withdraw = total_deposited
+           cdps.at[aggregate_arbitrageur_cdp_index, "closed"] = 1
+
         # Check positive profit condition
         profit = q_withdraw - z - gas_price * (swap_gas_used + cdp_gas_used)
         if profit > 0:
@@ -201,14 +204,13 @@ def p_arbitrageur_model(params, substep, state_history, state):
         'UNI_delta': UNI_delta,
     }
     
-    return {**validate_updated_cdp_state(cdps, cdps_copy), 'optimal_values': {}, **uniswap_state_delta}
+    return {**validate_updated_cdp_state(cdps, cdps_copy), **uniswap_state_delta}
 
 def validate_updated_cdp_state(cdps, previous_cdps, raise_on_assert=True):
     u_1 = cdps["drawn"].sum() - previous_cdps["drawn"].sum()
     u_2 = cdps["wiped"].sum() - previous_cdps["wiped"].sum()
     v_1 = cdps["locked"].sum() - previous_cdps["locked"].sum()
     v_2 = cdps["freed"].sum() - previous_cdps["freed"].sum()
-    w_2 = 0
 
     assert_log(u_1 >= 0, u_1, raise_on_assert)
     assert_log(u_2 >= 0, u_2, raise_on_assert)
@@ -235,12 +237,12 @@ def validate_updated_cdp_state(cdps, previous_cdps, raise_on_assert=True):
 
     return {
         "cdps": cdps,
-        "u_1": u_1,
-        "u_2": u_2,
-        "v_1": v_1,
-        "v_2": v_2,
-        "v_2 + v_3": v_2,
-        "w_2": w_2,
+        'optimal_values': {
+            "u_1": u_1,
+            "u_2": u_2,
+            "v_1": v_1,
+            "v_2": v_2,
+        }
     }
 
 def s_store_optimal_values(params, substep, state_history, state, policy_input):
