@@ -9,7 +9,7 @@ UniswapObservation = namedtuple('UniswapObservation', ['timestamp', 'price_0_cum
 ConverterFeedObservation = namedtuple('ConverterFeedObservation', ['timestamp', 'time_adjusted_price'])
 
 class UniswapOracle():
-    def __init__(self, granularity=5, window_size=3*24*3600, max_window_size=5*24*3600):
+    def __init__(self, granularity=5, window_size=15*3600, max_window_size=21*3600):
         self.default_amount_in = 1
         self.target_token = 'rai'
         self.denomination_token = 'eth'

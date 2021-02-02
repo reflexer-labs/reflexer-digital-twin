@@ -6,7 +6,7 @@ import pandas as pd
 import statistics
 
 from .utils import approx_greater_equal_zero, assert_log, approx_eq
-from .debt_market import resolve_cdp_positions, open_cdp_draw, open_cdp_lock, draw_to_liquidation_ratio, is_cdp_above_liquidation_ratio
+from .debt_market import open_cdp_draw, open_cdp_lock, draw_to_liquidation_ratio, is_cdp_above_liquidation_ratio
 from .uniswap import get_output_price, get_input_price
 
 
@@ -161,6 +161,11 @@ def p_arbitrageur_model(params, substep, state_history, state):
         _g2 = g2(RAI_balance, ETH_balance, uniswap_fee, liquidation_ratio, redemption_price)
         z = (_g2 - ETH_balance) / (1 - uniswap_fee)
         d_repay = (RAI_balance * z * (1 - uniswap_fee)) / (ETH_balance + z * (1 - uniswap_fee))
+
+        if d_repay > total_borrowed:
+           d_repay = total_borrowed
+           z, _ = get_output_price(d_repay, ETH_balance, RAI_balance, uniswap_fee)
+
         q_withdraw = total_deposited - (liquidation_ratio * redemption_price / eth_price) * (total_borrowed - d_repay)
         
         # Check positive profit condition
@@ -171,8 +176,8 @@ def p_arbitrageur_model(params, substep, state_history, state):
             repayed = cdps.at[aggregate_arbitrageur_cdp_index, "wiped"]
             withdrawn = cdps.at[aggregate_arbitrageur_cdp_index, "freed"]
 
-            assert d_repay <= total_borrowed
-            assert q_withdraw <= total_deposited
+            assert q_withdraw <= total_deposited, f"{d_repay=} {q_withdraw=} {_g2=} {RAI_balance=} {ETH_balance=} {total_borrowed=} {total_deposited=} {z=} {eth_price=} {redemption_price=} {market_price=}"
+            assert d_repay <= total_borrowed, f"{d_repay=} {q_withdraw=} {_g2=} {RAI_balance=} {ETH_balance=} {total_borrowed=} {total_deposited=} {z=} {eth_price=} {redemption_price=} {market_price=}"
             
             assert d_repay >= 0, d_repay
             assert q_withdraw >= 0, q_withdraw

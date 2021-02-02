@@ -14,12 +14,6 @@ partial_state_update_blocks = [
         },
         'variables': {}
     },
-    # {
-    #     'policies': {
-    #         'governance': p_enable_controller,
-    #     },
-    #     'variables': {}
-    # },
     {
         'details': '''
             This block observes (or samples from data) the amount of time passed between events
@@ -59,19 +53,6 @@ partial_state_update_blocks = [
             'UNI_supply': update_UNI_supply,
         }
     },
-    {
-        'details': """
-        This block computes and stores the error terms
-        required to compute the various control actions
-        """,
-        'policies': {
-            'observe': observe_errors
-        },
-        'variables': {
-            'error_star': store_error_star,
-            'error_star_integral': update_error_star_integral,
-        }
-    },
     #################################################################
     {
         'details': '''
@@ -82,6 +63,17 @@ partial_state_update_blocks = [
         },
         'variables': {
             'events': s_collect_events,
+            'cdps': s_store_cdps,
+        }
+    },
+    {
+        'details': """
+        Rebalance CDPs using wipes and draws 
+        """,
+        'policies': {
+            'rebalance_cdps': p_rebalance_cdps,
+        },
+        'variables': {
             'cdps': s_store_cdps,
         }
     },
@@ -96,11 +88,27 @@ partial_state_update_blocks = [
             'cdps': s_update_cdp_interest
         }
     },
+    #################################################################
+    {
+        'details': """
+        This block computes and stores the error terms
+        required to compute the various control actions
+        """,
+        'policies': {
+            'observe': observe_errors
+        },
+        'variables': {
+            'error_star': store_error_star,
+            'error_star_integral': update_error_star_integral,
+        }
+    },
     {
         'details': """
         This block computes the stability control action 
         """,
-        'policies': {},
+        'policies': {
+            'governance': p_enable_controller,
+        },
         'variables': {
             'target_rate': update_target_rate,
         }
@@ -112,18 +120,6 @@ partial_state_update_blocks = [
         'policies': {},
         'variables': {
             'target_price': update_target_price,
-        }
-    },
-    #################################################################
-    {
-        'details': """
-        Rebalance CDPs using wipes and draws 
-        """,
-        'policies': {
-            'rebalance_cdps': p_rebalance_cdps,
-        },
-        'variables': {
-            'cdps': s_store_cdps,
         }
     },
     #################################################################

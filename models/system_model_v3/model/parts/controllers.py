@@ -14,7 +14,7 @@ def update_target_rate(params, substep, state_history, state, policy_input):
         params["kp"] * error + params["ki"](state["timedelta"]) * error_integral
     )
 
-    target_rate = target_rate if params["controller_enabled"] else 0  # unitless
+    target_rate = target_rate if policy_input["controller_enabled"] else 0  # unitless
 
     return "target_rate", target_rate
 
