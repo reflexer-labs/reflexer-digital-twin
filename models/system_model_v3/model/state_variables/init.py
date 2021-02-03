@@ -9,7 +9,6 @@ import datetime as dt
 # NB: These initial states may be overriden in the relevant notebook
 state_variables = {
     # Metadata / metrics
-    'events': [],
     'cdp_metrics': {},
     'optimal_values': {},
     'sim_metrics': {},
@@ -25,25 +24,19 @@ state_variables = {
     
     # CDP states
     'cdps': cdps, # A dataframe of CDPs (both open and closed)
-    # v - ETH collateral states
+    # ETH collateral states
     'eth_collateral': eth_collateral, # "Q"; total ETH collateral in the CDP system i.e. locked - freed - bitten
-    'eth_locked': eth_collateral, # total ETH locked into CDPs; the cumulative sum of "v_1" activity
-    'eth_freed': 0, # total ETH freed from CDPs; the cumulative sum of "v_2" activity
-    'eth_bitten': 0, # total ETH bitten/liquidated from CDPs; the cumulative sum of "v_3" activity
-    'v_1': 0, # discrete "lock" event, in ETH
-    'v_2': 0, # discrete "free" event, in ETH
-    'v_3': 0, # discrete "bite" event, in ETH
+    'eth_locked': eth_collateral, # total ETH locked into CDPs
+    'eth_freed': 0, # total ETH freed from CDPs
+    'eth_bitten': 0, # total ETH bitten/liquidated from CDPs
     
-    # u - principal debt states
+    # Principal debt states
     'principal_debt': principal_debt, # "D_1"; the total debt in the CDP system i.e. drawn - wiped - bitten
-    'rai_drawn': principal_debt, # total RAI debt minted from CDPs; the cumulative sum of "u_1" activity
-    'rai_wiped': 0, # total RAI debt wiped/burned from CDPs in repayment; the cumulative sum of "u_2" activity
-    'rai_bitten': 0, # total RAI liquidated from CDPs; the cumulative sum of "u_3" activity
-    'u_1': 0, # discrete "draw" event, in RAI
-    'u_2': 0, # discrete "wipe" event, in RAI
-    'u_3': 0, # discrete "bite" event, in RAI
+    'rai_drawn': principal_debt, # total RAI debt minted from CDPs
+    'rai_wiped': 0, # total RAI debt wiped/burned from CDPs in repayment
+    'rai_bitten': 0, # total RAI liquidated from CDPs
     
-    # w - accrued interest states
+    # Accrued interest states
     'accrued_interest': 0, # "D_2"; the total interest accrued in the system i.e. current D_2 + w_1 - w_2 - w_3
     'interest_dripped': 0, # cumulative w_1 interest collected
     'interest_wiped': 0, # cumulative w_2, interest repaid - in practice acrues to MKR holders, because interest is actually acrued by burning MKR

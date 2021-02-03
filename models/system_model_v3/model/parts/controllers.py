@@ -7,14 +7,17 @@ def update_target_rate(params, substep, state_history, state, policy_input):
     Calculate the PI controller target rate using the Kp and Ki constants and the error states.
     """
 
-    error = state["error_star"]  # unit USD
-    error_integral = state["error_star_integral"]  # unit USD * seconds
+    if state['cumulative_time'] % params['control_period'](state['timestep']) == 0:
+        error = state["error_star"]  # unit USD
+        error_integral = state["error_star_integral"]  # unit USD * seconds
 
-    target_rate = (
-        params["kp"] * error + params["ki"](state["timedelta"]) * error_integral
-    )
+        target_rate = (
+            params["kp"] * error + params["ki"](state["timedelta"]) * error_integral
+        )
 
-    target_rate = target_rate if policy_input["controller_enabled"] else 0  # unitless
+        target_rate = target_rate if policy_input["controller_enabled"] else 0  # unitless
+    else:
+        target_rate = state['target_rate'] if policy_input["controller_enabled"] else 0
 
     return "target_rate", target_rate
 

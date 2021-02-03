@@ -99,7 +99,6 @@ partial_state_update_blocks = [
     #         'liquidate_cdps': p_liquidate_cdps
     #     },
     #     'variables': {
-    #         'events': s_collect_events,
     #         'cdps': s_store_cdps,
     #     }
     # },

@@ -12,34 +12,9 @@ from models.system_model_v3.model.state_variables.historical_state import env_pr
 See https://medium.com/reflexer-labs/introducing-proto-rai-c4cf1f013ef for current/launch values
 '''
 
-
 # TODO: Default assumption, set according to process for deriving per-second alpha
 halflife = SPY / 52 # weeklong halflife
 alpha = int(np.power(.5, float(1 / halflife)) * RAY)
-
-'''
-Deliverables:
-Sweep of alpha
-Kp
-Ki
-liquidation_ratio
-liquidity threshold
-TWAP:
-window_size=15*3600, # 15 hours
-granularity=5
-
-max_window_size=21*3600, # 21 hours
-
-Metrics:
-liquidity threshold: (metric + deliverable) reserves of RAI in Uniswap (as fraction of total supply)
-
-debt_ceiling setter
-
-Control period 3 hours
-TWAP 6 hours
-'''
-
-
 
 params = {
     # Admin parameters
@@ -56,9 +31,7 @@ params = {
 
     # Time parameters
     'expected_blocktime': [15], # seconds
-    # TODO: implement control period
-    'minumum_control_period': [lambda _timestep: 3600], # seconds
-    'expected_control_delay': [lambda _timestep: 1200], # seconds
+    'control_period': [lambda _timestep: 3600 * 3], # seconds; must be multiple of cumulative time
     
     # Controller parameters
     'controller_enabled': [False],

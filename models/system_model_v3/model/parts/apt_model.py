@@ -148,7 +148,7 @@ def p_arbitrageur_model(params, substep, state_history, state):
             # Swap RAI for ETH
             _, ETH_delta = get_input_price(d_borrow, RAI_balance, ETH_balance, uniswap_fee)
             assert ETH_delta < 0, ETH_delta
-            assert approx_eq(ETH_delta, -z, abs_tol=1e-10), (ETH_delta, -z)
+            assert approx_eq(ETH_delta, -z, abs_tol=1e-5), (ETH_delta, -z)
 
     elif redemption_price > (1 / ((1 - uniswap_fee) * liquidation_ratio)) * market_price and expected_market_price > market_price:
         '''
@@ -191,7 +191,7 @@ def p_arbitrageur_model(params, substep, state_history, state):
             # Deposit ETH, get RAI
             ETH_delta, _ = get_output_price(d_repay, ETH_balance, RAI_balance, uniswap_fee)
             assert ETH_delta > 0, ETH_delta
-            assert approx_eq(ETH_delta, z, abs_tol=1e-10), (ETH_delta, z)
+            assert approx_eq(ETH_delta, z, abs_tol=1e-5), (ETH_delta, z)
 
             RAI_delta = -d_repay
             assert RAI_delta < 0, RAI_delta
