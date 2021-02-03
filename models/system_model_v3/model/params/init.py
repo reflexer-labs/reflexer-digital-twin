@@ -31,12 +31,12 @@ params = {
 
     # Time parameters
     'expected_blocktime': [15], # seconds
-    'control_period': [lambda _timestep: 3600 * 3], # seconds; must be multiple of cumulative time
+    'control_period': [3600 * 3], # seconds; must be multiple of cumulative time
     
     # Controller parameters
     'controller_enabled': [False],
     'kp': [5e-7], # proportional term for the stability controller: units 1/USD
-    'ki': [lambda control_period=3600: -1e-7 / control_period], # integral term for the stability controller: units 1/(USD*seconds)
+    'ki': [-1e-7], # integral term for the stability controller scaled by control period: units 1/(USD*seconds)
     'alpha': [alpha], # in 1/RAY
     'error_term': [lambda target, measured: target - measured],
     
@@ -65,6 +65,6 @@ params = {
     # Uniswap parameters
     'uniswap_fee': [0.003], # 0.3%
     'gas_price': [100e-9], # 100 gwei, current "fast" transaction
-    'swap_gas_used': [133340],
+    'swap_gas_used': [103834],
     'cdp_gas_used': [133340],
 }
