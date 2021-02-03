@@ -1,5 +1,6 @@
 import scipy.stats as sts
 import numpy as np
+import copy
 
 
 # TODO: stochastic process liquidity demand
@@ -7,7 +8,7 @@ import numpy as np
 def p_market_price(params, substep, state_history, state):
     market_price = (state['ETH_balance'] / state['RAI_balance']) * state['eth_price']
 
-    uniswap_oracle = state['uniswap_oracle']
+    uniswap_oracle = copy.deepcopy(state['uniswap_oracle'])
     uniswap_oracle.update_result(state)
     median_price = uniswap_oracle.median_price
 
