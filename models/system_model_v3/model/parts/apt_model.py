@@ -5,12 +5,14 @@ import logging
 import pandas as pd
 import statistics
 
-from .utils import approx_greater_equal_zero, assert_log, approx_eq
+from .utils import approx_greater_equal_zero, assert_log, approx_eq, print_time
 from .debt_market import open_cdp_draw, open_cdp_lock, draw_to_liquidation_ratio, is_cdp_above_liquidation_ratio
 from .uniswap import get_output_price, get_input_price
 
 
 def p_resolve_expected_market_price(params, substep, state_history, state):
+    debug = params['debug']
+
     eth_return = state['eth_return']
     eth_price_mean = params['eth_price_mean']
     eth_returns_mean = params['eth_returns_mean']
@@ -26,23 +28,11 @@ def p_resolve_expected_market_price(params, substep, state_history, state):
     market_price_data = [state[-1]['market_price'] for state in state_history]
     market_price_mean = statistics.mean(market_price_data)
 
-    # eth_price_data = [state[-1]['eth_price'] for state in state_history]
-    # eth_price_mean = statistics.mean(eth_price_data)
-
-    # eth_return_data = [state[-1]['eth_return'] for state in state_history]
-    # eth_returns_mean = statistics.mean(eth_return_data)
-
     alpha_0 = params['alpha_0']
     alpha_1 = params['alpha_1']
     beta_0 = params['beta_0']
     beta_1 = params['beta_1']
     beta_2 = params['beta_2']
-
-    """
-    TODO: changed to reflect stoch. process
-    * derive betas, or proxy based on stoch. process
-    * maybe assumption, same types of price movements as historical MakerDAO DAI
-    """    
 
     expected_market_price = (1 / alpha_1) * p * (interest_rate + beta_2 * (eth_price_mean - eth_price * interest_rate)
                                  + beta_1 * (market_price_mean - p * interest_rate)
@@ -55,8 +45,9 @@ def p_resolve_expected_market_price(params, substep, state_history, state):
 def s_store_expected_market_price(params, substep, state_history, state, policy_input):
     return 'expected_market_price', policy_input['expected_market_price']
 
+@print_time
 def p_arbitrageur_model(params, substep, state_history, state):
-    # TODO: possible metric - arb. profits/performance
+    debug = params['debug']
 
     RAI_balance = state['RAI_balance']
     ETH_balance = state['ETH_balance']
@@ -131,7 +122,7 @@ def p_arbitrageur_model(params, substep, state_history, state):
         # Check positive profit condition
         profit = z - q_deposit - gas_price * (swap_gas_used + cdp_gas_used)
         if profit > 0:
-            print(f"{state['timestamp']} Performing arb. CDP -> UNI for profit {profit}")
+            logging.debug(f"{state['timestamp']} Performing arb. CDP -> UNI for profit {profit}")
 
             borrowed = cdps.at[aggregate_arbitrageur_cdp_index, "drawn"]
             deposited = cdps.at[aggregate_arbitrageur_cdp_index, "locked"]
@@ -164,7 +155,7 @@ def p_arbitrageur_model(params, substep, state_history, state):
         q_withdraw = total_deposited - (liquidation_ratio * redemption_price / eth_price) * (total_borrowed - d_repay)
         
         if d_repay > total_borrowed:
-           print("Arb. CDP closed!")
+           logging.warning("Arb. CDP closed!")
            logging.warning(f"{d_repay=} {q_withdraw=} {_g2=} {RAI_balance=} {ETH_balance=} {total_borrowed=} {total_deposited=} {z=} {eth_price=} {redemption_price=} {market_price=}")
            d_repay = total_borrowed
            z, _ = get_output_price(d_repay, ETH_balance, RAI_balance, uniswap_fee)
@@ -174,7 +165,7 @@ def p_arbitrageur_model(params, substep, state_history, state):
         # Check positive profit condition
         profit = q_withdraw - z - gas_price * (swap_gas_used + cdp_gas_used)
         if profit > 0:
-            print(f"{state['timestamp']} Performing arb. UNI -> CDP for profit {profit}")
+            logging.debug(f"{state['timestamp']} Performing arb. UNI -> CDP for profit {profit}")
 
             repayed = cdps.at[aggregate_arbitrageur_cdp_index, "wiped"]
             withdrawn = cdps.at[aggregate_arbitrageur_cdp_index, "freed"]
@@ -203,9 +194,15 @@ def p_arbitrageur_model(params, substep, state_history, state):
         'ETH_delta': ETH_delta,
         'UNI_delta': UNI_delta,
     }
-    
-    return {**validate_updated_cdp_state(cdps, cdps_copy), **uniswap_state_delta}
 
+    if debug:
+        cdp_update = validate_updated_cdp_state(cdps, cdps_copy)
+    else:
+        cdp_update = {"cdps": cdps, "optimal_values": {}}
+    
+    return {**cdp_update, **uniswap_state_delta}
+
+@print_time
 def validate_updated_cdp_state(cdps, previous_cdps, raise_on_assert=True):
     u_1 = cdps["drawn"].sum() - previous_cdps["drawn"].sum()
     u_2 = cdps["wiped"].sum() - previous_cdps["wiped"].sum()

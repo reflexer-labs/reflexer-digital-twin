@@ -6,6 +6,8 @@ from models.constants import SPY, RAY
 
 from models.system_model_v3.model.state_variables.system import stability_fee
 from models.system_model_v3.model.state_variables.historical_state import env_process_df, eth_price_mean, eth_returns_mean, market_price_mean
+from models.system_model_v3.model.parts.uniswap_oracle import UniswapOracle
+from models.system_model_v3.model.state_variables.liquidity import cdps
 
 
 '''
@@ -18,9 +20,9 @@ alpha = int(np.power(.5, float(1 / halflife)) * RAY)
 
 params = {
     # Admin parameters
-    'debug': [True], # Print debug messages (see APT model)
+    'debug': [False], # Print debug messages (see APT model)
     'raise_on_assert': [True], # See assert_log() in utils.py
-    'free_memory_states': [['cdps', 'events', 'uniswap_oracle']],
+    'free_memory_states': [['cdps', 'events']],
 
     # Configuration options
     options.IntegralType.__name__: [options.IntegralType.LEAKY.value],
@@ -35,10 +37,12 @@ params = {
     
     # Controller parameters
     'controller_enabled': [False],
+    'enable_controller_time': [7 * 24 * 3600], # after 7 days
     'kp': [5e-7], # proportional term for the stability controller: units 1/USD
     'ki': [-1e-7], # integral term for the stability controller scaled by control period: units 1/(USD*seconds)
     'alpha': [alpha], # in 1/RAY
     'error_term': [lambda target, measured: target - measured],
+    'rescale_target_price': [True], # scale the target price by the liquidation ratio
     
     # APT model
     'interest_rate': [1.03], # Real-world expected interest rate, for determining profitable arbitrage opportunities
@@ -54,6 +58,7 @@ params = {
     'beta_2': [3.86810578185312e-06],
 
     # CDP parameters
+    # 'cdps': cdps, # A dataframe of CDPs (both open and closed)
     'liquidation_ratio': [1.5], # Configure the liquidation ratio parameter e.g. 150%
     'liquidation_buffer': [2.0], # Configure the liquidation buffer parameter: the multiplier for the liquidation ratio, that users apply as a buffer
     'liquidation_penalty': [0], # Percentage added on top of collateral needed to liquidate CDP. This is needed in order to avoid auction grinding attacks.
@@ -63,6 +68,13 @@ params = {
     'stability_fee': [lambda timestep, df=None: stability_fee], # per second interest rate (x% per month)
 
     # Uniswap parameters
+    'uniswap_oracle': [
+        UniswapOracle(
+            window_size=15*3600, # 15 hours
+            max_window_size=21*3600, # 21 hours
+            granularity=5
+        )
+    ],
     'uniswap_fee': [0.003], # 0.3%
     'gas_price': [100e-9], # 100 gwei, current "fast" transaction
     'swap_gas_used': [103834],

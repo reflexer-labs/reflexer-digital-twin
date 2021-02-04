@@ -1,5 +1,6 @@
 import models.system_model_v3.model.parts.markets as markets
 import models.system_model_v3.model.parts.uniswap as uniswap
+import models.system_model_v3.model.parts.init as init
 
 from .parts.utils import s_update_sim_metrics, p_free_memory, s_collect_events
 from .parts.governance import p_enable_controller
@@ -15,7 +16,9 @@ partial_state_update_blocks_unprocessed = [
         'policies': {
             'free_memory': p_free_memory,
         },
-        'variables': {}
+        'variables': {
+            'target_price': init.initialize_target_price,
+        }
     },
     {
         'details': '''
@@ -46,7 +49,6 @@ partial_state_update_blocks_unprocessed = [
             'market_price': markets.p_market_price
         },
         'variables': {
-            'uniswap_oracle': markets.s_uniswap_oracle,
             'market_price': markets.s_market_price,
             'market_price_twap': markets.s_market_price_twap,
         }

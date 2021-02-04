@@ -54,7 +54,8 @@ def observe_errors(params, substep, state_history, state):
     The error_term parameter allows you to set whether the error is calculated as target - market or market - target.
     """
 
-    error = params["error_term"](state["target_price"], state["market_price_twap"])
+    target_price = state["target_price"] * params["liquidation_ratio"] if params["rescale_target_price"] else state["target_price"]
+    error = params["error_term"](target_price, state["market_price_twap"])
 
     return {"error_star": error}
 

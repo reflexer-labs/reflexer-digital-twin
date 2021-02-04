@@ -3,7 +3,23 @@ import pandas as pd
 import math
 import logging
 import time
+from functools import wraps
 
+
+def print_time(f):
+    """
+    Decorator for printing the execution time and the output from it.
+    """
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        # Current timestep
+        t1 = time.time()
+        f_out = f(*args, **kwargs)
+        t2 = time.time()
+        text = f"{f.__name__} output (exec time: {(t2 - t1) * 1000 :.6f} ms)"
+        print(text)
+        return f_out
+    return wrapper
 
 def s_update_sim_metrics(params, substep, state_history, state, policy_input):
     previous_timestep_time = state['sim_metrics'].get('timestep_time', 0)
@@ -18,6 +34,7 @@ def save_partial_results(params, substep, state_history, state):
     partial_results.to_pickle(params['partial_results'])
     return {}
 
+@print_time
 def p_free_memory(params, substep, state_history, state):
     if state['timestep'] > 0:
         for key in params['free_memory_states']:

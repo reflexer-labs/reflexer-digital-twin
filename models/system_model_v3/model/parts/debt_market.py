@@ -1,7 +1,7 @@
 import scipy.stats as sts
 import pandas as pd
 import math
-from .utils import approx_greater_equal_zero, assert_log
+from .utils import approx_greater_equal_zero, assert_log, print_time
 from .uniswap import get_output_price, get_input_price
 
 import logging
@@ -204,6 +204,7 @@ def open_cdp_draw(draw, eth_price, target_price, liquidation_ratio):
     }
 
 
+@print_time
 def p_rebalance_cdps(params, substep, state_history, state):
     cdps = state["cdps"]
 
@@ -262,11 +263,12 @@ def p_rebalance_cdps(params, substep, state_history, state):
             assert RAI_delta >= 0, RAI_delta
             cdps.at[index, "drawn"] = drawn + draw
 
-    open_cdps = len(cdps.query("open == 1"))
-    closed_cdps = len(cdps.query("open == 0"))
-    logging.debug(
-        f"p_rebalance_cdps() ~ Number of open CDPs: {open_cdps}; Number of closed CDPs: {closed_cdps}"
-    )
+    if params['debug']:
+        open_cdps = len(cdps.query("open == 1"))
+        closed_cdps = len(cdps.query("open == 0"))
+        logging.debug(
+            f"p_rebalance_cdps() ~ Number of open CDPs: {open_cdps}; Number of closed CDPs: {closed_cdps}"
+        )
 
     uniswap_state_delta = {
         'RAI_delta': RAI_delta,
@@ -277,6 +279,7 @@ def p_rebalance_cdps(params, substep, state_history, state):
     return {"cdps": cdps, **uniswap_state_delta}
 
 
+@print_time
 def p_liquidate_cdps(params, substep, state_history, state):
     eth_price = state["eth_price"]
     target_price = state["target_price"]
@@ -364,7 +367,7 @@ def p_liquidate_cdps(params, substep, state_history, state):
     #     print('Failed to drop CDPs')
     #     raise
 
-    logging.debug(
+    if debug: logging.debug(
         f"{len(liquidated_cdps)} CDPs liquidated with v_2 {v_2} v_3 {v_3} u_3 {u_3} w_3 {w_3}"
     )
 
