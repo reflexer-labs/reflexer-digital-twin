@@ -1,7 +1,7 @@
 import scipy.stats as sts
 import pandas as pd
 import math
-from .utils import approx_greater_equal_zero, assert_log, print_time
+from .utils import approx_greater_equal_zero, assert_log
 from .uniswap import get_output_price, get_input_price
 
 import logging
@@ -204,7 +204,6 @@ def open_cdp_draw(draw, eth_price, target_price, liquidation_ratio):
     }
 
 
-@print_time
 def p_rebalance_cdps(params, substep, state_history, state):
     cdps = state["cdps"]
 
@@ -279,7 +278,6 @@ def p_rebalance_cdps(params, substep, state_history, state):
     return {"cdps": cdps, **uniswap_state_delta}
 
 
-@print_time
 def p_liquidate_cdps(params, substep, state_history, state):
     eth_price = state["eth_price"]
     target_price = state["target_price"]

@@ -21,7 +21,6 @@ def p_liquidity_demand(params, substep, state_history, state):
     
     return {'RAI_delta': RAI_delta, 'ETH_delta': ETH_delta, 'UNI_delta': 0}
 
-@print_time
 def p_market_price(params, substep, state_history, state):
     market_price = (state['ETH_balance'] / state['RAI_balance']) * state['eth_price']
 

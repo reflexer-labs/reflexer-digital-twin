@@ -5,7 +5,7 @@ import logging
 import pandas as pd
 import statistics
 
-from .utils import approx_greater_equal_zero, assert_log, approx_eq, print_time
+from .utils import approx_greater_equal_zero, assert_log, approx_eq
 from .debt_market import open_cdp_draw, open_cdp_lock, draw_to_liquidation_ratio, is_cdp_above_liquidation_ratio
 from .uniswap import get_output_price, get_input_price
 
@@ -45,7 +45,6 @@ def p_resolve_expected_market_price(params, substep, state_history, state):
 def s_store_expected_market_price(params, substep, state_history, state, policy_input):
     return 'expected_market_price', policy_input['expected_market_price']
 
-@print_time
 def p_arbitrageur_model(params, substep, state_history, state):
     debug = params['debug']
 
@@ -202,7 +201,6 @@ def p_arbitrageur_model(params, substep, state_history, state):
     
     return {**cdp_update, **uniswap_state_delta}
 
-@print_time
 def validate_updated_cdp_state(cdps, previous_cdps, raise_on_assert=True):
     u_1 = cdps["drawn"].sum() - previous_cdps["drawn"].sum()
     u_2 = cdps["wiped"].sum() - previous_cdps["wiped"].sum()

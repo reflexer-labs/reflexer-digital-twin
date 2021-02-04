@@ -231,7 +231,6 @@ partial_state_update_blocks_unprocessed = [
         'policies': {},
         'variables': {
             'cdp_metrics': s_update_cdp_metrics,
-            'sim_metrics': s_update_sim_metrics
         }
     },
 ]

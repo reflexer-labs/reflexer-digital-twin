@@ -5,7 +5,7 @@ from models.system_model_v3.model.state_variables.historical_state import start_
 import datetime as dt
 
 
-# NB: These initial states may be overriden in the relevant notebook
+# NB: These initial states may be overriden in the relevant notebook or experiment process
 state_variables = {
     # Metadata / metrics
     'cdp_metrics': {},

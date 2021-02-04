@@ -7,7 +7,6 @@ from models.constants import SPY, RAY
 from models.system_model_v3.model.state_variables.system import stability_fee
 from models.system_model_v3.model.state_variables.historical_state import env_process_df, eth_price_mean, eth_returns_mean, market_price_mean
 from models.system_model_v3.model.parts.uniswap_oracle import UniswapOracle
-from models.system_model_v3.model.state_variables.liquidity import cdps
 
 
 '''
@@ -58,7 +57,6 @@ params = {
     'beta_2': [3.86810578185312e-06],
 
     # CDP parameters
-    # 'cdps': cdps, # A dataframe of CDPs (both open and closed)
     'liquidation_ratio': [1.5], # Configure the liquidation ratio parameter e.g. 150%
     'liquidation_buffer': [2.0], # Configure the liquidation buffer parameter: the multiplier for the liquidation ratio, that users apply as a buffer
     'liquidation_penalty': [0], # Percentage added on top of collateral needed to liquidate CDP. This is needed in order to avoid auction grinding attacks.

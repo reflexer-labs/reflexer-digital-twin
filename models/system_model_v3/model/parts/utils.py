@@ -34,7 +34,6 @@ def save_partial_results(params, substep, state_history, state):
     partial_results.to_pickle(params['partial_results'])
     return {}
 
-@print_time
 def p_free_memory(params, substep, state_history, state):
     if state['timestep'] > 0:
         for key in params['free_memory_states']:
