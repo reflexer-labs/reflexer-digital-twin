@@ -1,9 +1,25 @@
 import scipy.stats as sts
 import numpy as np
 import copy
+import models.system_model_v3.model.parts.uniswap as uniswap
 
 
-# TODO: stochastic process liquidity demand
+def p_liquidity_demand(params, substep, state_history, state):
+    RAI_delta = 0 # TODO: stochastic process for liquidity demand
+
+    RAI_balance = state['RAI_balance']
+    ETH_balance = state['ETH_balance']
+    uniswap_fee = params['uniswap_fee']
+
+    if RAI_delta >= 0:
+        # TODO: confirm positive/negative dataset
+        # Selling RAI
+        _, ETH_delta = uniswap.get_input_price(RAI_delta, RAI_balance, ETH_balance, uniswap_fee)
+    else:
+        # Buying RAI
+        ETH_delta, _ = uniswap.get_output_price(RAI_delta, RAI_balance, ETH_balance, uniswap_fee)
+    
+    return {'RAI_delta': RAI_delta, 'ETH_delta': ETH_delta, 'UNI_delta': 0}
 
 def p_market_price(params, substep, state_history, state):
     market_price = (state['ETH_balance'] / state['RAI_balance']) * state['eth_price']

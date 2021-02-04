@@ -66,5 +66,5 @@ params = {
     'uniswap_fee': [0.003], # 0.3%
     'gas_price': [100e-9], # 100 gwei, current "fast" transaction
     'swap_gas_used': [103834],
-    'cdp_gas_used': [133340],
+    'cdp_gas_used': [(369e3 + 244e3) / 2], # Deposit + borrow; repay + withdraw
 }

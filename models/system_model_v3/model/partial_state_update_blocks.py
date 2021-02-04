@@ -1,13 +1,16 @@
-from .parts.controllers import *
-from .parts.markets import *
-from .parts.debt_market import *
-from .parts.time import *
+import models.system_model_v3.model.parts.markets as markets
+import models.system_model_v3.model.parts.uniswap as uniswap
+
 from .parts.utils import s_update_sim_metrics, p_free_memory, s_collect_events
-from .parts.apt_model import *
-from .parts.uniswap import *
 from .parts.governance import p_enable_controller
 
-partial_state_update_blocks = [
+from .parts.controllers import *
+from .parts.debt_market import *
+from .parts.time import *
+from .parts.apt_model import *
+
+
+partial_state_update_blocks_unprocessed = [
     {
         'policies': {
             'free_memory': p_free_memory,
@@ -28,15 +31,24 @@ partial_state_update_blocks = [
         }
     },
     #################################################################
-    # {}, shock for ETH, RAI
     {
         'policies': {
-            'market_price': p_market_price
+            'liquidity_demand': markets.p_liquidity_demand
         },
         'variables': {
-            'uniswap_oracle': s_uniswap_oracle,
-            'market_price': s_market_price,
-            'market_price_twap': s_market_price_twap,
+            'RAI_balance': uniswap.update_RAI_balance,
+            'ETH_balance': uniswap.update_ETH_balance,
+            'UNI_supply': uniswap.update_UNI_supply,
+        }
+    },
+    {
+        'policies': {
+            'market_price': markets.p_market_price
+        },
+        'variables': {
+            'uniswap_oracle': markets.s_uniswap_oracle,
+            'market_price': markets.s_market_price,
+            'market_price_twap': markets.s_market_price_twap,
         }
     },
     {
@@ -60,9 +72,9 @@ partial_state_update_blocks = [
         'variables': {
             'cdps': s_store_cdps,
             'optimal_values': s_store_optimal_values,
-            'RAI_balance': update_RAI_balance,
-            'ETH_balance': update_ETH_balance,
-            'UNI_supply': update_UNI_supply,
+            'RAI_balance': uniswap.update_RAI_balance,
+            'ETH_balance': uniswap.update_ETH_balance,
+            'UNI_supply': uniswap.update_UNI_supply,
         }
     },
     #################################################################
@@ -91,17 +103,18 @@ partial_state_update_blocks = [
         }
     },
     #################################################################
-    # {
-    #     'details': '''
-    #         Exogenous u,v activity: liquidate CDPs
-    #     ''',
-    #     'policies': {
-    #         'liquidate_cdps': p_liquidate_cdps
-    #     },
-    #     'variables': {
-    #         'cdps': s_store_cdps,
-    #     }
-    # },
+    {   
+        'enabled': False,
+        'details': '''
+            Exogenous u,v activity: liquidate CDPs
+        ''',
+        'policies': {
+            'liquidate_cdps': p_liquidate_cdps
+        },
+        'variables': {
+            'cdps': s_store_cdps,
+        }
+    },
     {
         'details': """
         Rebalance CDPs using wipes and draws 
@@ -111,9 +124,9 @@ partial_state_update_blocks = [
         },
         'variables': {
             'cdps': s_store_cdps,
-            'RAI_balance': update_RAI_balance,
-            'ETH_balance': update_ETH_balance,
-            'UNI_supply': update_UNI_supply,
+            'RAI_balance': uniswap.update_RAI_balance,
+            'ETH_balance': uniswap.update_ETH_balance,
+            'UNI_supply': uniswap.update_UNI_supply,
         }
     },
     #################################################################
@@ -220,3 +233,5 @@ partial_state_update_blocks = [
         }
     },
 ]
+
+partial_state_update_blocks = list(filter(lambda psub: psub.get('enabled', True), partial_state_update_blocks_unprocessed))
