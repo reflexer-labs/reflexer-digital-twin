@@ -1,6 +1,7 @@
 from models.system_model_v3.model.state_variables.liquidity import cdps, eth_collateral, principal_debt, uniswap_rai_balance, uniswap_eth_balance
 from models.system_model_v3.model.state_variables.system import stability_fee, target_price
 from models.system_model_v3.model.state_variables.historical_state import start_date, eth_price
+from models.system_model_v3.model.parts.uniswap_oracle import UniswapOracle
 
 import datetime as dt
 
@@ -66,4 +67,9 @@ state_variables = {
     'RAI_balance': uniswap_rai_balance,
     'ETH_balance': uniswap_eth_balance,
     'UNI_supply': uniswap_rai_balance,
+    'uniswap_oracle': UniswapOracle(
+        window_size=15*3600, # 15 hours
+        max_window_size=21*3600, # 21 hours
+        granularity=5
+    ),
 }

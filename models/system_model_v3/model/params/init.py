@@ -6,7 +6,6 @@ from models.constants import SPY, RAY
 
 from models.system_model_v3.model.state_variables.system import stability_fee
 from models.system_model_v3.model.state_variables.historical_state import env_process_df, eth_price_mean, eth_returns_mean, market_price_mean
-from models.system_model_v3.model.parts.uniswap_oracle import UniswapOracle
 
 
 '''
@@ -21,7 +20,7 @@ params = {
     # Admin parameters
     'debug': [False], # Print debug messages (see APT model)
     'raise_on_assert': [True], # See assert_log() in utils.py
-    'free_memory_states': [['cdps', 'events']],
+    'free_memory_states': [['events']],
 
     # Configuration options
     options.IntegralType.__name__: [options.IntegralType.LEAKY.value],
@@ -29,6 +28,7 @@ params = {
     # Exogenous states, loaded as parameter at every timestep - these are lambda functions, and have to be called
     'eth_price': [lambda timestep, df=env_process_df: df.iloc[timestep].Open],
     'seconds_passed': [lambda timestep, df=env_process_df: df.iloc[timestep].seconds_passed],
+    'liquidity_demand': [lambda timestep, df=None: 0], # TODO: stochastic process for liquidity demand
 
     # Time parameters
     'expected_blocktime': [15], # seconds
@@ -66,13 +66,6 @@ params = {
     'stability_fee': [lambda timestep, df=None: stability_fee], # per second interest rate (x% per month)
 
     # Uniswap parameters
-    'uniswap_oracle': [
-        UniswapOracle(
-            window_size=15*3600, # 15 hours
-            max_window_size=21*3600, # 21 hours
-            granularity=5
-        )
-    ],
     'uniswap_fee': [0.003], # 0.3%
     'gas_price': [100e-9], # 100 gwei, current "fast" transaction
     'swap_gas_used': [103834],
