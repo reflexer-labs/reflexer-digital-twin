@@ -13,17 +13,21 @@ from .uniswap import get_output_price, get_input_price
 def p_resolve_expected_market_price(params, substep, state_history, state):
     debug = params['debug']
 
-    eth_return = state['eth_return']
-    eth_price_mean = params['eth_price_mean']
-    eth_returns_mean = params['eth_returns_mean']
     p = state['market_price']
     interest_rate = params['interest_rate']
-    
+    eth_return = state['eth_return']
+
     try:
         eth_price = state_history[-1][-1]['eth_price']
     except IndexError as e:
         logging.warning(e)
         eth_price = state['eth_price']
+
+    eth_price_data = [state[-1]['eth_price'] for state in state_history]
+    eth_price_mean = statistics.mean(eth_price_data)
+
+    eth_returns_data = [state[-1]['eth_return'] for state in state_history]
+    eth_returns_mean = statistics.mean(eth_returns_data)
 
     market_price_data = [state[-1]['market_price'] for state in state_history]
     market_price_mean = statistics.mean(market_price_data)

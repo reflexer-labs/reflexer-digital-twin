@@ -1,6 +1,6 @@
 from models.system_model_v3.model.state_variables.liquidity import cdps, eth_collateral, principal_debt, uniswap_rai_balance, uniswap_eth_balance
 from models.system_model_v3.model.state_variables.system import stability_fee, target_price
-from models.system_model_v3.model.state_variables.historical_state import start_date, eth_price
+from models.system_model_v3.model.state_variables.historical_state import eth_price
 from models.system_model_v3.model.parts.uniswap_oracle import UniswapOracle
 
 import datetime as dt
@@ -16,7 +16,7 @@ state_variables = {
     # Time states
     'timedelta': 0, # seconds
     'cumulative_time': 0, # seconds
-    'timestamp': dt.datetime.strptime(start_date, '%Y-%m-%d'), # type: datetime; start time
+    'timestamp': dt.datetime.strptime('2017-01-01', '%Y-%m-%d'), # type: datetime; start time
     'blockheight': 0, # block offset (init 0 simplicity)
     
     # Exogenous states

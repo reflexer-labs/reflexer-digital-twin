@@ -5,7 +5,7 @@ import models.options as options
 from models.constants import SPY, RAY
 
 from models.system_model_v3.model.state_variables.system import stability_fee
-from models.system_model_v3.model.state_variables.historical_state import env_process_df, eth_price_mean, eth_returns_mean, market_price_mean
+from models.system_model_v3.model.state_variables.historical_state import eth_price_df
 
 
 '''
@@ -20,14 +20,14 @@ params = {
     # Admin parameters
     'debug': [False], # Print debug messages (see APT model)
     'raise_on_assert': [True], # See assert_log() in utils.py
-    'free_memory_states': [['events']],
+    'free_memory_states': [['events', 'cdps', 'uniswap_oracle']],
 
     # Configuration options
     options.IntegralType.__name__: [options.IntegralType.LEAKY.value],
 
     # Exogenous states, loaded as parameter at every timestep - these are lambda functions, and have to be called
-    'eth_price': [lambda timestep, df=env_process_df: df.iloc[timestep].Open],
-    'seconds_passed': [lambda timestep, df=env_process_df: df.iloc[timestep].seconds_passed],
+    'eth_price': [lambda run, timestep, df=eth_price_df: df[str(run-1)].iloc[timestep]],
+    'seconds_passed': [lambda timestep, df=None: 3600],
     'liquidity_demand': [lambda timestep, df=None: 0], # TODO: stochastic process for liquidity demand
 
     # Time parameters
@@ -45,9 +45,9 @@ params = {
     
     # APT model
     'interest_rate': [1.03], # Real-world expected interest rate, for determining profitable arbitrage opportunities
-    'eth_price_mean': [eth_price_mean],
-    'eth_returns_mean': [eth_returns_mean],
-    'market_price_mean': [market_price_mean],
+    # 'eth_price_mean': [eth_price_mean],
+    # 'eth_returns_mean': [eth_returns_mean],
+    # 'market_price_mean': [market_price_mean],
 
     # APT OLS model
     'alpha_0': [0],

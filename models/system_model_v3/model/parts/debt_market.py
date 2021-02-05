@@ -10,7 +10,7 @@ import logging
 
 
 def p_resolve_eth_price(params, substep, state_history, state):
-    eth_price = params["eth_price"](state["timestep"])
+    eth_price = params["eth_price"](state["run"], state["timestep"])
     delta_eth_price = eth_price - state_history[-1][-1]["eth_price"]
 
     return {"delta_eth_price": delta_eth_price}
