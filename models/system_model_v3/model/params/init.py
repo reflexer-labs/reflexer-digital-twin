@@ -5,7 +5,7 @@ import models.options as options
 from models.constants import SPY, RAY
 
 from models.system_model_v3.model.state_variables.system import stability_fee
-from models.system_model_v3.model.state_variables.historical_state import eth_price_df
+from models.system_model_v3.model.state_variables.historical_state import eth_price_df, liquidity_demand_df, token_swap_df
 
 
 '''
@@ -27,8 +27,9 @@ params = {
 
     # Exogenous states, loaded as parameter at every timestep - these are lambda functions, and have to be called
     'eth_price': [lambda run, timestep, df=eth_price_df: df[str(run-1)].iloc[timestep]],
+    'liquidity_demand_events': [lambda run, timestep, df=liquidity_demand_df: df[str(run-1)].iloc[timestep]],
+    'token_swap_events': [lambda run, timestep, df=token_swap_df: df[str(run-1)].iloc[timestep]],
     'seconds_passed': [lambda timestep, df=None: 3600],
-    'liquidity_demand': [lambda timestep, df=None: 0], # TODO: stochastic process for liquidity demand
 
     # Time parameters
     'expected_blocktime': [15], # seconds

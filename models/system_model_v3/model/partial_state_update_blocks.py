@@ -15,6 +15,7 @@ partial_state_update_blocks_unprocessed = [
     {
         'policies': {
             'free_memory': p_free_memory,
+            'random_seed': init.initialize_seed,
         },
         'variables': {
             'target_price': init.initialize_target_price,
@@ -35,6 +36,7 @@ partial_state_update_blocks_unprocessed = [
     },
     #################################################################
     {
+        'enabled': False,
         'policies': {
             'liquidity_demand': markets.p_liquidity_demand
         },

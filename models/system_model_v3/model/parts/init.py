@@ -1,3 +1,10 @@
+import random
+
+def initialize_seed(params, substep, state_history, state):
+    if state['timestep'] == 0:
+        random.seed(a=f'{state["simulation"]}/{state["subset"]}/{state["run"]}')
+    return {}
+
 def initialize_cdps(params, substep, state_history, state):
     if not state['cdps']:
         pass
