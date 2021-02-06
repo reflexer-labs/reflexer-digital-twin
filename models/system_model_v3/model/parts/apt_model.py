@@ -90,7 +90,16 @@ def p_arbitrageur_model(params, substep, state_history, state):
     assert total_borrowed >= 0, total_borrowed
     assert total_deposited >= 0, total_deposited
     
-    if redemption_price < ((1 - uniswap_fee) / liquidation_ratio) * market_price and expected_market_price < market_price:
+    expensive_RAI_on_secondary_market = \
+        redemption_price < ((1 - uniswap_fee) / liquidation_ratio) * market_price and expected_market_price < market_price \
+        if params['arbitrageur_considers_liquidation_ratio'] \
+        else redemption_price < (1 - uniswap_fee) * market_price and expected_market_price < market_price
+    cheap_RAI_on_secondary_market = \
+        redemption_price > (1 / ((1 - uniswap_fee) * liquidation_ratio)) * market_price and expected_market_price > market_price \
+        if params['arbitrageur_considers_liquidation_ratio'] \
+        else redemption_price > (1 / (1 - uniswap_fee)) * market_price and expected_market_price > market_price
+
+    if expensive_RAI_on_secondary_market:
         '''
         Expensive RAI on Uni:
         (put ETH from pocket into additional collateral in CDP)
@@ -144,7 +153,7 @@ def p_arbitrageur_model(params, substep, state_history, state):
             assert ETH_delta < 0, ETH_delta
             assert approx_eq(ETH_delta, -z, abs_tol=1e-5), (ETH_delta, -z)
 
-    elif redemption_price > (1 / ((1 - uniswap_fee) * liquidation_ratio)) * market_price and expected_market_price > market_price:
+    elif cheap_RAI_on_secondary_market:
         '''
         Cheap RAI on Uni:
         ETH out of pocket -> Uni

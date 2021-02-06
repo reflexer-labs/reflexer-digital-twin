@@ -45,6 +45,7 @@ params = {
     'rescale_target_price': [True], # scale the target price by the liquidation ratio
     
     # APT model
+    'arbitrageur_considers_liquidation_ratio': [True],
     'interest_rate': [1.03], # Real-world expected interest rate, for determining profitable arbitrage opportunities
     # 'eth_price_mean': [eth_price_mean],
     # 'eth_returns_mean': [eth_returns_mean],
