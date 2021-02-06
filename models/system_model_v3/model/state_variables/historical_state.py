@@ -6,3 +6,6 @@ eth_price_df = pd.read_csv('models/system_model_v3/data/eth_prices.csv', index_c
 
 # Set the initial ETH price state
 eth_price = eth_price_df["0"].iloc[0]
+
+liquidity_demand_df = pd.read_csv('models/system_model_v3/data/liquidity_samples.csv', index_col=0)
+token_swap_df = pd.read_csv('models/system_model_v3/data/buy_sell.csv', index_col=0)
