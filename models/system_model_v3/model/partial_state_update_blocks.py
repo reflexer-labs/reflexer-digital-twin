@@ -36,7 +36,7 @@ partial_state_update_blocks_unprocessed = [
     },
     #################################################################
     {
-        'enabled': False,
+        'enabled': True,
         'policies': {
             'liquidity_demand': markets.p_liquidity_demand
         },
@@ -44,6 +44,7 @@ partial_state_update_blocks_unprocessed = [
             'RAI_balance': uniswap.update_RAI_balance,
             'ETH_balance': uniswap.update_ETH_balance,
             'UNI_supply': uniswap.update_UNI_supply,
+            'liquidity_demand_mean': s_liquidity_demand_mean,
         }
     },
     {
