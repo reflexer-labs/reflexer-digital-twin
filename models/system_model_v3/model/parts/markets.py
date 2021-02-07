@@ -8,66 +8,72 @@ import models.system_model_v3.model.parts.uniswap as uniswap
 from .utils import print_time
 
 def p_liquidity_demand(params, substep, state_history, state):
-    RAI_balance = state['RAI_balance']
-    ETH_balance = state['ETH_balance']
-    UNI_supply = state['UNI_supply']
+    if params['liquidity_demand_enabled']:
+        RAI_balance = state['RAI_balance']
+        ETH_balance = state['ETH_balance']
+        UNI_supply = state['UNI_supply']
 
-    market_price = state['market_price']
-    eth_price = state['eth_price']
-    
-    uniswap_fee = params['uniswap_fee']
+        market_price = state['market_price']
+        eth_price = state['eth_price']
+        
+        uniswap_fee = params['uniswap_fee']
 
-    swap = random.randint(0, 1)
-    # Positive == swap in, or add liquidity event; negative == swap out or remove liquidity event
-    direction = 1 if random.randint(0, 1) else -1
+        swap = random.randint(0, 1)
+        # Positive == swap in, or add liquidity event; negative == swap out or remove liquidity event
+        direction = 1 if random.randint(0, 1) else -1
 
-    if liquidity_demand_s
-    10% of the RAI reserve in the pool, and one where the value applied is e.g. min(0.50*RAI reserve, liquidity)
+        UNI_delta = 0
+        if swap:
+            # Draw from swap process
+            RAI_delta = abs(params['token_swap_events'](state['run'], state['timestep']) * 1e-18)
+            RAI_delta = min(RAI_delta, RAI_balance * params['liquidity_demand_shock_percentage']) \
+                if params['liquidity_demand_shock'] \
+                else min(RAI_delta, RAI_balance * params['liquidity_demand_max_percentage'])
+            RAI_delta = RAI_delta * direction
 
-    UNI_delta = 0
-    if swap:
-        # Draw from swap process
-        RAI_delta = direction * params['token_swap_events'](state['run'], state['timestep']) * 1e-18
-        RAI_delta = min(RAI_delta, RAI_balance * params['liquidity_demand_shock_percentage']) \
-            if params['liquidity_demand_shock'] \
-            else min(RAI_delta, RAI_balance * params['liquidity_demand_max_percentage'])
-
-        if RAI_delta >= 0:
-            # Selling RAI
-            _, ETH_delta = uniswap.get_input_price(RAI_delta, RAI_balance, ETH_balance, uniswap_fee)
-            assert ETH_delta <= 0, (ETH_delta, RAI_delta)
-            assert ETH_delta <= ETH_balance, (ETH_delta, ETH_balance)
+            if RAI_delta >= 0:
+                # Selling RAI
+                _, ETH_delta = uniswap.get_input_price(RAI_delta, RAI_balance, ETH_balance, uniswap_fee)
+                assert ETH_delta <= 0, (ETH_delta, RAI_delta)
+                assert ETH_delta <= ETH_balance, (ETH_delta, ETH_balance)
+            else:
+                # Buying RAI
+                ETH_delta, _ = uniswap.get_output_price(abs(RAI_delta), ETH_balance, RAI_balance, uniswap_fee)
+                assert ETH_delta > 0, (ETH_delta, RAI_delta)
+                assert RAI_delta <= RAI_balance, (RAI_delta, RAI_balance)
         else:
-            # Buying RAI
-            ETH_delta, _ = uniswap.get_output_price(abs(RAI_delta), ETH_balance, RAI_balance, uniswap_fee)
-            assert ETH_delta > 0, (ETH_delta, RAI_delta)
-            assert RAI_delta <= RAI_balance, (RAI_delta, RAI_balance)
+            # Draw from liquidity process
+            RAI_delta = abs(params['liquidity_demand_events'](state['run'], state['timestep']) * 1e-18)
+            RAI_delta = min(RAI_delta, RAI_balance * params['liquidity_demand_shock_percentage']) \
+                if params['liquidity_demand_shock'] \
+                else min(RAI_delta, RAI_balance * params['liquidity_demand_max_percentage'])
+            RAI_delta = RAI_delta * direction
+
+            if RAI_delta >= 0:
+                ETH_delta, RAI_delta, UNI_delta = uniswap.add_liquidity(ETH_balance, RAI_balance, UNI_supply, RAI_delta, RAI_delta * market_price / eth_price)
+                assert ETH_delta >= 0
+                assert RAI_delta >= 0
+                assert UNI_delta >= 0
+            else:
+                ETH_delta, RAI_delta, UNI_delta = uniswap.remove_liquidity(ETH_balance, RAI_balance, UNI_supply, abs(RAI_delta))
+                assert ETH_delta <= 0
+                assert ETH_delta <= ETH_balance, (ETH_delta, ETH_balance)
+                assert RAI_delta <= 0
+                assert UNI_delta <= 0
+
+        logging.debug(f"Secondary market {'swap' if swap else 'liquidity demand'}: {RAI_delta=} {ETH_delta=} {UNI_delta=}")
+        return {'RAI_delta': RAI_delta, 'ETH_delta': ETH_delta, 'UNI_delta': UNI_delta}
     else:
-        # Draw from liquidity process
-        RAI_delta = direction * params['liquidity_demand_events'](state['run'], state['timestep']) * 1e-18
-        RAI_delta = min(RAI_delta, RAI_balance * params['liquidity_demand_shock_percentage']) \
-            if params['liquidity_demand_shock'] \
-            else min(RAI_delta, RAI_balance * params['liquidity_demand_max_percentage'])
+        return {'RAI_delta': 0, 'ETH_delta': 0, 'UNI_delta': 0}
+    
 
-        if RAI_delta >= 0:
-            ETH_delta, RAI_delta, UNI_delta = uniswap.add_liquidity(ETH_balance, RAI_balance, UNI_supply, RAI_delta, RAI_delta * market_price / eth_price)
-            assert ETH_delta >= 0
-            assert RAI_delta >= 0
-            assert UNI_delta >= 0
-        else:
-            ETH_delta, RAI_delta, UNI_delta = uniswap.remove_liquidity(ETH_balance, RAI_balance, UNI_supply, abs(RAI_delta))
-            assert ETH_delta <= 0
-            assert ETH_delta <= ETH_balance, (ETH_delta, ETH_balance)
-            assert RAI_delta <= 0
-            assert UNI_delta <= 0
-
-    logging.debug(f"Secondary market {"swap" if swap else "liquidity demand"}: {RAI_delta=} {ETH_delta=} {UNI_delta=}")
-
-    return {'RAI_delta': RAI_delta, 'ETH_delta': ETH_delta, 'UNI_delta': UNI_delta, 'liquidity_demand': RAI_delta if not swap else 0}
+def s_liquidity_demand(params, substep, state_history, state, policy_input):
+    liquidity_demand = policy_input['RAI_delta']
+    return 'liquidity_demand', liquidity_demand
 
 def s_liquidity_demand_mean(params, substep, state_history, state, policy_input):
-    net_liquidity_demand = abs(policy_input['liquidity_demand'])
-    liquidity_demand_mean = (state['liquidity_demand_mean'] + net_liquidity_demand) / 2
+    liquidity_demand = policy_input['RAI_delta']
+    liquidity_demand_mean = (state['liquidity_demand_mean'] + liquidity_demand) / 2
     return 'liquidity_demand_mean', liquidity_demand_mean
 
 def p_market_price(params, substep, state_history, state):

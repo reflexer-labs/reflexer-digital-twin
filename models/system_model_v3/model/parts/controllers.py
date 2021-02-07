@@ -1,5 +1,6 @@
 import models.options as options
 import models.constants as constants
+import models.system_model_v3.model.parts.failure_modes as failure
 
 
 def update_target_rate(params, substep, state_history, state, policy_input):
@@ -38,9 +39,9 @@ def update_target_price(params, substep, state_history, state, policy_input):
         target_price = (
             state["target_price"] * (1 + state["target_rate"]) ** state["timedelta"]
         )
-    except OverflowError:
+    except OverflowError as e:
         target_price = state["target_price"]
-        raise
+        raise failure.ControllerTargetOverflowException((e, target_price))
 
     if target_price < 0:
         target_price = 0

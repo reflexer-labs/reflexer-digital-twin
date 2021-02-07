@@ -8,6 +8,7 @@ import statistics
 from .utils import approx_greater_equal_zero, assert_log, approx_eq
 from .debt_market import open_cdp_draw, open_cdp_lock, draw_to_liquidation_ratio, is_cdp_above_liquidation_ratio
 from .uniswap import get_output_price, get_input_price
+import models.system_model_v3.model.parts.failure_modes as failure
 
 
 def p_resolve_expected_market_price(params, substep, state_history, state):
@@ -41,7 +42,7 @@ def p_resolve_expected_market_price(params, substep, state_history, state):
     # Liquidity here means the net transfer in or out of RAI tokens in the ETH-RAI pool,
     # in units of RAI, **not** units of weiRAI. If the liquidity realization is in units of
     # weiRAI it **must** be rescaled by 1e-18 before using this expected market price formulation
-    liquidity_demand = params['liquidity_demand_events'](state['run'], state['timestep']) # Uniswap liquidity demand for RAI
+    liquidity_demand = state['liquidity_demand'] # Uniswap liquidity demand for RAI
     liquidity_demand_mean = state['liquidity_demand_mean'] # mean value from stochastic process of liquidity
 
     # APT Market Parameters
@@ -59,6 +60,7 @@ def s_store_expected_market_price(params, substep, state_history, state, policy_
 
 def p_arbitrageur_model(params, substep, state_history, state):
     debug = params['debug']
+
 
     RAI_balance = state['RAI_balance']
     ETH_balance = state['ETH_balance']
@@ -91,12 +93,12 @@ def p_arbitrageur_model(params, substep, state_history, state):
     cdps_copy = cdps.copy()
     aggregate_arbitrageur_cdp_index = cdps.query("arbitrage == 1").index[0]
     aggregate_arbitrageur_cdp = cdps.loc[aggregate_arbitrageur_cdp_index]
-
+    
     total_borrowed = aggregate_arbitrageur_cdp['drawn'] - aggregate_arbitrageur_cdp['wiped'] - aggregate_arbitrageur_cdp['u_bitten']
     total_deposited = aggregate_arbitrageur_cdp['locked'] - aggregate_arbitrageur_cdp['freed'] - aggregate_arbitrageur_cdp['v_bitten']
 
-    assert total_borrowed >= 0, total_borrowed
-    assert total_deposited >= 0, total_deposited
+    if not total_borrowed >= 0: raise failure.NegativeBalanceException(total_borrowed)
+    if not total_deposited >= 0: raise failure.NegativeBalanceException(total_deposited)
     
     expensive_RAI_on_secondary_market = \
         redemption_price < ((1 - uniswap_fee) / liquidation_ratio) * market_price and expected_market_price < market_price \
@@ -121,12 +123,12 @@ def p_arbitrageur_model(params, substep, state_history, state):
         z = (ETH_balance * d_borrow * (1 - uniswap_fee)) / (RAI_balance + d_borrow * (1 - uniswap_fee))
 
         if q_deposit < 0:
-            assert is_cdp_above_liquidation_ratio(
+            if not is_cdp_above_liquidation_ratio(
                 aggregate_arbitrageur_cdp,
                 eth_price,
                 redemption_price,
                 liquidation_ratio
-            ), aggregate_arbitrageur_cdp
+            ): raise failure.LiquidationRatioException(context=aggregate_arbitrageur_cdp)
 
             available_to_borrow = draw_to_liquidation_ratio(aggregate_arbitrageur_cdp, eth_price, redemption_price, liquidation_ratio)
             assert available_to_borrow >= 0, available_to_borrow

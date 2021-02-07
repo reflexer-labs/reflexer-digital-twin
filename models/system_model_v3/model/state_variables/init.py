@@ -21,7 +21,8 @@ state_variables = {
     
     # Exogenous states
     'eth_price': eth_price, # unit: dollars; updated from historical data as exogenous parameter
-    'liquidity_demand_mean': 100, # net transfer in or out of RAI tokens in the ETH-RAI pool
+    'liquidity_demand': 1,
+    'liquidity_demand_mean': 1, # net transfer in or out of RAI tokens in the ETH-RAI pool
     
     # CDP states
     'cdps': cdps, # A dataframe of CDPs (both open and closed)

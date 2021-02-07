@@ -74,7 +74,7 @@ def is_cdp_at_liquidation_ratio(cdp, eth_price, target_price, liquidation_ratio)
 
 
 def wipe_to_liquidation_ratio(
-    cdp, eth_price, target_price, liquidation_ratio, _raise=False
+    cdp, eth_price, target_price, liquidation_ratio, _raise=True
 ):
     locked = cdp["locked"]
     freed = cdp["freed"]
@@ -101,7 +101,7 @@ def wipe_to_liquidation_ratio(
 
 
 def draw_to_liquidation_ratio(
-    cdp, eth_price, target_price, liquidation_ratio, _raise=False
+    cdp, eth_price, target_price, liquidation_ratio, _raise=True
 ):
     locked = cdp["locked"]
     freed = cdp["freed"]
@@ -123,7 +123,7 @@ def draw_to_liquidation_ratio(
 
 
 def lock_to_liquidation_ratio(
-    cdp, eth_price, target_price, liquidation_ratio, _raise=False
+    cdp, eth_price, target_price, liquidation_ratio, _raise=True
 ):
     locked = cdp["locked"]
     freed = cdp["freed"]
@@ -146,7 +146,7 @@ def lock_to_liquidation_ratio(
 
 
 def free_to_liquidation_ratio(
-    cdp, eth_price, target_price, liquidation_ratio, _raise=False
+    cdp, eth_price, target_price, liquidation_ratio, _raise=True
 ):
     locked = cdp["locked"]
     freed = cdp["freed"]

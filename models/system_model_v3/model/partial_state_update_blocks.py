@@ -44,7 +44,8 @@ partial_state_update_blocks_unprocessed = [
             'RAI_balance': uniswap.update_RAI_balance,
             'ETH_balance': uniswap.update_ETH_balance,
             'UNI_supply': uniswap.update_UNI_supply,
-            'liquidity_demand_mean': s_liquidity_demand_mean,
+            'liquidity_demand': markets.s_liquidity_demand,
+            'liquidity_demand_mean': markets.s_liquidity_demand_mean,
         }
     },
     {
