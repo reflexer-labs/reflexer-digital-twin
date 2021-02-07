@@ -153,7 +153,7 @@ tables==3.6.1
 
 # cadCAD==0.4.23
 git+git://github.com/danlessa/cadCAD@danlessa_devel # No deepcopy for improved performance
-radcad==0.5.0
+radcad==0.5.3
 
 # System Model v1.0 Requirements
 
