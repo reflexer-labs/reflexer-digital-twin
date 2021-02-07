@@ -30,6 +30,9 @@ params = {
     'liquidity_demand_events': [lambda run, timestep, df=liquidity_demand_df: df[str(run-1)].iloc[timestep]],
     'token_swap_events': [lambda run, timestep, df=token_swap_df: df[str(run-1)].iloc[timestep]],
     'seconds_passed': [lambda timestep, df=None: 3600],
+    'liquidity_demand_shock': [False], # introduce shocks (up to 50% of secondary market pool)
+    'liquidity_demand_max_percentage': [0.1], # max percentage of secondary market pool when no shocks introduced using liquidity_demand_shock
+    'liquidity_demand_shock_percentage': [0.5], # max percentage of secondary market pool when shocks introduced using liquidity_demand_shock
 
     # Time parameters
     'expected_blocktime': [15], # seconds
@@ -52,11 +55,9 @@ params = {
     # 'market_price_mean': [market_price_mean],
 
     # APT OLS model
-    'alpha_0': [0],
-    'alpha_1': [1],
-    'beta_0': [1.0003953223600617],
-    'beta_1': [0.6756295152422528],
-    'beta_2': [3.86810578185312e-06],
+    # OLS values (Feb. 6, 2021) for beta_1 and beta_2
+    'beta_1': [9.084809e-05],
+    'beta_2': [-4.194794e-08],
 
     # CDP parameters
     'liquidation_ratio': [1.5], # Configure the liquidation ratio parameter e.g. 150%

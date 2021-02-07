@@ -11,11 +11,18 @@ from .uniswap import get_output_price, get_input_price
 
 
 def p_resolve_expected_market_price(params, substep, state_history, state):
+    '''
+    The expected market price is assumed to be a response to unexpected changes in external
+    factors (cf. APT Model documentation). The external factors are defined as:
+    1. the price of ETH;
+    2. swap events in the RAI-ETH Uniswap pool;
+    3. add/remove events in the RAI-ETH Uniswap pool.
+    '''
+
     debug = params['debug']
 
-    p = state['market_price']
-    interest_rate = params['interest_rate']
-    eth_return = state['eth_return']
+    p = state['market_price'] # price of RAI in USD
+    interest_rate = params['interest_rate'] # interest rate / opportunity cost / time value of money
 
     try:
         eth_price = state_history[-1][-1]['eth_price']
@@ -23,26 +30,27 @@ def p_resolve_expected_market_price(params, substep, state_history, state):
         logging.warning(e)
         eth_price = state['eth_price']
 
+    # Mean and Rate Parameters
     eth_price_data = [state[-1]['eth_price'] for state in state_history]
-    eth_price_mean = statistics.mean(eth_price_data)
-
-    eth_returns_data = [state[-1]['eth_return'] for state in state_history]
-    eth_returns_mean = statistics.mean(eth_returns_data)
+    eth_price_mean = statistics.mean(eth_price_data) # mean value from stochastic process of ETH price
 
     market_price_data = [state[-1]['market_price'] for state in state_history]
     market_price_mean = statistics.mean(market_price_data)
 
-    alpha_0 = params['alpha_0']
-    alpha_1 = params['alpha_1']
-    beta_0 = params['beta_0']
-    beta_1 = params['beta_1']
-    beta_2 = params['beta_2']
+    # NOTE Convention on liquidity:
+    # Liquidity here means the net transfer in or out of RAI tokens in the ETH-RAI pool,
+    # in units of RAI, **not** units of weiRAI. If the liquidity realization is in units of
+    # weiRAI it **must** be rescaled by 1e-18 before using this expected market price formulation
+    liquidity_demand = params['liquidity_demand_events'](state['run'], state['timestep']) # Uniswap liquidity demand for RAI
+    liquidity_demand_mean = state['liquidity_demand_mean'] # mean value from stochastic process of liquidity
 
-    expected_market_price = (1 / alpha_1) * p * (interest_rate + beta_2 * (eth_price_mean - eth_price * interest_rate)
-                                 + beta_1 * (market_price_mean - p * interest_rate)
-                 ) - (alpha_0/alpha_1)
+    # APT Market Parameters
+    beta_1 = params['beta_1'] # regression coefficient for ETH price
+    beta_2 = params['beta_2'] # regression coefficient for liquidity shock
 
-    logging.debug(f'expected_market_price terms: {alpha_1, p, interest_rate, beta_2, eth_price_mean, eth_price, beta_1, market_price_mean, alpha_0, expected_market_price}')
+    # Expected Market Price in USD/RAI (cf. APT Model documentation)
+    expected_market_price = p * (interest_rate + beta_1 * (eth_price_mean - eth_price * interest_rate)
+                        + beta_2 * (liquidity_demand_mean - liquidity_demand * interest_rate))
 
     return {'expected_market_price': expected_market_price}
 
