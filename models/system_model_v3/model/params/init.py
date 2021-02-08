@@ -52,9 +52,6 @@ params = {
     # APT model
     'arbitrageur_considers_liquidation_ratio': [True],
     'interest_rate': [1.03], # Real-world expected interest rate, for determining profitable arbitrage opportunities
-    # 'eth_price_mean': [eth_price_mean],
-    # 'eth_returns_mean': [eth_returns_mean],
-    # 'market_price_mean': [market_price_mean],
 
     # APT OLS model
     # OLS values (Feb. 6, 2021) for beta_1 and beta_2
@@ -62,7 +59,7 @@ params = {
     'beta_2': [-4.194794e-08],
 
     # CDP parameters
-    'liquidation_ratio': [1.5], # Configure the liquidation ratio parameter e.g. 150%
+    'liquidation_ratio': [1.45], # Configure the liquidation ratio parameter e.g. 150%
     'liquidation_buffer': [2.0], # Configure the liquidation buffer parameter: the multiplier for the liquidation ratio, that users apply as a buffer
     'liquidation_penalty': [0], # Percentage added on top of collateral needed to liquidate CDP. This is needed in order to avoid auction grinding attacks.
     'debt_ceiling': [1e9],
