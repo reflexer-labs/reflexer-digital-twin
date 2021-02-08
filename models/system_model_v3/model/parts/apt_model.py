@@ -28,7 +28,7 @@ def p_resolve_expected_market_price(params, substep, state_history, state):
     try:
         eth_price = state_history[-1][-1]['eth_price']
     except IndexError as e:
-        logging.warning(e)
+        logging.exception(e)
         eth_price = state['eth_price']
 
     # Mean and Rate Parameters
@@ -178,11 +178,7 @@ def p_arbitrageur_model(params, substep, state_history, state):
         
         if d_repay > total_borrowed:
            logging.warning("Arb. CDP closed!")
-           logging.warning(f"{d_repay=} {q_withdraw=} {_g2=} {RAI_balance=} {ETH_balance=} {total_borrowed=} {total_deposited=} {z=} {eth_price=} {redemption_price=} {market_price=}")
-           d_repay = total_borrowed
-           z, _ = get_output_price(d_repay, ETH_balance, RAI_balance, uniswap_fee)
-           q_withdraw = total_deposited
-           cdps.at[aggregate_arbitrageur_cdp_index, "closed"] = 1
+           raise failure.LiquidityException("Arb. CDP closed")
 
         # Check positive profit condition
         profit = q_withdraw - z - gas_price * (swap_gas_used + cdp_gas_used)

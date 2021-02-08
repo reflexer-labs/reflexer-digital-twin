@@ -5,21 +5,21 @@ def update_RAI_balance(params, substep, state_history, state, policy_input):
     RAI_balance = state['RAI_balance']
     RAI_delta = policy_input['RAI_delta']
     updated_RAI_balance = RAI_balance + RAI_delta
-    if not updated_RAI_balance > 0: raise failure.NegativeBalanceException('Uniswap RAI')
+    if not updated_RAI_balance > 0: raise failure.NegativeBalanceException(f'Uniswap RAI {RAI_balance=} {RAI_delta=}')
     return "RAI_balance", updated_RAI_balance
 
 def update_ETH_balance(params, substep, state_history, state, policy_input):
     ETH_balance = state['ETH_balance']
     ETH_delta = policy_input['ETH_delta']
     updated_ETH_balance = ETH_balance + ETH_delta
-    if not updated_ETH_balance > 0: raise failure.NegativeBalanceException('Uniswap ETH')
+    if not updated_ETH_balance > 0: raise failure.NegativeBalanceException(f'Uniswap ETH {ETH_balance=} {ETH_delta=}')
     return "ETH_balance", updated_ETH_balance
 
 def update_UNI_supply(params, substep, state_history, state, policy_input):
     UNI_supply = state['UNI_supply']
     UNI_delta = policy_input['UNI_delta']
     updated_UNI_supply = UNI_supply + UNI_delta
-    if not updated_UNI_supply > 0: raise failure.NegativeBalanceException('Uniswap UNI')
+    if not updated_UNI_supply > 0: raise failure.NegativeBalanceException(f'Uniswap UNI {UNI_supply=} {UNI_delta=}')
     return "UNI_supply", updated_UNI_supply
 
 # Uniswap functions
