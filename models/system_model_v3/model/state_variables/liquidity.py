@@ -6,7 +6,7 @@ from models.system_model_v3.model.state_variables.system import target_price
 import pandas as pd
 
 
-liquidation_ratio = 1.5
+liquidation_ratio = 1.45
 liquidation_buffer = 2
 liquidity_cdp_count = 0 # Set to zero to disable liquidity CDPs, and only use aggregate arbitrage CDP
 
