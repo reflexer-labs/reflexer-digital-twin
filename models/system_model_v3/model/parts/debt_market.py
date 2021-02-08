@@ -3,6 +3,7 @@ import pandas as pd
 import math
 from .utils import approx_greater_equal_zero, assert_log
 from .uniswap import get_output_price, get_input_price
+import models.system_model_v3.model.parts.failure_modes as failure
 
 import logging
 
@@ -87,11 +88,8 @@ def wipe_to_liquidation_ratio(
     wipe = (drawn - wiped - u_bitten) - (locked - freed - v_bitten) * eth_price / (
         liquidation_ratio * target_price
     )
-    assert_log(
-        approx_greater_equal_zero(wipe, abs_tol=1e-3),
-        f"wipe: {locals()}",
-        _raise=_raise,
-    )
+    if not approx_greater_equal_zero(wipe, abs_tol=1e-3):
+        raise failure.InvalidCDPTransactionException(f"wipe: {locals()}")
     wipe = max(wipe, 0)
 
     if drawn <= wiped + wipe + u_bitten:
@@ -114,9 +112,8 @@ def draw_to_liquidation_ratio(
     draw = (locked - freed - v_bitten) * eth_price / (
         target_price * liquidation_ratio
     ) - (drawn - wiped - u_bitten)
-    assert_log(
-        approx_greater_equal_zero(draw, abs_tol=1e-3), f"draw: {draw}", _raise=_raise
-    )
+    if not approx_greater_equal_zero(draw, abs_tol=1e-3):
+        raise failure.InvalidCDPTransactionException(f"draw: {locals()}")
     draw = max(draw, 0)
 
     return draw
@@ -137,9 +134,8 @@ def lock_to_liquidation_ratio(
         (drawn - wiped - u_bitten) * target_price * liquidation_ratio
         - (locked - freed - v_bitten) * eth_price
     ) / eth_price
-    assert_log(
-        approx_greater_equal_zero(lock, abs_tol=1e-3), f"lock: {lock}", _raise=_raise
-    )
+    if not approx_greater_equal_zero(lock, abs_tol=1e-3):
+        raise failure.InvalidCDPTransactionException(f"lock: {lock}")
     lock = max(lock, 0)
 
     return lock
@@ -160,9 +156,8 @@ def free_to_liquidation_ratio(
         (locked - freed - v_bitten) * eth_price
         - liquidation_ratio * (drawn - wiped - u_bitten) * target_price
     ) / eth_price
-    assert_log(
-        approx_greater_equal_zero(free, abs_tol=1e-3), f"free: {free}", _raise=_raise
-    )
+    if not approx_greater_equal_zero(free, abs_tol=1e-3):
+        raise failure.InvalidCDPTransactionException(f"free: {free}")
     free = max(free, 0)
 
     return free
@@ -240,10 +235,10 @@ def p_rebalance_cdps(params, substep, state_history, state):
             )
             # Exchange ETH for RAI
             ETH_delta, _ = get_output_price(wipe, ETH_balance, RAI_balance, uniswap_fee)
-            assert ETH_delta >= 0, ETH_delta
-            assert ETH_delta <= ETH_balance, ETH_delta
+            if not ETH_delta >= 0: raise failure.InvalidSecondaryMarketDeltaException(f'{ETH_delta=}')
+            if not ETH_delta <= ETH_balance: raise failure.InvalidSecondaryMarketDeltaException(f'{ETH_delta=}')
             RAI_delta = -wipe
-            assert RAI_delta <= 0, RAI_delta
+            if not RAI_delta <= 0: raise failure.InvalidSecondaryMarketDeltaException(f'{RAI_delta=}')
             cdps.at[index, "wiped"] = wiped + wipe
         else:
             # Draw debt, exchanging RAI for ETH in Uniswap
@@ -257,9 +252,9 @@ def p_rebalance_cdps(params, substep, state_history, state):
             )
             # Exchange RAI for ETH
             _, ETH_delta = get_input_price(draw, RAI_balance, ETH_balance, uniswap_fee)
-            assert ETH_delta <= 0, ETH_delta
+            if not ETH_delta <= 0: raise failure.InvalidSecondaryMarketDeltaException(f'{ETH_delta=}')
             RAI_delta = draw
-            assert RAI_delta >= 0, RAI_delta
+            if not RAI_delta >= 0: raise failure.InvalidSecondaryMarketDeltaException(f'{RAI_delta=}')
             cdps.at[index, "drawn"] = drawn + draw
 
     if params['debug']:
@@ -414,12 +409,8 @@ def s_update_eth_collateral(params, substep, state_history, state, policy_input)
     event = (
         f"ETH collateral < 0: {eth_collateral} ~ {(eth_locked, eth_freed, eth_bitten)}"
     )
-    if not assert_log(
-        approx_greater_equal_zero(eth_collateral, 1e-2),
-        event,
-        params["raise_on_assert"],
-    ):
-        eth_collateral = 0
+    if not approx_greater_equal_zero(eth_collateral, 1e-2):
+        raise failure.NegativeBalanceException(event)
 
     return "eth_collateral", eth_collateral
 
@@ -434,12 +425,8 @@ def s_update_principal_debt(params, substep, state_history, state, policy_input)
     event = (
         f"Principal debt < 0: {principal_debt} ~ {(rai_drawn, rai_wiped, rai_bitten)}"
     )
-    if not assert_log(
-        approx_greater_equal_zero(principal_debt, 1e-2),
-        event,
-        params["raise_on_assert"],
-    ):
-        principal_debt = 0
+    if not approx_greater_equal_zero(principal_debt, 1e-2):
+        raise failure.NegativeBalanceException(event)
 
     return "principal_debt", principal_debt
 

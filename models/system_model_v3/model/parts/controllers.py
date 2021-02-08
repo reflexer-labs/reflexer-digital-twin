@@ -40,7 +40,6 @@ def update_target_price(params, substep, state_history, state, policy_input):
             state["target_price"] * (1 + state["target_rate"]) ** state["timedelta"]
         )
     except OverflowError as e:
-        target_price = state["target_price"]
         raise failure.ControllerTargetOverflowException((e, target_price))
 
     if target_price < 0:

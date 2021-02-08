@@ -4,6 +4,7 @@ import math
 import logging
 import time
 from functools import wraps
+import models.system_model_v3.model.parts.failure_modes as failure
 
 
 def print_time(f):
@@ -60,7 +61,7 @@ def assert_log(condition, message="", _raise=True):
     try:
         assert condition, message
     except AssertionError as e:
-        logging.warning(e)
-        if _raise: raise e
+        logging.warning(f"{e}: {message}")
+        if _raise: raise failure.AssertionError(f"{e}: {message}")
 
     return condition

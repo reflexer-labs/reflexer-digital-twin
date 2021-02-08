@@ -131,12 +131,12 @@ def p_arbitrageur_model(params, substep, state_history, state):
             ): raise failure.LiquidationRatioException(context=aggregate_arbitrageur_cdp)
 
             available_to_borrow = draw_to_liquidation_ratio(aggregate_arbitrageur_cdp, eth_price, redemption_price, liquidation_ratio)
-            assert available_to_borrow >= 0, available_to_borrow
+            if not available_to_borrow >= 0: raise failure.ArbitrageConditionException(f'{available_to_borrow=}')
 
             # Check if d_borrow is valid, add delta_d_borrow, using ETH from pocket
             if d_borrow > available_to_borrow:
                 delta_d_borrow = d_borrow - available_to_borrow
-                assert delta_d_borrow >= 0
+                if not delta_d_borrow >= 0: raise failure.ArbitrageConditionException(f'{delta_d_borrow=}')
                 q_deposit = ((liquidation_ratio * redemption_price) / eth_price) * (total_borrowed + delta_d_borrow) - total_deposited
             else:
                 q_deposit = 0
@@ -149,19 +149,19 @@ def p_arbitrageur_model(params, substep, state_history, state):
             borrowed = cdps.at[aggregate_arbitrageur_cdp_index, "drawn"]
             deposited = cdps.at[aggregate_arbitrageur_cdp_index, "locked"]
 
-            assert d_borrow >= 0, d_borrow
-            assert q_deposit >= 0, (q_deposit, redemption_price, eth_price, total_borrowed, d_borrow, total_deposited)
+            if not d_borrow >= 0: raise failure.ArbitrageConditionException(f'{d_borrow=}')
+            if not q_deposit >= 0: raise failure.ArbitrageConditionException(f'{q_deposit=}')
             
             cdps.at[aggregate_arbitrageur_cdp_index, "drawn"] = borrowed + d_borrow
             cdps.at[aggregate_arbitrageur_cdp_index, "locked"] = deposited + q_deposit
 
             RAI_delta = d_borrow
-            assert RAI_delta > 0, RAI_delta
+            if not RAI_delta >= 0: raise failure.ArbitrageConditionException(f'{RAI_delta=}')
 
             # Swap RAI for ETH
             _, ETH_delta = get_input_price(d_borrow, RAI_balance, ETH_balance, uniswap_fee)
-            assert ETH_delta < 0, ETH_delta
-            assert approx_eq(ETH_delta, -z, abs_tol=1e-5), (ETH_delta, -z)
+            if not ETH_delta < 0: raise failure.ArbitrageConditionException(f'{ETH_delta=}')
+            if not approx_eq(ETH_delta, -z, abs_tol=1e-5): raise failure.ArbitrageConditionException(f'{ETH_delta=} {-z=}')
 
     elif cheap_RAI_on_secondary_market:
         '''
@@ -192,22 +192,26 @@ def p_arbitrageur_model(params, substep, state_history, state):
             repayed = cdps.at[aggregate_arbitrageur_cdp_index, "wiped"]
             withdrawn = cdps.at[aggregate_arbitrageur_cdp_index, "freed"]
 
-            assert q_withdraw <= total_deposited, f"{d_repay=} {q_withdraw=} {_g2=} {RAI_balance=} {ETH_balance=} {total_borrowed=} {total_deposited=} {z=} {eth_price=} {redemption_price=} {market_price=}"
-            assert d_repay <= total_borrowed, f"{d_repay=} {q_withdraw=} {_g2=} {RAI_balance=} {ETH_balance=} {total_borrowed=} {total_deposited=} {z=} {eth_price=} {redemption_price=} {market_price=}"
+            if not q_withdraw <= total_deposited: raise failure.ArbitrageConditionException(
+                f"{d_repay=} {q_withdraw=} {_g2=} {RAI_balance=} {ETH_balance=} {total_borrowed=} {total_deposited=} {z=} {eth_price=} {redemption_price=} {market_price=}"
+            )
+            if not d_repay <= total_borrowed: raise failure.ArbitrageConditionException(
+                f"{d_repay=} {q_withdraw=} {_g2=} {RAI_balance=} {ETH_balance=} {total_borrowed=} {total_deposited=} {z=} {eth_price=} {redemption_price=} {market_price=}"
+            )
             
-            assert d_repay >= 0, d_repay
-            assert q_withdraw >= 0, q_withdraw
+            if not d_repay >= 0: raise failure.ArbitrageConditionException(f'{d_repay=}')
+            if not q_withdraw >= 0: raise failure.ArbitrageConditionException(f'{q_withdraw=}')
             
             cdps.at[aggregate_arbitrageur_cdp_index, "wiped"] = repayed + d_repay
             cdps.at[aggregate_arbitrageur_cdp_index, "freed"] = withdrawn + q_withdraw
 
             # Deposit ETH, get RAI
             ETH_delta, _ = get_output_price(d_repay, ETH_balance, RAI_balance, uniswap_fee)
-            assert ETH_delta > 0, ETH_delta
-            assert approx_eq(ETH_delta, z, abs_tol=1e-5), (ETH_delta, z)
+            if not ETH_delta > 0: raise failure.ArbitrageConditionException(f'{ETH_delta=}')
+            if not approx_eq(ETH_delta, z, abs_tol=1e-5): raise failure.ArbitrageConditionException(f'{ETH_delta=} {z=}')
 
             RAI_delta = -d_repay
-            assert RAI_delta < 0, RAI_delta
+            if not RAI_delta < 0: raise failure.ArbitrageConditionException(f'{RAI_delta=}')
     else:
         pass
 
@@ -230,28 +234,20 @@ def validate_updated_cdp_state(cdps, previous_cdps, raise_on_assert=True):
     v_1 = cdps["locked"].sum() - previous_cdps["locked"].sum()
     v_2 = cdps["freed"].sum() - previous_cdps["freed"].sum()
 
-    assert_log(u_1 >= 0, u_1, raise_on_assert)
-    assert_log(u_2 >= 0, u_2, raise_on_assert)
-    assert_log(v_1 >= 0, v_1, raise_on_assert)
-    assert_log(v_2 >= 0, v_2, raise_on_assert)
+    if not u_1 >= 0: raise failure.InvalidCDPStateException(f'{u_1}')
+    if not u_2 >= 0: raise failure.InvalidCDPStateException(f'{u_2}')
+    if not v_1 >= 0: raise failure.InvalidCDPStateException(f'{v_1}')
+    if not v_2 >= 0: raise failure.InvalidCDPStateException(f'{v_2}')
 
-    assert_log(
-        approx_greater_equal_zero(
-            cdps["drawn"].sum() - cdps["wiped"].sum() - cdps["u_bitten"].sum(),
-            abs_tol=1e-2,
-        ),
-        (cdps["drawn"].sum(), cdps["wiped"].sum(), cdps["u_bitten"].sum()),
-        raise_on_assert,
-    )
+    if not approx_greater_equal_zero(
+        cdps["drawn"].sum() - cdps["wiped"].sum() - cdps["u_bitten"].sum(),
+        abs_tol=1e-2,
+    ): raise failure.InvalidCDPStateException(f'{cdps["drawn"].sum()=} {cdps["wiped"].sum()=} {cdps["u_bitten"].sum()=}')
 
-    assert_log(
-        approx_greater_equal_zero(
-            cdps["locked"].sum() - cdps["freed"].sum() - cdps["v_bitten"].sum(),
-            abs_tol=1e-2,
-        ),
-        (cdps["locked"].sum(), cdps["freed"].sum(), cdps["v_bitten"].sum()),
-        raise_on_assert,
-    )
+    if not approx_greater_equal_zero(
+        cdps["locked"].sum() - cdps["freed"].sum() - cdps["v_bitten"].sum(),
+        abs_tol=1e-2,
+    ): raise failure.InvalidCDPStateException(f'{cdps["locked"].sum()=} {cdps["freed"].sum()=} {cdps["v_bitten"].sum()=}')
 
     return {
         "cdps": cdps,
