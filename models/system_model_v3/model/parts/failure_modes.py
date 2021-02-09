@@ -36,3 +36,6 @@ class AssertionError(CustomException):
 
 class LiquidityException(CustomException):
     pass
+
+class ExpectedMarketPriceException(CustomException):
+    pass

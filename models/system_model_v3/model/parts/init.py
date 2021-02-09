@@ -3,7 +3,7 @@ import numpy as np
 
 
 # Ensure all numpy RuntimeWarnings raise
-np.seterr(all='raise')
+np.seterr(divide='raise', over='raise', under='ignore')
 
 def initialize_seed(params, substep, state_history, state):
     if state['timestep'] == 0:

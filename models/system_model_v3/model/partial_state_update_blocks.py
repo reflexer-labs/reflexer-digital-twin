@@ -53,6 +53,7 @@ partial_state_update_blocks_unprocessed = [
             'market_price': markets.p_market_price
         },
         'variables': {
+            'market_slippage': markets.s_slippage,
             'market_price': markets.s_market_price,
             'market_price_twap': markets.s_market_price_twap,
             'uniswap_oracle': markets.s_uniswap_oracle

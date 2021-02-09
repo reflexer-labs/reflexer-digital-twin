@@ -66,6 +66,11 @@ def p_liquidity_demand(params, substep, state_history, state):
     else:
         return {'RAI_delta': 0, 'ETH_delta': 0, 'UNI_delta': 0}
     
+def s_slippage(params, substep, state_history, state, policy_input):
+    expected_market_price = state['market_price']
+    realized_market_price = policy_input['market_price']
+    market_slippage = 1 - realized_market_price / expected_market_price
+    return 'market_slippage', market_slippage
 
 def s_liquidity_demand(params, substep, state_history, state, policy_input):
     liquidity_demand = policy_input['RAI_delta']

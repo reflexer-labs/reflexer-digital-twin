@@ -66,7 +66,7 @@ state_variables = {
     'error_star_integral': 0, # price units x seconds
     
     # Uniswap states
-    'secondary_market_slippage': 0, # TODO: update slippage
+    'market_slippage': 0,
     'RAI_balance': uniswap_rai_balance,
     'ETH_balance': uniswap_eth_balance,
     'UNI_supply': uniswap_rai_balance,
