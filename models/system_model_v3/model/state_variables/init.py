@@ -71,8 +71,8 @@ state_variables = {
     'ETH_balance': uniswap_eth_balance,
     'UNI_supply': uniswap_rai_balance,
     'uniswap_oracle': UniswapOracle(
-        window_size=15*3600, # 15 hours
-        max_window_size=21*3600, # 21 hours
-        granularity=5
+        window_size=16*3600, # 16 hours
+        max_window_size=24*3600, # 24 hours
+        granularity=4 # period = window_size / granularity
     ),
 }

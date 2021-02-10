@@ -3,9 +3,11 @@ import numpy as np
 import copy
 import random
 import logging
+import math
 
 import models.system_model_v3.model.parts.uniswap as uniswap
 from .utils import print_time
+
 
 def p_liquidity_demand(params, substep, state_history, state):
     if params['liquidity_demand_enabled']:
@@ -67,9 +69,13 @@ def p_liquidity_demand(params, substep, state_history, state):
         return {'RAI_delta': 0, 'ETH_delta': 0, 'UNI_delta': 0}
     
 def s_slippage(params, substep, state_history, state, policy_input):
-    expected_market_price = state['market_price']
-    realized_market_price = policy_input['market_price']
-    market_slippage = 1 - realized_market_price / expected_market_price
+    swap = not policy_input['UNI_delta']
+    if swap:
+        expected_market_price = state['market_price']
+        realized_market_price = ((state['ETH_balance'] + policy_input['ETH_delta']) / (state['RAI_balance'] + policy_input['RAI_delta'])) * state['eth_price']
+        market_slippage = 1 - realized_market_price / expected_market_price
+    else:
+        market_slippage = math.nan
     return 'market_slippage', market_slippage
 
 def s_liquidity_demand(params, substep, state_history, state, policy_input):

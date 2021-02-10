@@ -121,47 +121,53 @@ def p_arbitrageur_model(params, substep, state_history, state):
         d_borrow = min(debt_ceiling - total_borrowed, (_g1 - RAI_balance) / (1 - uniswap_fee))
         q_deposit = ((liquidation_ratio * redemption_price) / eth_price) * (total_borrowed + d_borrow) - total_deposited
         z = (ETH_balance * d_borrow * (1 - uniswap_fee)) / (RAI_balance + d_borrow * (1 - uniswap_fee))
+        
+        if is_cdp_above_liquidation_ratio(
+            aggregate_arbitrageur_cdp,
+            eth_price,
+            redemption_price,
+            liquidation_ratio
+        ):
+            if q_deposit < 0:
+                # if not is_cdp_above_liquidation_ratio(
+                #     aggregate_arbitrageur_cdp,
+                #     eth_price,
+                #     redemption_price,
+                #     liquidation_ratio
+                # ): raise failure.LiquidationRatioException(context=aggregate_arbitrageur_cdp)
 
-        if q_deposit < 0:
-            if not is_cdp_above_liquidation_ratio(
-                aggregate_arbitrageur_cdp,
-                eth_price,
-                redemption_price,
-                liquidation_ratio
-            ): raise failure.LiquidationRatioException(context=aggregate_arbitrageur_cdp)
+                available_to_borrow = draw_to_liquidation_ratio(aggregate_arbitrageur_cdp, eth_price, redemption_price, liquidation_ratio)
+                if not available_to_borrow >= 0: raise failure.ArbitrageConditionException(f'{available_to_borrow=}')
 
-            available_to_borrow = draw_to_liquidation_ratio(aggregate_arbitrageur_cdp, eth_price, redemption_price, liquidation_ratio)
-            if not available_to_borrow >= 0: raise failure.ArbitrageConditionException(f'{available_to_borrow=}')
+                # Check if d_borrow is valid, add delta_d_borrow, using ETH from pocket
+                if d_borrow > available_to_borrow:
+                    delta_d_borrow = d_borrow - available_to_borrow
+                    if not delta_d_borrow >= 0: raise failure.ArbitrageConditionException(f'{delta_d_borrow=}')
+                    q_deposit = ((liquidation_ratio * redemption_price) / eth_price) * (total_borrowed + delta_d_borrow) - total_deposited
+                else:
+                    q_deposit = 0
 
-            # Check if d_borrow is valid, add delta_d_borrow, using ETH from pocket
-            if d_borrow > available_to_borrow:
-                delta_d_borrow = d_borrow - available_to_borrow
-                if not delta_d_borrow >= 0: raise failure.ArbitrageConditionException(f'{delta_d_borrow=}')
-                q_deposit = ((liquidation_ratio * redemption_price) / eth_price) * (total_borrowed + delta_d_borrow) - total_deposited
-            else:
-                q_deposit = 0
+            # Check positive profit condition
+            profit = z - q_deposit - gas_price * (swap_gas_used + cdp_gas_used)
+            if profit > 0:
+                logging.debug(f"{state['timestamp']} Performing arb. CDP -> UNI for profit {profit}")
 
-        # Check positive profit condition
-        profit = z - q_deposit - gas_price * (swap_gas_used + cdp_gas_used)
-        if profit > 0:
-            logging.debug(f"{state['timestamp']} Performing arb. CDP -> UNI for profit {profit}")
+                borrowed = cdps.at[aggregate_arbitrageur_cdp_index, "drawn"]
+                deposited = cdps.at[aggregate_arbitrageur_cdp_index, "locked"]
 
-            borrowed = cdps.at[aggregate_arbitrageur_cdp_index, "drawn"]
-            deposited = cdps.at[aggregate_arbitrageur_cdp_index, "locked"]
+                if not d_borrow >= 0: raise failure.ArbitrageConditionException(f'{d_borrow=}')
+                if not q_deposit >= 0: raise failure.ArbitrageConditionException(f'{q_deposit=}')
+                
+                cdps.at[aggregate_arbitrageur_cdp_index, "drawn"] = borrowed + d_borrow
+                cdps.at[aggregate_arbitrageur_cdp_index, "locked"] = deposited + q_deposit
 
-            if not d_borrow >= 0: raise failure.ArbitrageConditionException(f'{d_borrow=}')
-            if not q_deposit >= 0: raise failure.ArbitrageConditionException(f'{q_deposit=}')
-            
-            cdps.at[aggregate_arbitrageur_cdp_index, "drawn"] = borrowed + d_borrow
-            cdps.at[aggregate_arbitrageur_cdp_index, "locked"] = deposited + q_deposit
+                RAI_delta = d_borrow
+                if not RAI_delta >= 0: raise failure.ArbitrageConditionException(f'{RAI_delta=}')
 
-            RAI_delta = d_borrow
-            if not RAI_delta >= 0: raise failure.ArbitrageConditionException(f'{RAI_delta=}')
-
-            # Swap RAI for ETH
-            _, ETH_delta = get_input_price(d_borrow, RAI_balance, ETH_balance, uniswap_fee)
-            if not ETH_delta < 0: raise failure.ArbitrageConditionException(f'{ETH_delta=}')
-            if not approx_eq(ETH_delta, -z, abs_tol=1e-5): raise failure.ArbitrageConditionException(f'{ETH_delta=} {-z=}')
+                # Swap RAI for ETH
+                _, ETH_delta = get_input_price(d_borrow, RAI_balance, ETH_balance, uniswap_fee)
+                if not ETH_delta < 0: raise failure.ArbitrageConditionException(f'{ETH_delta=}')
+                if not approx_eq(ETH_delta, -z, abs_tol=1e-5): raise failure.ArbitrageConditionException(f'{ETH_delta=} {-z=}')
 
     elif cheap_RAI_on_secondary_market:
         '''

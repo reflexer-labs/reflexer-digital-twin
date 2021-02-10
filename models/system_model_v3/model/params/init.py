@@ -42,7 +42,7 @@ params = {
     
     # Controller parameters
     'controller_enabled': [False],
-    'enable_controller_time': [7 * 24 * 3600], # after 7 days
+    'enable_controller_time': [7 * 24 * 3600], # delay in enabling controller (7 days)
     'kp': [5e-7], # proportional term for the stability controller: units 1/USD
     'ki': [-1e-7], # integral term for the stability controller scaled by control period: units 1/(USD*seconds)
     'alpha': [alpha], # in 1/RAY

@@ -46,6 +46,7 @@ partial_state_update_blocks_unprocessed = [
             'UNI_supply': uniswap.update_UNI_supply,
             'liquidity_demand': markets.s_liquidity_demand,
             'liquidity_demand_mean': markets.s_liquidity_demand_mean,
+            'market_slippage': markets.s_slippage,
         }
     },
     {
@@ -53,7 +54,6 @@ partial_state_update_blocks_unprocessed = [
             'market_price': markets.p_market_price
         },
         'variables': {
-            'market_slippage': markets.s_slippage,
             'market_price': markets.s_market_price,
             'market_price_twap': markets.s_market_price_twap,
             'uniswap_oracle': markets.s_uniswap_oracle
