@@ -154,6 +154,7 @@ tables==3.6.1
 # cadCAD==0.4.23
 git+git://github.com/danlessa/cadCAD@danlessa_devel # No deepcopy version of cadCAD for improved performance
 radcad==0.5.6 # Alternative cadCAD engine with parallel processing
+click
 
 # System Model v1.0 Requirements
 
