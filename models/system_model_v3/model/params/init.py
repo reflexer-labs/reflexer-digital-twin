@@ -12,10 +12,6 @@ from models.system_model_v3.model.state_variables.historical_state import eth_pr
 See https://medium.com/reflexer-labs/introducing-proto-rai-c4cf1f013ef for current/launch values
 '''
 
-# TODO: Default assumption, set according to process for deriving per-second alpha
-halflife = SPY / 52 # weeklong halflife
-alpha = int(np.power(.5, float(1 / halflife)) * RAY)
-
 params = {
     # Admin parameters
     'debug': [False], # Print debug messages (see APT model)
@@ -38,14 +34,14 @@ params = {
 
     # Time parameters
     'expected_blocktime': [15], # seconds
-    'control_period': [3600 * 3], # seconds; must be multiple of cumulative time
+    'control_period': [3600 * 4], # seconds; must be multiple of cumulative time
     
     # Controller parameters
     'controller_enabled': [False],
     'enable_controller_time': [7 * 24 * 3600], # delay in enabling controller (7 days)
-    'kp': [5e-7], # proportional term for the stability controller: units 1/USD
-    'ki': [-1e-7], # integral term for the stability controller scaled by control period: units 1/(USD*seconds)
-    'alpha': [alpha], # in 1/RAY
+    'kp': [2e-7], # proportional term for the stability controller: units 1/USD
+    'ki': [-5e-9], # integral term for the stability controller scaled by control period: units 1/(USD*seconds)
+    'alpha': [.999 * RAY], # in 1/RAY
     'error_term': [lambda target, measured: target - measured],
     'rescale_target_price': [True], # scale the target price by the liquidation ratio
     

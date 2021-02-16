@@ -7,7 +7,7 @@ from models.utils.process_results import drop_dataframe_midsteps
 from models.config_wrapper import ConfigWrapper
 
 
-def run(config: ConfigWrapper, drop_midsteps: bool=True, use_radcad=True) -> pd.DataFrame:
+def run(config: ConfigWrapper, drop_midsteps: bool=True, use_radcad=False) -> pd.DataFrame:
     config.append() # Append the simulation config to the cadCAD `configs` list
 
     # Configure the Python logging framework, logs saved to `logs/` directory with the current timestamp.
@@ -41,6 +41,14 @@ def run(config: ConfigWrapper, drop_midsteps: bool=True, use_radcad=True) -> pd.
 
         raw_result = experiment.run()
         exceptions = experiment.exceptions
+
+        # Convert the raw results to a Pandas dataframe
+        df = pd.DataFrame(raw_result)
+        # If enabled, drop the simulation result midsteps
+        # i.e. only keep the final state at the end of a simulation timestep
+        df = drop_dataframe_midsteps(df) if drop_midsteps else df.reset_index()
+
+        return (df, exceptions, None)
     else:
         from cadCAD.engine import ExecutionMode, ExecutionContext, Executor
         from cadCAD.configuration import Experiment
@@ -54,18 +62,17 @@ def run(config: ConfigWrapper, drop_midsteps: bool=True, use_radcad=True) -> pd.
         run = Executor(exec_context=exec_context, configs=configs)
 
         # Execute the simulation, and return the raw results (list of dictionaries containing states)
-        raw_result, _tensor_field, _sessions = run.execute()
-        exceptions = None
+        raw_result, tensor_field, sessions = run.execute()
+
+        # Convert the raw results to a Pandas dataframe
+        df = pd.DataFrame(raw_result)
+        # If enabled, drop the simulation result midsteps
+        # i.e. only keep the final state at the end of a simulation timestep
+        df = drop_dataframe_midsteps(df) if drop_midsteps else df.reset_index()
+
+        return (df, tensor_field, sessions)
 
     end = time.time()
     
     logging.info(f'Finished simulation in {end - start} seconds')
     print(f'Finished simulation in {end - start} seconds')
-
-    # Convert the raw results to a Pandas dataframe
-    df = pd.DataFrame(raw_result)
-    # If enabled, drop the simulation result midsteps
-    # i.e. only keep the final state at the end of a simulation timestep
-    df = drop_dataframe_midsteps(df) if drop_midsteps else df.reset_index()
-
-    return (df, exceptions, None)
