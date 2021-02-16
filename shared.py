@@ -29,3 +29,4 @@ from models.utils.process_results import drop_dataframe_midsteps
 
 import models.system_model_v1 as system_model_v1
 import models.system_model_v2 as system_model_v2
+import models.system_model_v3 as system_model_v3

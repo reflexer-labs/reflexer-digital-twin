@@ -10,7 +10,6 @@ backcall==0.2.0
 black==20.8b1
 bleach==3.2.1
 cachetools==4.1.1
-cadCAD==0.4.23
 certifi==2020.6.20
 cffi==1.14.3
 chardet==3.0.4
@@ -146,11 +145,18 @@ zict==2.0.0
 scikit-optimize==0.8.1
 emcee==3.0.2
 pyDOE==0.3.8
-
 vyper==0.2.8
-
 pytest==6.1.2
-#git+git://github.com/BlockScience/scipy@patch-optimize # Forked off scipy==1.5.2
+tables==3.6.1
+
+# git+git://github.com/BlockScience/scipy@patch-optimize # Forked off scipy==1.5.2, see patch notes in README
+
+cadCAD==0.4.23
+# git+git://github.com/danlessa/cadCAD@danlessa_devel # No deepcopy version of cadCAD for improved performance
+cadcad_machine_search==0.0.1.2
+radcad==0.5.6 # Alternative cadCAD engine with parallel processing
+ipython-autotime
+pandarallel
 
 # System Model v1.0 Requirements
 
