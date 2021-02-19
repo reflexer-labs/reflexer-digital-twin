@@ -65,7 +65,3 @@ for time interval $$\Delta t$$
 * `w_2` -- discrete "shut"/"wipe" event, in RAI
 * `w_3` -- discrete "bite" event, in RAI
 
-## APT system
-
-TODO: update APT glossary
-<!-- #endregion -->

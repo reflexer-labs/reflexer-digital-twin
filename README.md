@@ -73,9 +73,9 @@ improving prices, given current price and expected value from APT bridge
 
 # Where to start?
 
-The current model, **System Model v2.0**, integrates a CDP subsystem, a secondary market subsystem, and applies [Arbitrage Pricing Theory (APT)](https://www.investopedia.com/terms/a/apt.asp) to the **System Model v1.0** model. The **System Model v1.0** model consisted of an estimated "debt price" regressor model, and a fitted market model, with a PI controller in the loop.
+The current model, **System Model v3.0**, is a full system model with CDP and APT system model, using a stochastic Ethereum price and liquidity demand process as a driver, under different PI controller settings.**System Model v2.0**, integrates a CDP subsystem, a secondary market subsystem, and applies [Arbitrage Pricing Theory (APT)](https://www.investopedia.com/terms/a/apt.asp) to the **System Model v1.0** model. The **System Model v1.0** model consisted of an estimated "debt price" regressor model, and a fitted market model, with a PI controller in the loop.
 
-The latest notebook would be the **System Model v2.0** [full system model notebook](notebooks/system_model_v2/notebook_debt_market.ipynb). Please see the below in this README about the Scipy patch that needs to be applied, and the Pickle files you'll need to download for the ML model. The model code used within the notebook can be found in `models/system_model_v2/`.
+The latest notebook would be the **System Model v3.0** [full system model notebook](notebooks/system_model_v3/v3_debt_market_model.ipynb). Please see the below in this README about the Scipy patch that needs to be applied, and the Pickle files you'll need to download for the ML model. The model code used within the notebook can be found in `models/system_model_v3/`.
 
 
 Click [here](parameter_methodology.md) for information about cadCAD parameter sweeping methodology. 
@@ -114,6 +114,23 @@ See [GLOSSARY.md](./GLOSSARY.md) markdown file.
 # Models
 
 [Model versions](https://drive.google.com/drive/u/1/folders/1uW7U2dtrlhb91bkvKzs-Vbh2MBoc7ifZ) 
+
+## System Model v3.0: Full CDP and APT system model
+
+Full system model with CDP and APT system model, using a stochastic Ethereum price and liquidity demand process as a driver, under different PI controller settings.
+
+* Model code: `models/system_model_v3/`
+* Debt Market Model Notebook: `notebooks/system_model_v3/v3_debt_market_model.ipynb`
+* Ethereum stochastic generator: `/notebooks/Stochastic_Generators/Eth_Exogenous_Process_Modeling.ipynb`
+* Uniswap liquidity stochastic generator:`/notebooks/Stochastic_Generators/Uniswap_process_modeling.ipynb`
+
+### Notebooks
+
+1. [Full system model](notebooks/system_model_v3/v3_debt_market_model.ipynb)
+
+### Experiments
+
+
 
 ## System Model v2.0: CDP, APT, Secondary Market Subsystems
 
@@ -239,6 +256,11 @@ simulation.append()
 result = run(drop_midsteps=True)
 ```
 
+## Resources
+* [Tutorial](https://github.com/cadCAD-org/demos/blob/master/tutorials/numerical_computation/numerical_integration_1.ipynb) on how to use cadCAD for numerical integration.
+
+<!---
+
 ## Solidity / cadCAD Cross-Model Simulation
 
 ```bash
@@ -265,7 +287,7 @@ python tests/run_shock_tests.py
 Outputs:
 * `exports/_.png` - metric grid for each set of parameters
 * `notebooks/system_model_v1/shock_tests.ipynb` - template notebook for running test and generating grid
+---!>
 
 
-## Resources
-* [Tutorial](https://github.com/cadCAD-org/demos/blob/master/tutorials/numerical_computation/numerical_integration_1.ipynb) on how to use cadCAD for numerical integration.
+
