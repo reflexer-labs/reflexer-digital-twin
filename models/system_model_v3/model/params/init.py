@@ -37,7 +37,7 @@ params = {
     'control_period': [3600 * 4], # seconds; must be multiple of cumulative time
     
     # Controller parameters
-    'controller_enabled': [False],
+    'controller_enabled': [True],
     'enable_controller_time': [7 * 24 * 3600], # delay in enabling controller (7 days)
     'kp': [2e-7], # proportional term for the stability controller: units 1/USD
     'ki': [-5e-9], # integral term for the stability controller scaled by control period: units 1/(USD*seconds)
