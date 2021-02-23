@@ -115,18 +115,18 @@ See [GLOSSARY.md](./GLOSSARY.md) markdown file.
 
 [Model versions](https://drive.google.com/drive/u/1/folders/1uW7U2dtrlhb91bkvKzs-Vbh2MBoc7ifZ) 
 
+
+
 ## System Model v3.0: Full CDP and APT system model
 
 Full system model with CDP and APT system model, using a stochastic Ethereum price and liquidity demand process as a driver, under different PI controller settings.
 
 * Model code: `models/system_model_v3/`
 * Debt Market Model Notebook: `notebooks/system_model_v3/v3_debt_market_model.ipynb`
-* Ethereum stochastic generator: `/notebooks/Stochastic_Generators/Eth_Exogenous_Process_Modeling.ipynb`
-* Uniswap liquidity stochastic generator:`/notebooks/Stochastic_Generators/Uniswap_process_modeling.ipynb`
 
 ### Notebooks
 
-1. [Full system model](notebooks/system_model_v3/v3_debt_market_model.ipynb)
+1. [Full system model - simple run](notebooks/analysis/Single_run.ipynb)
 
 ### Experiments
 

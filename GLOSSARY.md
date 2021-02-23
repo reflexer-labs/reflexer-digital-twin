@@ -5,8 +5,8 @@
 * APT - [Arbitrage Pricing Theory (APT)](https://www.investopedia.com/terms/a/apt.asp) is a factor pricing model that uses an arbitrage argument to define the impact of factors on the generating process of an asset's return.
 * Reflex-index: a collateralized, non-pegged asset with low volatility compared to its own collateral
 * Redemption price: the price the system wants the reflex-index to have; always stuck at 1 USD for DAI but variable for reflex-indexes
-* Market price: the price that the market values the reflex-index at
-* Redemption rate: a per-second rate (which can be positive or negative) used to incentivize users to generate lever more or pay back their debt; the redemption rate gradually changes the redemption price; similar, but not identical to an interest rate
+* Market price: the price that the market values the reflex-index
+* Redemption rate: a per-second rate (which can be positive or negative) used to incentivize users to generate lever more or pay back their debt; the redemption rate gradually changes the redemption price; similar, but not identical to an interest rate.
 * CDP - A collateralized debt position (CDP) is the position created by locking collateral in Reflex-index’s smart contract. It is essentially a  decentralized loan backed by the value of the collateral.
 * Proportional-Integral-Derivative (PID) controller - is the most commonly implemented real-world stability controller type in the world, and both its modelingstructure and its parameter tuning are well-researched problems.
 
@@ -38,8 +38,6 @@ for time interval $$\Delta t$$
     p(t + \Delta t) = F(p_r(t + \Delta t); \ldots)
   $$
 for time interval $$\Delta t$$
-
-# System Model v2.0
 
 ## CDP system
 
