@@ -50,7 +50,10 @@ def p_resolve_expected_market_price(params, substep, state_history, state):
     beta_2 = params['beta_2'] # regression coefficient for liquidity shock
 
     # Expected Market Price in USD/RAI (cf. APT Model documentation)
-    expected_market_price = p * (interest_rate + beta_1 * (eth_price_mean - eth_price * interest_rate)
+    if params['liquidity_demand_shock'] == False:
+        expected_market_price = p
+    else:
+        expected_market_price = p * (interest_rate + beta_1 * (eth_price_mean - eth_price * interest_rate)
                         + beta_2 * (liquidity_demand_mean - liquidity_demand * interest_rate))
 
     return {'expected_market_price': expected_market_price}

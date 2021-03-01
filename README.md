@@ -93,6 +93,7 @@ Each model is located under `models/_`, with a unique name for each experiment.
 Directories:
 
 * `diagrams/` - system diagrams, used in documentation
+* `experiments/` - experiment results, code, and run logs.
 * `exports/` - exports from simulations, such as datasets, charts, etc.
 * `lib/` - third party libraries modified for use within models and simulations, such as Scipy which had to be patched
 * `logs/` - output directory for cadCAD model logs (local only, in `.gitignore`)
@@ -124,14 +125,16 @@ Full system model with CDP and APT system model, using a stochastic Ethereum pri
 * Model code: `models/system_model_v3/`
 * Debt Market Model Notebook: `notebooks/system_model_v3/v3_debt_market_model.ipynb`
 
-### Notebooks
+### Analysis Notebooks
 
 1. [Full system model - simple run](notebooks/analysis/Single_run.ipynb)
+2. [Shock Test](notebooks/analysis/Shock_Tests.ipynb)
+3. [Sensitivity Test](notebooks/analysis/Sensitivity_tests.ipynb)
+4. [Grid Searches](notebooks/analysis/Grid_Searches.ipynb)
+5. [RAI Mainnet subgraph](notebooks/analysis/TheGraphDataAccess.ipynb)
 
-### Experiments
 
-
-
+### Unsupported
 ## System Model v2.0: CDP, APT, Secondary Market Subsystems
 
 <p align="center"><img src="diagrams/debt_dynamics.png" alt="Debt dynamics" width="80%"/></p>
