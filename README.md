@@ -22,46 +22,7 @@ Mathematical representation:
 
 See [Documenting Model Selection Presentation](https://drive.google.com/drive/u/1/folders/1uW7U2dtrlhb91bkvKzs-Vbh2MBoc7ifZ) for more information.
 
-See [Parameter overview](https://drive.google.com/file/d/1Ud1D3Jq05GcoU7h9IYKf5zGAmxIuzX_X/view) here for more details about the parameters and KPIs.
-
-### APT Bridge
-Takes as input exogenous ETH price process (historical single collateral DAI)
-1. ETH price arrives
-2. Test for arbitrage depending upon realized ETH return:
-* If ETH price rises unexpectedly, borrowing power of CDP rises => reduce
-(“free”) collateral and/or increase (“draw”) debt
-* If ETH price falls unexpectedly, borrowing power of CDP falls =>
-increase (“lock”) collateral and/or decrease (“wipe”) debt
-3. APT Bridge: optimize over (free, draw) or (lock, wipe) pairs to equilibrate the
-expected values of the debt market and the secondary market prices
-4. Optimal values are then passed to CDP to update debt market state,
-endogenous liquidations, opening and closing of CDPs
-5. Updated debt market state is then passed to APT bridge (to update its state)
-and to Secondary Market
-6. Expected price is passed to Secondary Market
-7. Secondary Market returns new market price to APT bridge
-8. New ETH price is realized, process repeats
-
-<CDP framework image>
-    
-### CDP Framework
-1. Takes as input: arbitrage activity (e.g. locks, draws, frees, wipes) from
-APT bridge, and exogenous price of ETH
-2. ETH price changes collateral value, and debt positions are updated:
-* Existing CDPs are rebalanced using arbitrage activity
-* Excess locks after rebalancing (if any) create new position(s)
-* Excess wipes after rebalancing (if any) close (“shut”) position(s)
-* Remaining CDPs below liquidation ratio (if any) are liquidated
-3.Gives as output: new debt market state, sent to APT bridge
-
-### Secondary market
-Simplest model: zero-intelligence trading (Gode and Sunder, Journal of Political Economy 101(1), 1993)
-1. CDP state is translated into an order book
-2. Expected value of market price is received from APT bridge
-3. Market price (uniformly) randomly selected from set of all possible surplus-
-improving prices, given current price and expected value from APT bridge
-4. Secondary Market returns new market price to APT bridge
-5. Excess demand or supply is carried over in order book to next period
+See [Parameter overview](https://drive.google.com/file/d/1Ud1D3Jq05GcoU7h9IYKf5zGAmxIuzX_X/view) here for more details about the parameters and KPIs
     
     
 ## RAI Arbitrageur Model
@@ -69,7 +30,11 @@ improving prices, given current price and expected value from APT bridge
 
 ## AMM Arb Model
 [Click here to see model specifications](https://hackmd.io/7Z2e-Is7Toi-5SaRl4K3tA?view)
-<!-- #endregion -->
+
+## Aggregate Arbitrageur model specifications
+[Click here to see model specifications](https://hackmd.io/vG1Dg_zGT1azTziLv9H7xg)
+    
+    
 
 # Where to start?
 
@@ -132,6 +97,9 @@ Full system model with CDP and APT system model, using a stochastic Ethereum pri
 3. [Sensitivity Test](notebooks/analysis/Sensitivity_tests.ipynb)
 4. [Grid Searches](notebooks/analysis/Grid_Searches.ipynb)
 5. [RAI Mainnet subgraph](notebooks/analysis/TheGraphDataAccess.ipynb)
+
+Additional experiment log files and notebooks can be found [here](notebooks/analysis/Experiments_run.md)
+
 
 
 ### Unsupported

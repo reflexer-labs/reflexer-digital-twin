@@ -27,7 +27,7 @@ params = {
     'token_swap_events': [lambda run, timestep, df=token_swap_df: df[str(run-1)].iloc[timestep]],
     'seconds_passed': [lambda timestep, df=None: 3600],
     
-    'liquidity_demand_enabled': [True],
+    'liquidity_demand_enabled': [True], # turn on or off all shocks
     'liquidity_demand_shock': [False], # introduce shocks (up to 50% of secondary market pool)
     'liquidity_demand_max_percentage': [0.1], # max percentage of secondary market pool when no shocks introduced using liquidity_demand_shock
     'liquidity_demand_shock_percentage': [0.5], # max percentage of secondary market pool when shocks introduced using liquidity_demand_shock
