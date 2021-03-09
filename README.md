@@ -90,13 +90,18 @@ Full system model with CDP and APT system model, using a stochastic Ethereum pri
 * Model code: `models/system_model_v3/`
 * Debt Market Model Notebook: `notebooks/system_model_v3/v3_debt_market_model.ipynb`
 
+### Stochastic Generator Notebooks
+1. [Eth Exogenous Process](notebooks/Stochastic_Generators/Eth_Exogenous_Process_Modeling.ipynb)
+2. [Uniswap Exogenous Process](notebooks/Stochastic_Generators/Uniswap_process_modeling.ipynb)
 ### Analysis Notebooks
 
 1. [Full system model - simple run](notebooks/analysis/Single_run.ipynb)
-2. [Shock Test](notebooks/analysis/Shock_Tests.ipynb)
-3. [Sensitivity Test](notebooks/analysis/Sensitivity_tests.ipynb)
-4. [Grid Searches](notebooks/analysis/Grid_Searches.ipynb)
-5. [RAI Mainnet subgraph](notebooks/analysis/TheGraphDataAccess.ipynb)
+2. [Full system model - MC - WIP](notebooks/analysis/Monte_carlo_run.ipynb)
+3. [Shock Test](notebooks/analysis/Shock_Tests.ipynb)
+4. [Grid Search Sensitivity-WIP](notebooks/analysis/Grid_Search_Sensitivity.ipynb)
+5. [RAI Mainnet subgraph access](notebooks/analysis/TheGraphDataSetCreation.ipynb)
+6. [RAI Mainnet subgraph analysis](notebooks/analysis/TheGraphDataAnalysis.ipynb)
+
 
 Additional experiment log files and notebooks can be found [here](notebooks/analysis/Experiments_run.md)
 
