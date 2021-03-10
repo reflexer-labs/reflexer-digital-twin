@@ -48,7 +48,7 @@ def run(config: ConfigWrapper, drop_midsteps: bool=True, use_radcad=False) -> pd
         # i.e. only keep the final state at the end of a simulation timestep
         df = drop_dataframe_midsteps(df) if drop_midsteps else df.reset_index()
 
-        return (df, exceptions, None)
+        output = (df, exceptions, None)
     else:
         from cadCAD.engine import ExecutionMode, ExecutionContext, Executor
         from cadCAD.configuration import Experiment
@@ -70,9 +70,11 @@ def run(config: ConfigWrapper, drop_midsteps: bool=True, use_radcad=False) -> pd
         # i.e. only keep the final state at the end of a simulation timestep
         df = drop_dataframe_midsteps(df) if drop_midsteps else df.reset_index()
 
-        return (df, tensor_field, sessions)
+        output = (df, tensor_field, sessions)
 
     end = time.time()
     
+    print("")
     logging.info(f'Finished simulation in {end - start} seconds')
     print(f'Finished simulation in {end - start} seconds')
+    return output
