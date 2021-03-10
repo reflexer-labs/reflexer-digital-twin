@@ -42,8 +42,14 @@ The current model, **System Model v3.0**, is a full system model with CDP and AP
 
 The latest notebook would be the **System Model v3.0** [full system model notebook](notebooks/system_model_v3/v3_debt_market_model.ipynb). Please see the below in this README about the Scipy patch that needs to be applied, and the Pickle files you'll need to download for the ML model. The model code used within the notebook can be found in `models/system_model_v3/`.
 
-
 Click [here](parameter_methodology.md) for information about cadCAD parameter sweeping methodology. 
+
+Another starting point is to use the unit tests as a guide. Tests can be contained
+on the `tests/` folder, or on distinct `tests` subfolders that are spread
+on the models itself for convenience (like `models/_/parts/tests/`).
+
+This project is using `pytest` for the testing framework, so in order to use it,
+just use `python -m pytest` on the root folder.
 
 The table of contents and glossary below should serve as a guide.
 
