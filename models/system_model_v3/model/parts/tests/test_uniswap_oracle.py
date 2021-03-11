@@ -22,3 +22,5 @@ def test_oracle_update_obs():
     
     assert oracle.updates - 1 == (N - 1) / (window_size / granularity)
     assert oracle.last_update_time == N
+
+    oracle.update_result(state, update=False)
