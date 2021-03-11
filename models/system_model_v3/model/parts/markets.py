@@ -142,9 +142,13 @@ def p_market_price(params, substep, state_history, state):
     market_price *= state["eth_price"]
 
     # Retrieve RAI
-    uniswap_oracle = copy.deepcopy(state["uniswap_oracle"])
-    uniswap_oracle.update_result(state)
-    median_price = uniswap_oracle.median_price
+    if params.get('constant_uniswap_price', False) is True:
+        median_price = state['market_price']
+        uniswap_oracle = None
+    else:
+        uniswap_oracle = copy.deepcopy(state["uniswap_oracle"])
+        uniswap_oracle.update_result(state)
+        median_price = uniswap_oracle.median_price
 
     return {
         "market_price": market_price,
