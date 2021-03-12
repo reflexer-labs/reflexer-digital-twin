@@ -495,7 +495,7 @@ def s_update_cdp_interest(params, substep, state_history, state, policy_input):
 
     def resolve_cdp_interest(cdp):
         if cdp["open"]:
-            principal_debt = cdp["drawn"]
+            principal_debt = cdp['drawn'] - cdp['wiped'] - cdp['u_bitten']
             previous_accrued_interest = cdp["dripped"]
             cdp["dripped"] = calculate_accrued_interest(
                 stability_fee,
