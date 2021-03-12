@@ -8,7 +8,7 @@
 To achieve this goal, RL implemented a Proportional-Integral-Derivative (PID) controller, based upon a reference document approach for the [Maker DAI market that was never implemented](https://steemit.com/makerdao/@kennyrowe/digital-money-a-simulation-of-the-deflation-rate-adjustment-mechanism-of-the-dai-stablecoin). This controller (described in more detail in what follows) is the most commonly implemented real-world stability controller type in the world, and both its modeling structure and its parameter tuning are well-researched problems.
 
 
-# Goals
+## Goals
 The goals of this repository are to create a cadCAD model to simulate the Reflexer, Rai system with the Arbitrage Pricing Theory (APT) to act as “bridge” between CDP and secondary market. The simulations used here will help design the incorporation of PID controller into a closed-loop system, and select the parameters that optimize how the system responds to price changes in order to achieve overall objectives. In short, 
 * Smoothing of secondary market price movements without assuming a redemption price peg
 * Stability of the controller for a range of exogenous shocks
@@ -23,7 +23,7 @@ Mathematical representation:
 See [Documenting Model Selection Presentation](https://drive.google.com/drive/u/1/folders/1uW7U2dtrlhb91bkvKzs-Vbh2MBoc7ifZ) for more information.
 
 See [Parameter overview](https://drive.google.com/file/d/1Ud1D3Jq05GcoU7h9IYKf5zGAmxIuzX_X/view) here for more details about the parameters and KPIs
-    
+  
     
 ## RAI Arbitrageur Model
 [Click here to see model specifications](https://hackmd.io/@jshorish/Hkdj9NhRw)
@@ -40,10 +40,8 @@ See [Parameter overview](https://drive.google.com/file/d/1Ud1D3Jq05GcoU7h9IYKf5z
 
 The current model, **System Model v3.0**, is a full system model with CDP and APT system model, using a stochastic Ethereum price and liquidity demand process as a driver, under different PI controller settings.**System Model v2.0**, integrates a CDP subsystem, a secondary market subsystem, and applies [Arbitrage Pricing Theory (APT)](https://www.investopedia.com/terms/a/apt.asp) to the **System Model v1.0** model. The **System Model v1.0** model consisted of an estimated "debt price" regressor model, and a fitted market model, with a PI controller in the loop.
 
-The latest notebook would be the **System Model v3.0** [full system model notebook](notebooks/system_model_v3/v3_debt_market_model.ipynb). Please see the below in this README about the Scipy patch that needs to be applied, and the Pickle files you'll need to download for the ML model. The model code used within the notebook can be found in `models/system_model_v3/`.
+The latest notebook would be the **System Model v3.0** [full system model notebook](notebooks/system_model_v3/v3_debt_market_model.ipynb). The model code used within the notebook can be found in `models/system_model_v3/`.
 
-
-Click [here](parameter_methodology.md) for information about cadCAD parameter sweeping methodology. 
 
 The table of contents and glossary below should serve as a guide.
 
@@ -88,13 +86,13 @@ See [GLOSSARY.md](./GLOSSARY.md) markdown file.
 Full system model with CDP and APT system model, using a stochastic Ethereum price and liquidity demand process as a driver, under different PI controller settings.
 
 * Model code: `models/system_model_v3/`
-* Debt Market Model Notebook: `notebooks/system_model_v3/v3_debt_market_model.ipynb`
+* Debt Market Model Notebook: `notebooks/system_model_v3/debt_market_model.ipynb`
 
 ### Stochastic Generator Notebooks
 1. [Eth Exogenous Process](notebooks/Stochastic_Generators/Eth_Exogenous_Process_Modeling.ipynb)
-2. [Uniswap Exogenous Process](notebooks/Stochastic_Generators/Uniswap_process_modeling.ipynb)
+2. [Uniswap Exogenous Process](notebooks/Stochastic_Generators/Uniswap_Process_Modeling.ipynb)
 ### Analysis Notebooks
-
+Notebooks analysing the system and showcasing how to perform experiments and analysis.
 1. [Full system model - simple run](notebooks/analysis/Single_run.ipynb)
 2. [Full system model - MC - WIP](notebooks/analysis/Monte_carlo_run.ipynb)
 3. [Shock Test](notebooks/analysis/Shock_Tests.ipynb)
@@ -105,14 +103,14 @@ Full system model with CDP and APT system model, using a stochastic Ethereum pri
 
 Additional experiment log files and notebooks can be found [here](notebooks/analysis/Experiments_run.md)
 
+Click [here](parameter_methodology.md) for information about cadCAD parameter sweeping methodology. 
 
-
-### Unsupported
+* Note: Notebooks below here are not fully documented
 ## System Model v2.0: CDP, APT, Secondary Market Subsystems
 
 <p align="center"><img src="diagrams/debt_dynamics.png" alt="Debt dynamics" width="80%"/></p>
 
-Full system model with CDP, APT, and secondary market subsystems. See [slides 17-21](https://drive.google.com/drive/u/1/folders/1uW7U2dtrlhb91bkvKzs-Vbh2MBoc7ifZ)
+Full system model with CDP, APT, and secondary market subsystems. See [slides 17-21](https://drive.google.com/drive/u/1/folders/1uW7U2dtrlhb91bkvKzs-Vbh2MBoc7ifZ). Please see the below in this README about the Scipy patch that needs to be applied, and the Pickle files you'll need to download for the ML model. 
 
 * Model code: `models/system_model_v2/`
 * Notebooks: `notebooks/system_model_v2/`
@@ -233,7 +231,7 @@ result = run(drop_midsteps=True)
 ```
 
 ## Resources
-* [Tutorial](https://github.com/cadCAD-org/demos/blob/master/tutorials/numerical_computation/numerical_integration_1.ipynb) on how to use cadCAD for numerical integration.
+* [Tutorial](https://github.com/cadCAD-org/demos/blob/master/tutorials/numerical_computation/numerical_integration_1.ipynb) This tutorial is the first in a series on numerical computation. The goal of this tutorials is to outline and define the key concepts of and present pseudo code for numerical integration for applications of signal processing and control theory in smart contracts.
 
 <!---
 

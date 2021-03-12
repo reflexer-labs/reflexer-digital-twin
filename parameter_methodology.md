@@ -11,7 +11,7 @@ template:
 -- Optimal parameters are selected
 
 ## cadCAD as Decision Support Software
-The overall objective of the project is to provide Rai with a software Decision Support System implemented via cadCAD, that achieves two design goals. First, the DSS achieves the iimmediate project objective, which is to provide stakeholders with the optimal economic policy parameters that are required to help implement the RAI economic system system. Such parameters are unknown at the time of system design, and require estimation and/or optimization using the system representation that a DSS provides. 
+The overall objective of the project is to provide Reflexer with a software Decision Support System implemented via cadCAD, that achieves two design goals. First, the DSS achieves the iimmediate project objective, which is to provide stakeholders with the optimal economic policy parameters that are required to help implement the RAI economic system system. Such parameters are unknown at the time of system design, and require estimation and/or optimization using the system representation that a DSS provides. 
 
 Second, the ongoing project objective will be to address the fact that as the system changes over time, its optimal parameter values (and hence participant behavior) may also change. cadCAD's DSS representation is created with dynamic analysis in mind, allowing for periodic updating of parameters in response to real-time information from the system as it evolves over time. Such parameter updating allows the DSS to be used by individual miners, to assist in their own economic policy over time. 
 
