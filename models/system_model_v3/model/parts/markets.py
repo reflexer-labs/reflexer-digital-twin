@@ -10,15 +10,15 @@ from .utils import print_time
 
 
 def p_liquidity_demand(params, substep, state_history, state):
-    if params['liquidity_demand_enabled']:
-        RAI_balance = state['RAI_balance']
-        ETH_balance = state['ETH_balance']
-        UNI_supply = state['UNI_supply']
+    if params["liquidity_demand_enabled"]:
+        RAI_balance = state["RAI_balance"]
+        ETH_balance = state["ETH_balance"]
+        UNI_supply = state["UNI_supply"]
 
-        market_price = state['market_price']
-        eth_price = state['eth_price']
-        
-        uniswap_fee = params['uniswap_fee']
+        market_price = state["market_price"]
+        eth_price = state["eth_price"]
+
+        uniswap_fee = params["uniswap_fee"]
 
         swap = random.randint(0, 1)
         # Positive == swap in, or add liquidity event; negative == swap out or remove liquidity event
@@ -27,80 +27,142 @@ def p_liquidity_demand(params, substep, state_history, state):
         UNI_delta = 0
         if swap:
             # Draw from swap process
-            RAI_delta = abs(params['token_swap_events'](state['run'], state['timestep']) * 1e-18)
-            RAI_delta = min(RAI_delta, RAI_balance * params['liquidity_demand_shock_percentage']) \
-                if params['liquidity_demand_shock'] \
-                else min(RAI_delta, RAI_balance * params['liquidity_demand_max_percentage'])
+            RAI_delta = abs(
+                params["token_swap_events"](state["run"], state["timestep"]) * 1e-18
+            )
+            RAI_delta = (
+                min(
+                    RAI_delta, RAI_balance * params["liquidity_demand_shock_percentage"]
+                )
+                if params["liquidity_demand_shock"]
+                else min(
+                    RAI_delta, RAI_balance * params["liquidity_demand_max_percentage"]
+                )
+            )
             RAI_delta = RAI_delta * direction
 
             if RAI_delta >= 0:
                 # Selling RAI
-                _, ETH_delta = uniswap.get_input_price(RAI_delta, RAI_balance, ETH_balance, uniswap_fee)
+                _, ETH_delta = uniswap.get_input_price(
+                    RAI_delta, RAI_balance, ETH_balance, uniswap_fee
+                )
                 assert ETH_delta <= 0, (ETH_delta, RAI_delta)
                 assert ETH_delta <= ETH_balance, (ETH_delta, ETH_balance)
             else:
                 # Buying RAI
-                ETH_delta, _ = uniswap.get_output_price(abs(RAI_delta), ETH_balance, RAI_balance, uniswap_fee)
+                ETH_delta, _ = uniswap.get_output_price(
+                    abs(RAI_delta), ETH_balance, RAI_balance, uniswap_fee
+                )
                 assert ETH_delta > 0, (ETH_delta, RAI_delta)
                 assert RAI_delta <= RAI_balance, (RAI_delta, RAI_balance)
         else:
             # Draw from liquidity process
-            RAI_delta = abs(params['liquidity_demand_events'](state['run'], state['timestep']) * 1e-18)
-            RAI_delta = min(RAI_delta, RAI_balance * params['liquidity_demand_shock_percentage']) \
-                if params['liquidity_demand_shock'] \
-                else min(RAI_delta, RAI_balance * params['liquidity_demand_max_percentage'])
+            RAI_delta = abs(
+                params["liquidity_demand_events"](state["run"], state["timestep"])
+                * 1e-18
+            )
+            RAI_delta = (
+                min(
+                    RAI_delta, RAI_balance * params["liquidity_demand_shock_percentage"]
+                )
+                if params["liquidity_demand_shock"]
+                else min(
+                    RAI_delta, RAI_balance * params["liquidity_demand_max_percentage"]
+                )
+            )
             RAI_delta = RAI_delta * direction
 
             if RAI_delta >= 0:
-                ETH_delta, RAI_delta, UNI_delta = uniswap.add_liquidity(ETH_balance, RAI_balance, UNI_supply, RAI_delta, RAI_delta * market_price / eth_price)
+                ETH_delta, RAI_delta, UNI_delta = uniswap.add_liquidity(
+                    ETH_balance,
+                    RAI_balance,
+                    UNI_supply,
+                    RAI_delta,
+                    RAI_delta * market_price / eth_price,
+                )
                 assert ETH_delta >= 0
                 assert RAI_delta >= 0
                 assert UNI_delta >= 0
             else:
-                ETH_delta, RAI_delta, UNI_delta = uniswap.remove_liquidity(ETH_balance, RAI_balance, UNI_supply, abs(RAI_delta))
+                ETH_delta, RAI_delta, UNI_delta = uniswap.remove_liquidity(
+                    ETH_balance, RAI_balance, UNI_supply, abs(RAI_delta)
+                )
                 assert ETH_delta <= 0
                 assert ETH_delta <= ETH_balance, (ETH_delta, ETH_balance)
                 assert RAI_delta <= 0
                 assert UNI_delta <= 0
 
-        logging.debug(f"Secondary market {'swap' if swap else 'liquidity demand'}: {RAI_delta=} {ETH_delta=} {UNI_delta=}")
-        return {'RAI_delta': RAI_delta, 'ETH_delta': ETH_delta, 'UNI_delta': UNI_delta}
+        logging.debug(
+            f"Secondary market {'swap' if swap else 'liquidity demand'}: {RAI_delta=} {ETH_delta=} {UNI_delta=}"
+        )
+        return {"RAI_delta": RAI_delta, "ETH_delta": ETH_delta, "UNI_delta": UNI_delta}
     else:
-        return {'RAI_delta': 0, 'ETH_delta': 0, 'UNI_delta': 0}
-    
+        return {"RAI_delta": 0, "ETH_delta": 0, "UNI_delta": 0}
+
+
 def s_slippage(params, substep, state_history, state, policy_input):
-    swap = not policy_input['UNI_delta']
+    swap = not policy_input["UNI_delta"]
     if swap:
-        expected_market_price = state['market_price']
-        realized_market_price = ((state['ETH_balance'] + policy_input['ETH_delta']) / (state['RAI_balance'] + policy_input['RAI_delta'])) * state['eth_price']
+        expected_market_price = state["market_price"]
+        realized_market_price = (
+            (state["ETH_balance"] + policy_input["ETH_delta"])
+            / (state["RAI_balance"] + policy_input["RAI_delta"])
+        ) * state["eth_price"]
         market_slippage = 1 - realized_market_price / expected_market_price
     else:
         market_slippage = math.nan
-    return 'market_slippage', market_slippage
+    return "market_slippage", market_slippage
+
 
 def s_liquidity_demand(params, substep, state_history, state, policy_input):
-    liquidity_demand = policy_input['RAI_delta']
-    return 'liquidity_demand', liquidity_demand
+    liquidity_demand = policy_input["RAI_delta"]
+    return "liquidity_demand", liquidity_demand
+
 
 def s_liquidity_demand_mean(params, substep, state_history, state, policy_input):
-    liquidity_demand = policy_input['RAI_delta']
-    liquidity_demand_mean = (state['liquidity_demand_mean'] + liquidity_demand) / 2
-    return 'liquidity_demand_mean', liquidity_demand_mean
+    liquidity_demand = policy_input["RAI_delta"]
+    liquidity_demand_mean = (state["liquidity_demand_mean"] + liquidity_demand) / 2
+    return "liquidity_demand_mean", liquidity_demand_mean
+
 
 def p_market_price(params, substep, state_history, state):
-    market_price = (state['ETH_balance'] / state['RAI_balance']) * state['eth_price']
+    """
+    Retrieve the RAI/ETH market price.
 
-    uniswap_oracle = copy.deepcopy(state['uniswap_oracle'])
-    uniswap_oracle.update_result(state)
-    median_price = uniswap_oracle.median_price
+    Output:
+        market_price: Instantaneous RAI price
+        market_price_twap: Median RAI price according to the Uniswap Oracle
+        uniswap_oracle: Mutated Uniswap Oracle object
+    """
 
-    return {"market_price": market_price, "market_price_twap": median_price, "uniswap_oracle": uniswap_oracle}
+    # Calculate the instantaneous RAI price
+    # RAI_price = ETH_price * ETH_bal / RAI_bal
+    market_price = state["ETH_balance"]
+    market_price /= state["RAI_balance"] 
+    market_price *= state["eth_price"]
+
+    # Retrieve RAI
+    # @danlessa note:
+    # this is possibly slow
+    # mostly because of appends and deepcopying
+    #uniswap_oracle = copy.deepcopy(state["uniswap_oracle"])
+    #uniswap_oracle.update_result(state)
+    #median_price = uniswap_oracle.median_price
+
+    return {
+        "market_price": market_price,
+        "market_price_twap": market_price,
+        "uniswap_oracle": None,
+    }
+
 
 def s_market_price(params, substep, state_history, state, policy_input):
     return "market_price", policy_input["market_price"]
 
+
 def s_market_price_twap(params, substep, state_history, state, policy_input):
     return "market_price_twap", policy_input["market_price_twap"]
+
 
 def s_uniswap_oracle(params, substep, state_history, state, policy_input):
     return "uniswap_oracle", policy_input["uniswap_oracle"]
