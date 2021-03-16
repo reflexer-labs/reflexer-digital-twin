@@ -40,21 +40,8 @@ See [Parameter overview](https://drive.google.com/file/d/1Ud1D3Jq05GcoU7h9IYKf5z
 
 The current model, **System Model v3.0**, is a full system model with CDP and APT system model, using a stochastic Ethereum price and liquidity demand process as a driver, under different PI controller settings.**System Model v2.0**, integrates a CDP subsystem, a secondary market subsystem, and applies [Arbitrage Pricing Theory (APT)](https://www.investopedia.com/terms/a/apt.asp) to the **System Model v1.0** model. The **System Model v1.0** model consisted of an estimated "debt price" regressor model, and a fitted market model, with a PI controller in the loop.
 
-<<<<<<< HEAD
 The latest notebook would be the **System Model v3.0** [full system model notebook](notebooks/system_model_v3/v3_debt_market_model.ipynb). The model code used within the notebook can be found in `models/system_model_v3/`.
 
-=======
-The latest notebook would be the **System Model v3.0** [full system model notebook](notebooks/system_model_v3/v3_debt_market_model.ipynb). Please see the below in this README about the Scipy patch that needs to be applied, and the Pickle files you'll need to download for the ML model. The model code used within the notebook can be found in `models/system_model_v3/`.
-
-Click [here](parameter_methodology.md) for information about cadCAD parameter sweeping methodology. 
->>>>>>> uniswap_profiling
-
-Another starting point is to use the unit tests as a guide. Tests can be contained
-on the `tests/` folder, or on distinct `tests` subfolders that are spread
-on the models itself for convenience (like `models/_/parts/tests/`).
-
-This project is using `pytest` for the testing framework, so in order to use it,
-just use `python -m pytest` on the root folder.
 
 The table of contents and glossary below should serve as a guide.
 
