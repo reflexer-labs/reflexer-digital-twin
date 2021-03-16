@@ -33,7 +33,7 @@ class OptimalValues(TypedDict):
     v_1: RAI
     v_2: RAI
 
-class ReflexerStateVariables(TypedDict):
+class ReflexerStateVariables(TypedDict, total=True):
     """
     Units and types of the state variables
     """
@@ -64,7 +64,7 @@ class ReflexerStateVariables(TypedDict):
 
     # Principal debt states
     principal_debt: RAI
-    raw_drawn: RAI
+    rai_drawn: RAI
     rai_wiped: RAI
     rai_bitten: RAI
 
@@ -168,6 +168,10 @@ state_variables = {
         window_size=16*3600, # 16 hours
         max_window_size=24*3600, # 24 hours
         granularity=4 # period = window_size / granularity
-    ),
+    )
 }
 
+# Assert that the dict is consistent
+typed_dict_keys = set(ReflexerStateVariables.__annotations__.keys())
+state_var_keys = set(state_variables.keys())
+assert typed_dict_keys == state_var_keys, (state_var_keys - typed_dict_keys, typed_dict_keys - state_var_keys)
