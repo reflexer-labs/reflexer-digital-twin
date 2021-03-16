@@ -6,15 +6,22 @@ Height = int
 ETH = float 
 USD = float
 RAI = float
+exaRAI = float
 UNI = float
 ETH_per_USD = float
 RAI_per_USD = float
+USD_per_RAI = float
+USD_per_RAI_Seconds = float
 USD_per_Seconds = float
+USD_per_ETH = float
 Percentage_Per_Second = float
 Percentage = float
-Per_USD: float
-Per_USD_Seconds: float
-Per_RAY: float
+Per_USD = float
+Per_USD_Seconds = float
+Per_RAY = float
+Run = int
+Timestep = int
+Gwei = int
 
 class CDP_Metric(TypedDict):
     cdp_count: int

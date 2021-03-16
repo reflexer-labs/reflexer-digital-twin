@@ -52,20 +52,20 @@ class ReflexerStateVariables(TypedDict, total=True):
 
     # System states
     stability_fee: Percentage_Per_Second
-    market_price: RAI_per_USD
-    market_price_twap: RAI_per_USD
-    target_price: RAI_per_USD
+    market_price: USD_per_RAI
+    market_price_twap: USD_per_RAI
+    target_price: USD_per_RAI
     target_rate: Percentage_Per_Second
 
     # APT model states
     eth_return: Percentage
     eth_gross_return: Percentage
-    expected_market_price: RAI_per_USD
-    expected_debt_price: RAI_per_USD
+    expected_market_price: USD_per_RAI
+    expected_debt_price: USD_per_RAI
 
     # Controller states
-    error_star: USD
-    error_star_integral: USD_per_Seconds
+    error_star: USD_per_RAI
+    error_star_integral: USD_per_RAI_Seconds
 
     # Uniswap states
     market_slippage: Percentage   
