@@ -13,7 +13,7 @@ def update_target_rate(params, substep, state_history, state, policy_input):
         error_integral = state["error_star_integral"]  # unit USD * seconds
 
         target_rate = (
-            params["kp"] * error + params["ki"] / params['control_period'] * error_integral
+            params["kp"] * error + (params["ki"] / params['control_period']) * error_integral
         )
 
         target_rate = target_rate if policy_input["controller_enabled"] else 0  # unitless
