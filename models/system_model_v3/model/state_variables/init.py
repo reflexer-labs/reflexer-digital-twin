@@ -4,34 +4,8 @@ from models.system_model_v3.model.state_variables.liquidity import cdps, eth_col
 from models.system_model_v3.model.state_variables.system import stability_fee, target_price
 from models.system_model_v3.model.state_variables.historical_state import eth_price
 from models.system_model_v3.model.parts.uniswap_oracle import UniswapOracle
-
+from models.system_model_v3.model.types import *
 import datetime as dt
-
-Seconds = int
-Height = int
-ETH = float 
-USD = float
-RAI = float
-UNI = float
-ETH_per_USD = float
-RAI_per_USD = float
-USD_per_Seconds = float
-Percentage_Per_Second = float
-Percentage = float
-
-class CDP_Metric(TypedDict):
-    cdp_count: int
-    open_cdp_count: int
-    closed_cdp_count: int
-    mean_cdp_collateral: float
-    median_cdp_collateral: float
-
-
-class OptimalValues(TypedDict):
-    u_1: RAI
-    u_2: RAI
-    v_1: RAI
-    v_2: RAI
 
 class ReflexerStateVariables(TypedDict, total=True):
     """
