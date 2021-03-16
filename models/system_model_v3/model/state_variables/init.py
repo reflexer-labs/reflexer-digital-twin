@@ -1,9 +1,105 @@
+from typing import Dict, TypedDict
+import pandas as pd
 from models.system_model_v3.model.state_variables.liquidity import cdps, eth_collateral, principal_debt, uniswap_rai_balance, uniswap_eth_balance
 from models.system_model_v3.model.state_variables.system import stability_fee, target_price
 from models.system_model_v3.model.state_variables.historical_state import eth_price
 from models.system_model_v3.model.parts.uniswap_oracle import UniswapOracle
 
 import datetime as dt
+
+Seconds = int
+Height = int
+ETH = float 
+USD = float
+RAI = float
+UNI = float
+ETH_per_USD = float
+RAI_per_USD = float
+USD_per_Seconds = float
+Percentage_Per_Second = float
+Percentage = float
+
+class CDP_Metric(TypedDict):
+    cdp_count: int
+    open_cdp_count: int
+    closed_cdp_count: int
+    mean_cdp_collateral: float
+    median_cdp_collateral: float
+
+
+class OptimalValues(TypedDict):
+    u_1: RAI
+    u_2: RAI
+    v_1: RAI
+    v_2: RAI
+
+class ReflexerStateVariables(TypedDict):
+    """
+    Units and types of the state variables
+    """
+    # Metadata / metrics
+    cdp_metrics: CDP_Metric
+    optimal_values: OptimalValues
+    sim_metrics: Dict[str, object]
+
+    # Time states
+    timedelta: Seconds
+    cumulative_time: Seconds
+    timestamp: dt.datetime
+    blockheight: Height
+
+    # Exogenous states
+    eth_price: ETH_per_USD
+    liquidity_demand: RAI
+    liquidity_demand_mean: RAI
+
+    # CDP states
+    cdps: pd.DataFrame
+
+    # ETH collateral states
+    eth_collateral: ETH
+    eth_locked: ETH
+    eth_freed: ETH
+    eth_bitten: ETH
+
+    # Principal debt states
+    principal_debt: RAI
+    raw_drawn: RAI
+    rai_wiped: RAI
+    rai_bitten: RAI
+
+    # Accrued interest states
+    accrued_interest: RAI
+    interest_bitten: RAI
+    w_1: RAI
+    w_2: RAI
+    w_3: RAI
+    system_revenue: RAI
+
+    # System states
+    stability_fee: Percentage_Per_Second
+    market_price: RAI_per_USD
+    market_price_twap: RAI_per_USD
+    target_price: RAI_per_USD
+    target_rate: Percentage_Per_Second
+
+    # APT model states
+    eth_return: Percentage
+    eth_gross_return: Percentage
+    expected_market_price: RAI_per_USD
+    expected_debt_price: RAI_per_USD
+
+    # Controller states
+    error_star: USD
+    error_star_integral: USD_per_Seconds
+
+    # Uniswap states
+    market_slippage: Percentage   
+    RAI_balance: RAI
+    ETH_balance: ETH
+    UNI_supply: UNI
+    uniswap_oracle: UniswapOracle
+
 
 
 # NB: These initial states may be overriden in the relevant notebook or experiment process
@@ -40,8 +136,6 @@ state_variables = {
     
     # Accrued interest states
     'accrued_interest': 0, # "D_2"; the total interest accrued in the system i.e. current D_2 + w_1 - w_2 - w_3
-    'interest_dripped': 0, # cumulative w_1 interest collected
-    'interest_wiped': 0, # cumulative w_2, interest repaid - in practice acrues to MKR holders, because interest is actually acrued by burning MKR
     'interest_bitten': 0, # cumulative w_3
     'w_1': 0, # discrete "drip" event, in RAI
     'w_2': 0, # discrete "shut"/"wipe" event, in RAI
@@ -76,3 +170,4 @@ state_variables = {
         granularity=4 # period = window_size / granularity
     ),
 }
+
