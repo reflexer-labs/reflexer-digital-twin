@@ -40,8 +40,8 @@ def p_resolve_expected_market_price(params, substep, state_history, state):
     # @danlessa note:
     # List comprehensions can be slow. Maybe creating a numpy array for it?
     # Also, I've commented it out because it is not being used.
-    # market_price_data = [state[-1]['market_price'] for state in state_history]
-    # market_price_mean = statistics.mean(market_price_data)
+    market_price_data = [state[-1]['market_price'] for state in state_history]
+    market_price_mean = statistics.mean(market_price_data)
 
     # NOTE Convention on liquidity:
     # Liquidity here means the net transfer in or out of RAI tokens in the ETH-RAI pool,

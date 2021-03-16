@@ -145,14 +145,14 @@ def p_market_price(params, substep, state_history, state):
     # @danlessa note:
     # this is possibly slow
     # mostly because of appends and deepcopying
-    #uniswap_oracle = copy.deepcopy(state["uniswap_oracle"])
-    #uniswap_oracle.update_result(state)
-    #median_price = uniswap_oracle.median_price
+    uniswap_oracle = copy.deepcopy(state["uniswap_oracle"])
+    uniswap_oracle.update_result(state)
+    median_price = uniswap_oracle.median_price
 
     return {
         "market_price": market_price,
-        "market_price_twap": market_price,
-        "uniswap_oracle": None,
+        "market_price_twap": median_price,
+        "uniswap_oracle": uniswap_oracle,
     }
 
 
