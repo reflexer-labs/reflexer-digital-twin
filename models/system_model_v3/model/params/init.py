@@ -1,5 +1,10 @@
+from typing import Callable
 import numpy as np
 import pandas as pd
+from pandas.core.frame import DataFrame
+
+
+from models.system_model_v3.model.types import *
 
 import models.options as options
 from models.constants import SPY, RAY
@@ -11,6 +16,46 @@ from models.system_model_v3.model.state_variables.historical_state import eth_pr
 '''
 See https://medium.com/reflexer-labs/introducing-proto-rai-c4cf1f013ef for current/launch values
 '''
+
+
+class ReflexerModelParameters(TypedDict):
+    debug: bool
+    raise_on_assert: bool
+    free_memory_states: List[str]
+    IntegralType: object
+    # IntegralType
+    eth_price: Callable[[Run, Timestep], List[USD_per_ETH]]
+    liquidity_demand_events: Callable[[Run, Timestep, DataFrame], exaRAI]
+    token_swap_events: Callable[[Run, Timestep, DataFrame], exaRAI]
+    seconds_passed: Callable[[Timestep, DataFrame], Seconds]
+    liquidity_demand_enabled: bool
+    liquidity_demand_shock: bool
+    liquidity_demand_max_percentage: Percentage
+    liquidity_demand_shock_percentage: Percentage
+    expected_blocktime: Seconds
+    control_period: Seconds
+    controller_enabled: bool
+    enable_controller_time: Seconds
+    kp: Per_USD
+    ki: Per_USD_Seconds
+    alpha: Per_RAY
+    error_term: Callable[[USD_per_RAI, USD_per_RAI], USD_per_RAI]
+    rescale_target_price: bool
+    arbitrageur_considers_liquidation_ratio: bool
+    interest_rate: Percentage
+    beta_1: ETH_per_USD
+    beta_2: RAI_per_USD
+    liquidation_ratio: Percentage
+    liquidation_buffer: Percentage
+    liquidation_penalty: Percentage
+    debt_ceiling: RAI
+    stability_fee: Callable[[Timestep, DataFrame],  Percentage]
+    uniswap_fee: Percentage
+    gas_price: ETH
+    swap_gas_used: Gwei
+    cdp_gas_used: Gwei
+
+
 
 params = {
     # Admin parameters
@@ -69,3 +114,10 @@ params = {
     'swap_gas_used': [103834],
     'cdp_gas_used': [(369e3 + 244e3) / 2], # Deposit + borrow; repay + withdraw
 }
+
+
+
+# Assert that the dict is consistent
+typed_dict_keys = set(ReflexerModelParameters.__annotations__.keys())
+state_var_keys = set(params.keys())
+assert typed_dict_keys == state_var_keys, (state_var_keys - typed_dict_keys, typed_dict_keys - state_var_keys)

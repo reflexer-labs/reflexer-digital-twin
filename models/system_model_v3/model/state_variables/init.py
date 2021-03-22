@@ -1,9 +1,79 @@
+from typing import Dict, TypedDict
+import pandas as pd
 from models.system_model_v3.model.state_variables.liquidity import cdps, eth_collateral, principal_debt, uniswap_rai_balance, uniswap_eth_balance
 from models.system_model_v3.model.state_variables.system import stability_fee, target_price
 from models.system_model_v3.model.state_variables.historical_state import eth_price
 from models.system_model_v3.model.parts.uniswap_oracle import UniswapOracle
-
+from models.system_model_v3.model.types import *
 import datetime as dt
+
+class ReflexerStateVariables(TypedDict, total=True):
+    """
+    Units and types of the state variables
+    """
+    # Metadata / metrics
+    cdp_metrics: CDP_Metric
+    optimal_values: OptimalValues
+    sim_metrics: Dict[str, object]
+
+    # Time states
+    timedelta: Seconds
+    cumulative_time: Seconds
+    timestamp: dt.datetime
+    blockheight: Height
+
+    # Exogenous states
+    eth_price: ETH_per_USD
+    liquidity_demand: RAI
+    liquidity_demand_mean: RAI
+
+    # CDP states
+    cdps: pd.DataFrame
+
+    # ETH collateral states
+    eth_collateral: ETH
+    eth_locked: ETH
+    eth_freed: ETH
+    eth_bitten: ETH
+
+    # Principal debt states
+    principal_debt: RAI
+    rai_drawn: RAI
+    rai_wiped: RAI
+    rai_bitten: RAI
+
+    # Accrued interest states
+    accrued_interest: RAI
+    interest_bitten: RAI
+    w_1: RAI
+    w_2: RAI
+    w_3: RAI
+    system_revenue: RAI
+
+    # System states
+    stability_fee: Percentage_Per_Second
+    market_price: USD_per_RAI
+    market_price_twap: USD_per_RAI
+    target_price: USD_per_RAI
+    target_rate: Percentage_Per_Second
+
+    # APT model states
+    eth_return: Percentage
+    eth_gross_return: Percentage
+    expected_market_price: USD_per_RAI
+    expected_debt_price: USD_per_RAI
+
+    # Controller states
+    error_star: USD_per_RAI
+    error_star_integral: USD_per_RAI_Seconds
+
+    # Uniswap states
+    market_slippage: Percentage   
+    RAI_balance: RAI
+    ETH_balance: ETH
+    UNI_supply: UNI
+    uniswap_oracle: UniswapOracle
+
 
 
 # NB: These initial states may be overriden in the relevant notebook or experiment process
@@ -40,8 +110,6 @@ state_variables = {
     
     # Accrued interest states
     'accrued_interest': 0, # "D_2"; the total interest accrued in the system i.e. current D_2 + w_1 - w_2 - w_3
-    'interest_dripped': 0, # cumulative w_1 interest collected
-    'interest_wiped': 0, # cumulative w_2, interest repaid - in practice acrues to MKR holders, because interest is actually acrued by burning MKR
     'interest_bitten': 0, # cumulative w_3
     'w_1': 0, # discrete "drip" event, in RAI
     'w_2': 0, # discrete "shut"/"wipe" event, in RAI
@@ -74,5 +142,10 @@ state_variables = {
         window_size=16*3600, # 16 hours
         max_window_size=24*3600, # 24 hours
         granularity=4 # period = window_size / granularity
-    ),
+    )
 }
+
+# Assert that the dict is consistent
+typed_dict_keys = set(ReflexerStateVariables.__annotations__.keys())
+state_var_keys = set(state_variables.keys())
+assert typed_dict_keys == state_var_keys, (state_var_keys - typed_dict_keys, typed_dict_keys - state_var_keys)
