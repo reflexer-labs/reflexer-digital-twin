@@ -42,14 +42,14 @@ class ReflexerModelParameters(TypedDict):
     error_term: Callable[[USD_per_RAI, USD_per_RAI], USD_per_RAI]
     rescale_target_price: bool
     arbitrageur_considers_liquidation_ratio: bool
-    interest_rate: Percentage
-    beta_1: ETH_per_USD
-    beta_2: RAI_per_USD
+    interest_rate: float
+    beta_1: USD_per_ETH
+    beta_2: USD_per_RAI
     liquidation_ratio: Percentage
     liquidation_buffer: Percentage
     liquidation_penalty: Percentage
     debt_ceiling: RAI
-    stability_fee: Callable[[Timestep, DataFrame],  Percentage]
+    stability_fee: Callable[[Timestep, DataFrame],  Percentage_Per_Second]
     uniswap_fee: Percentage
     gas_price: ETH
     swap_gas_used: Gwei
