@@ -23,7 +23,7 @@ class ReflexerStateVariables(TypedDict, total=True):
     blockheight: Height
 
     # Exogenous states
-    eth_price: ETH_per_USD
+    eth_price: USD_per_ETH
     liquidity_demand: RAI
     liquidity_demand_mean: RAI
 
@@ -65,7 +65,7 @@ class ReflexerStateVariables(TypedDict, total=True):
 
     # Controller states
     error_star: USD_per_RAI
-    error_star_integral: USD_per_RAI_Seconds
+    error_star_integral: USD_Seconds_per_RAI
 
     # Uniswap states
     market_slippage: Percentage   
