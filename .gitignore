@@ -149,14 +149,4 @@ data/.ipynb_checkpoints
 .ipynb_checkpoints/notebook-checkpoint.ipynb
 .ipynb_checkpoints
 
-models/pickles/*.pickle
-models/apt_model/*.pickle
-
-**/results*/
-**/simulation_results/
-exports/system_model_*/*.pickle
-*.hdf5
-experiments/**/*.pickle
-notebooks/analysis/saved_results/*.pickle
-notebooks/analysis/saved_results/*.hdf5
-
+*.pickle
