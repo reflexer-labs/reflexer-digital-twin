@@ -4,7 +4,7 @@ import math
 import logging
 import time
 from functools import wraps
-import models.system_model_v3.model.parts.failure_modes as failure
+import rai_digital_twin.models.digital_twin_v1.model.parts.failure_modes as failure
 
 
 def print_time(f):

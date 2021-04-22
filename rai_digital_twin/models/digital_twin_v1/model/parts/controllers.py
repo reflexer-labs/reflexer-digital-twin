@@ -1,6 +1,6 @@
-import models.options as options
-import models.constants as constants
-import models.system_model_v3.model.parts.failure_modes as failure
+import rai_digital_twin.models.options as options
+import rai_digital_twin.models.constants as constants
+import rai_digital_twin.models.digital_twin_v1.model.parts.failure_modes as failure
 
 
 def update_target_rate(params, substep, state_history, state, policy_input):

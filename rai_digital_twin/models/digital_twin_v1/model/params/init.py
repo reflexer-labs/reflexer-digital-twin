@@ -4,13 +4,13 @@ import pandas as pd
 from pandas.core.frame import DataFrame
 
 
-from models.system_model_v3.model.types import *
+from rai_digital_twin.models.digital_twin_v1.model.types import *
 
-import models.options as options
-from models.constants import SPY, RAY
+import rai_digital_twin.models.options as options
+from rai_digital_twin.models.constants import SPY, RAY
 
-from models.system_model_v3.model.state_variables.system import stability_fee
-from models.system_model_v3.model.state_variables.historical_state import eth_price_df, liquidity_demand_df, token_swap_df
+from rai_digital_twin.models.digital_twin_v1.model.state_variables.system import stability_fee
+from rai_digital_twin.models.digital_twin_v1.model.state_variables.historical_state import eth_price_df, liquidity_demand_df, token_swap_df
 
 
 '''

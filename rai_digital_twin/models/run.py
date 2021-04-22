@@ -3,8 +3,8 @@ import logging
 from datetime import datetime
 import time
 
-from models.utils.process_results import drop_dataframe_midsteps
-from models.config_wrapper import ConfigWrapper
+from rai_digital_twin.models.utils.process_results import drop_dataframe_midsteps
+from rai_digital_twin.models.config_wrapper import ConfigWrapper
 
 
 def run(config: ConfigWrapper, drop_midsteps: bool=True, use_radcad=False) -> pd.DataFrame:

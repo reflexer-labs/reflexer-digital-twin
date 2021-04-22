@@ -1,4 +1,4 @@
-from models.system_model_v3.model.parts.uniswap_oracle import UniswapOracle
+from rai_digital_twin.models.digital_twin_v1.model.parts.uniswap_oracle import UniswapOracle
 
 def test_oracle_init():
     type(UniswapOracle()) == UniswapOracle
