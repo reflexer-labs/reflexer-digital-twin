@@ -37,26 +37,6 @@ partial_state_update_blocks_unprocessed = [
             'cumulative_time': update_cumulative_time
         }
     },
-    #################################################################
-    {
-        'label': 'Liquidity',
-        'details': """
-        Stochastic process for Uniswap events
-        Note: depends on liquidity_demand=True, else the variables are kept.
-        """,
-        'enabled': True,
-        'policies': {
-            'liquidity_demand': markets.p_liquidity_demand
-        },
-        'variables': {
-            'RAI_balance': uniswap.update_RAI_balance,
-            'ETH_balance': uniswap.update_ETH_balance,
-            'UNI_supply': uniswap.update_UNI_supply,
-            'liquidity_demand': markets.s_liquidity_demand,
-            'liquidity_demand_mean': markets.s_liquidity_demand_mean,
-            'market_slippage': markets.s_slippage,
-        }
-    },
     {
         'label': 'Market Price',
         'details': """
@@ -70,35 +50,6 @@ partial_state_update_blocks_unprocessed = [
             'market_price': markets.s_market_price,
             'market_price_twap': markets.s_market_price_twap,
             'uniswap_oracle': markets.s_uniswap_oracle
-        }
-    },
-    {
-        'label': 'Expected Market Price',
-        'details': '''
-        Computes Expected Market Price according to the APT model
-        Note: depends on liquidity_demand=True, else it stores the market price.
-        ''',
-        'policies': {
-            'market': p_resolve_expected_market_price
-        },
-        'variables': {
-            'expected_market_price': s_store_expected_market_price
-        }
-    },
-    {
-        'label': 'Arbitrageur',
-        'details': """
-            APT model
-        """,
-        'policies': {
-            'arbitrage': p_arbitrageur_model
-        },
-        'variables': {
-            'cdps': s_store_cdps,
-            'optimal_values': s_store_optimal_values,
-            'RAI_balance': uniswap.update_RAI_balance,
-            'ETH_balance': uniswap.update_ETH_balance,
-            'UNI_supply': uniswap.update_UNI_supply,
         }
     },
     #################################################################
