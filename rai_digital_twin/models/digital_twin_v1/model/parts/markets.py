@@ -146,7 +146,7 @@ def p_market_price(params, substep, state_history, state):
         uniswap_oracle: Mutated Uniswap Oracle object
     """
 
-    # Calculate the instantaneous RAI price
+    # Calculate the instantaneous Uniswap RAI price
     # RAI_price = ETH_price * ETH_bal / RAI_bal
     market_price = state["ETH_balance"]
     market_price /= state["RAI_balance"]
@@ -158,6 +158,9 @@ def p_market_price(params, substep, state_history, state):
     # mostly because of appends and deepcopying
     uniswap_oracle = copy.deepcopy(state["uniswap_oracle"])
     uniswap_oracle.update_result(state)
+    # @danlessa note:
+    # This is actually the mean price
+    # between the last and the current state.
     median_price = uniswap_oracle.median_price
 
     return {

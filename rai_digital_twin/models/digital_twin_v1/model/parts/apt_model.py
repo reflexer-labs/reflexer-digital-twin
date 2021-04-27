@@ -18,6 +18,9 @@ def p_resolve_expected_market_price(params, substep, state_history, state):
     1. the price of ETH;
     2. swap events in the RAI-ETH Uniswap pool;
     3. add/remove events in the RAI-ETH Uniswap pool.
+
+    Observation: this is only used if the liquidity demand model is activated.
+    Else, the expected market price is the current market price.
     '''
 
     debug = params['debug']

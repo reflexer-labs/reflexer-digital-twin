@@ -40,7 +40,10 @@ partial_state_update_blocks_unprocessed = [
     #################################################################
     {
         'label': 'Liquidity',
-        'details': 'Stochastic process for Uniswap events',
+        'details': """
+        Stochastic process for Uniswap events
+        Note: depends on liquidity_demand=True, else the variables are kept.
+        """,
         'enabled': True,
         'policies': {
             'liquidity_demand': markets.p_liquidity_demand
@@ -56,6 +59,10 @@ partial_state_update_blocks_unprocessed = [
     },
     {
         'label': 'Market Price',
+        'details': """
+        Calculate the Uniswap market price (Oracle and Mean), 
+        and update the Uniswap Oracle.
+        """,
         'policies': {
             'market_price': markets.p_market_price
         },
@@ -68,7 +75,8 @@ partial_state_update_blocks_unprocessed = [
     {
         'label': 'Expected Market Price',
         'details': '''
-            Resolve expected price and store in state
+        Computes Expected Market Price according to the APT model
+        Note: depends on liquidity_demand=True, else it stores the market price.
         ''',
         'policies': {
             'market': p_resolve_expected_market_price
