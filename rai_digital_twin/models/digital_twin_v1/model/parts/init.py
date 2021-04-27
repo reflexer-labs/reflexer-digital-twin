@@ -16,5 +16,8 @@ def initialize_cdps(params, substep, state_history, state):
     return {}
 
 def initialize_target_price(params, substep, state_history, state, policy_input):
-    initial_target_price = state['target_price'] / params['liquidation_ratio'] if state['timestep'] == 0 and params['rescale_target_price'] else state['target_price']
+    if state['timestep'] == 0 and params['rescale_target_price']:
+        initial_target_price = state['target_price'] / params['liquidation_ratio']
+    else:
+        initial_target_price = state['target_price']
     return 'target_price', initial_target_price

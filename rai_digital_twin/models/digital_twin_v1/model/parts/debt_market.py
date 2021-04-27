@@ -431,28 +431,15 @@ def s_update_principal_debt(params, substep, state_history, state, policy_input)
     return "principal_debt", principal_debt
 
 
-def s_update_eth_locked(params, substep, state_history, state, policy_input):
-    return "eth_locked", state['cdps']["locked"].sum()
 
-
-def s_update_eth_freed(params, substep, state_history, state, policy_input):
-    return "eth_freed", state['cdps']["freed"].sum()
-
-
-def s_update_eth_bitten(params, substep, state_history, state, policy_input):
-    return "eth_bitten", state['cdps']["v_bitten"].sum()
-
-
-def s_update_rai_drawn(params, substep, state_history, state, policy_input):
-    return "rai_drawn", state['cdps']["drawn"].sum()
-
-
-def s_update_rai_wiped(params, substep, state_history, state, policy_input):
-    return "rai_wiped", state['cdps']["wiped"].sum()
-
-
-def s_update_rai_bitten(params, substep, state_history, state, policy_input):
-    return "rai_bitten", state['cdps']["u_bitten"].sum()
+def cdp_sum_suf(variable: str, cdp_column: str) -> callable:
+    """
+    Generates a State Update Function that sums over the
+    cdps state variable
+    """
+    def suf(params, substep, state_history, state, policy_input):
+        return variable, state['cdps'][cdp_column].sum()
+    return suf
 
 
 def s_update_system_revenue(params, substep, state_history, state, policy_input):

@@ -2,22 +2,19 @@ import rai_digital_twin.models.digital_twin_v1.model.parts.markets as markets
 import rai_digital_twin.models.digital_twin_v1.model.parts.uniswap as uniswap
 import rai_digital_twin.models.digital_twin_v1.model.parts.init as init
 
-from .parts.utils import s_update_sim_metrics, p_free_memory, s_collect_events
 from .parts.governance import p_enable_controller
 
 from .parts.controllers import *
 from .parts.debt_market import *
 from .parts.time import *
-from .parts.apt_model import *
 
 
 partial_state_update_blocks_unprocessed = [
     {
-        'label': 'Initialization & Memory management',
+        'label': 'Initialization',
         'details': '',
         'policies': {
-            'free_memory': p_free_memory,
-            'random_seed': init.initialize_seed,
+
         },
         'variables': {
             'target_price': init.initialize_target_price,
@@ -40,19 +37,14 @@ partial_state_update_blocks_unprocessed = [
     {
         'label': 'Market Price',
         'details': """
-        Calculate the Uniswap market price (Oracle and Mean), 
-        and update the Uniswap Oracle.
+        Retrieves the Uniswap Market Price
         """,
         'policies': {
-            'market_price': markets.p_market_price
         },
         'variables': {
-            'market_price': markets.s_market_price,
-            'market_price_twap': markets.s_market_price_twap,
-            'uniswap_oracle': markets.s_uniswap_oracle
+            'market_price_twap': markets.s_market_price_twap
         }
     },
-    #################################################################
     {
         'label': 'Aggregate states 1',
         'details': '''
@@ -60,12 +52,12 @@ partial_state_update_blocks_unprocessed = [
         ''',
         'policies': {},
         'variables': {
-            'eth_locked': s_update_eth_locked,
-            'eth_freed': s_update_eth_freed,
-            'eth_bitten': s_update_eth_bitten,
-            'rai_drawn': s_update_rai_drawn,
-            'rai_wiped': s_update_rai_wiped,
-            'rai_bitten': s_update_rai_bitten,
+            'eth_locked': cdp_sum_suf('eth_locked', 'locked'),
+            'eth_freed': cdp_sum_suf('eth_freed', 'freed'),
+            'eth_bitten': cdp_sum_suf('eth_bitten', 'v_bitten'),
+            'rai_drawn': cdp_sum_suf('eth_drawn', 'drawn'),
+            'rai_wiped': cdp_sum_suf('eth_wiped', 'wiped'),
+            'rai_bitten': cdp_sum_suf('eth_bitten', 'u_bitten'),
         }
     },
     {
@@ -174,12 +166,12 @@ partial_state_update_blocks_unprocessed = [
         ''',
         'policies': {},
         'variables': {
-            'eth_locked': s_update_eth_locked,
-            'eth_freed': s_update_eth_freed,
-            'eth_bitten': s_update_eth_bitten,
-            'rai_drawn': s_update_rai_drawn,
-            'rai_wiped': s_update_rai_wiped,
-            'rai_bitten': s_update_rai_bitten,
+            'eth_locked': cdp_sum_suf('eth_locked', 'locked'),
+            'eth_freed': cdp_sum_suf('eth_freed', 'freed'),
+            'eth_bitten': cdp_sum_suf('eth_bitten', 'v_bitten'),
+            'rai_drawn': cdp_sum_suf('eth_drawn', 'drawn'),
+            'rai_wiped': cdp_sum_suf('eth_wiped', 'wiped'),
+            'rai_bitten': cdp_sum_suf('eth_bitten', 'u_bitten'),
             'accrued_interest': s_update_interest_bitten,
             'system_revenue': s_update_system_revenue,
         }
@@ -221,5 +213,7 @@ partial_state_update_blocks_unprocessed = [
     }
 ]
 
-partial_state_update_blocks = list(filter(lambda psub: psub.get(
-    'enabled', True), partial_state_update_blocks_unprocessed))
+partial_state_update_blocks = [psub
+                               for psub
+                               in partial_state_update_blocks_unprocessed
+                               if psub.get('enabled, True') == True]
