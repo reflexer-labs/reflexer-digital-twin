@@ -118,8 +118,7 @@ partial_state_update_blocks = [
     {
         'label': 'Compute error',
         'details': """
-        This block computes and stores the error terms
-        required to compute the various control actions
+        Retrieve error terms required to compute the various control actions
         """,
         'policies': {
             'observe': observe_errors
@@ -132,7 +131,7 @@ partial_state_update_blocks = [
     {
         'label': 'Redemption Price',
         'details': """
-        This block updates the redemption price based on stability control action 
+        New redemption price based on stability control action 
         """,
         'policies': {},
         'variables': {

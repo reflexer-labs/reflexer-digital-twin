@@ -16,7 +16,7 @@ class NegativeBalanceException(CustomException):
 class LiquidationRatioException(CustomException):
     pass
 
-class ControllerredemptionOverflowException(CustomException):
+class ControllerTargetOverflowException(CustomException):
     pass
 
 class ArbitrageConditionException(CustomException):
