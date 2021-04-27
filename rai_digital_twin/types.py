@@ -1,3 +1,5 @@
+from collections import defaultdict
+from rai_digital_twin.models.digital_twin_v1.model.parts.debt_market import s_update_interest_bitten
 from typing import NamedTuple, Dict, TypedDict
 from rai_digital_twin.units import *
 
@@ -5,6 +7,7 @@ from rai_digital_twin.units import *
 Parameters = Dict[str, object]
 State = Dict[str, object]
 PolicyInput = Dict[str, object]
+
 
 class GovernanceEvent(NamedTuple):
     kind: str

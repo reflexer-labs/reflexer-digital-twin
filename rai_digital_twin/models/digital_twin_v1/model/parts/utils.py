@@ -4,7 +4,7 @@ import math
 import logging
 import time
 from functools import wraps
-import rai_digital_twin.models.digital_twin_v1.model.parts.failure_modes as failure
+import rai_digital_twin.failure_modes as failure
 
 
 def print_time(f):
@@ -22,12 +22,6 @@ def print_time(f):
         return f_out
     return wrapper
 
-def s_update_sim_metrics(params, substep, state_history, state, policy_input):
-    previous_timestep_time = state['sim_metrics'].get('timestep_time', 0)
-    sim_metrics = {
-        'timestep_time': time.time() - previous_timestep_time
-    }
-    return 'sim_metrics', sim_metrics
 
 def save_partial_results(params, substep, state_history, state):
     partial_results: pd.DataFrame = pd.read_pickle(params['partial_results'])

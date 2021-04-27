@@ -199,7 +199,7 @@ def open_cdp_draw(draw, eth_price, redemption_price, liquidation_ratio):
     }
 
 
-def p_rebalance_cdps(params, substep, state_history, state):
+def p_rebalance_cdps(params, _1, _2, state):
     cdps = state["cdps"]
 
     eth_price = state["eth_price"]
@@ -273,7 +273,7 @@ def p_rebalance_cdps(params, substep, state_history, state):
     return {"cdps": cdps, **uniswap_state_delta}
 
 
-def p_liquidate_cdps(params, substep, state_history, state):
+def p_liquidate_cdps(params, _1, _2, state):
     eth_price = state["eth_price"]
     redemption_price = state["redemption_price"]
     liquidation_penalty = params["liquidation_penalty"]

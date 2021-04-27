@@ -98,8 +98,7 @@ partial_state_update_blocks = [
         'variables': {
             'cdps': s_store_cdps,
             'RAI_balance': uniswap.update_RAI_balance,
-            'ETH_balance': uniswap.update_ETH_balance,
-            'UNI_supply': uniswap.update_UNI_supply,
+            'ETH_balance': uniswap.update_ETH_balance
         }
     },
     #################################################################

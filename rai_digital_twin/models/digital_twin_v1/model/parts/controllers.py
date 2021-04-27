@@ -3,9 +3,10 @@ import rai_digital_twin.models.constants as constants
 import rai_digital_twin.failure_modes as failure
 
 
-def update_redemption_rate(params, _1, _2, state, policy_input):
+def update_redemption_rate(params, _1, _2, state, _4):
     """
-    Calculate the PI controller redemption rate using the Kp and Ki constants and the error states.
+    Calculate the PI controller redemption rate using the Kp and Ki constants
+    and the error states.
     """
     if params['controller_enabled'] is True:
         # Only update the Redemption Rate if the current cumulative time
@@ -92,7 +93,6 @@ def update_error_star_integral(params, _1, _2, state, policy_input):
 
     Calculate the error integral using numerical integration (trapezoid rule).
     """
-
     # Numerical integration (trapezoid rule)
     error_star_integral = state["error_star_integral"]
     old_error = state["error_star"]  # unit: USD
@@ -111,4 +111,4 @@ def update_error_star_integral(params, _1, _2, state, policy_input):
     else:
         error_integral = error_star_integral + area  # unit: USD * seconds
 
-    return "error_star_integral", error_integral  # unit: USD * seconds
+    return ("error_star_integral", error_integral)

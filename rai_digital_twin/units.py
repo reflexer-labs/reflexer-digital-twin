@@ -27,12 +27,18 @@ class CDP_Metric(TypedDict):
     cdp_count: int
     open_cdp_count: int
     closed_cdp_count: int
-    mean_cdp_collateral: float
-    median_cdp_collateral: float
+    mean_cdp_collateral: ETH
+    median_cdp_collateral: ETH
 
 
-class OptimalValues(TypedDict):
-    u_1: RAI
-    u_2: RAI
-    v_1: RAI
-    v_2: RAI
+class CDP(TypedDict):
+    open: float
+    time: float
+    locked: float
+    wiped: float
+    freed: float
+    w_wiped: float
+    dripped: float
+    v_bitten: float
+    s_bitten: float
+    w_bitten: float
