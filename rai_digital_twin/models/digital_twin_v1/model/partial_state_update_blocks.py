@@ -1,6 +1,6 @@
-import models.system_model_v3.model.parts.markets as markets
-import models.system_model_v3.model.parts.uniswap as uniswap
-import models.system_model_v3.model.parts.init as init
+import rai_digital_twin.models.digital_twin_v1.model.parts.markets as markets
+import rai_digital_twin.models.digital_twin_v1.model.parts.uniswap as uniswap
+import rai_digital_twin.models.digital_twin_v1.model.parts.init as init
 
 from .parts.utils import s_update_sim_metrics, p_free_memory, s_collect_events
 from .parts.governance import p_enable_controller
@@ -14,6 +14,7 @@ from .parts.apt_model import *
 partial_state_update_blocks_unprocessed = [
     {
         'label': 'Initialization & Memory management',
+        'details': '',
         'policies': {
             'free_memory': p_free_memory,
             'random_seed': init.initialize_seed,
@@ -39,6 +40,7 @@ partial_state_update_blocks_unprocessed = [
     #################################################################
     {
         'label': 'Liquidity',
+        'details': 'Stochastic process for Uniswap events',
         'enabled': True,
         'policies': {
             'liquidity_demand': markets.p_liquidity_demand

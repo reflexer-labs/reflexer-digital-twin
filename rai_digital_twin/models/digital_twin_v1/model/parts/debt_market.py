@@ -3,7 +3,7 @@ import pandas as pd
 import math
 from .utils import approx_greater_equal_zero, assert_log
 from .uniswap import get_output_price, get_input_price
-import models.system_model_v3.model.parts.failure_modes as failure
+import rai_digital_twin.models.digital_twin_v1.model.parts.failure_modes as failure
 
 import logging
 

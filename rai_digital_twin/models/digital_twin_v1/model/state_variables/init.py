@@ -1,10 +1,10 @@
 from typing import Dict, TypedDict
 import pandas as pd
-from models.system_model_v3.model.state_variables.liquidity import cdps, eth_collateral, principal_debt, uniswap_rai_balance, uniswap_eth_balance
-from models.system_model_v3.model.state_variables.system import stability_fee, target_price
-from models.system_model_v3.model.state_variables.historical_state import eth_price
-from models.system_model_v3.model.parts.uniswap_oracle import UniswapOracle
-from models.system_model_v3.model.types import *
+from rai_digital_twin.models.digital_twin_v1.model.state_variables.liquidity import cdps, eth_collateral, principal_debt, uniswap_rai_balance, uniswap_eth_balance
+from rai_digital_twin.models.digital_twin_v1.model.state_variables.system import stability_fee, target_price
+from rai_digital_twin.models.digital_twin_v1.model.state_variables.historical_state import eth_price
+from rai_digital_twin.models.digital_twin_v1.model.parts.uniswap_oracle import UniswapOracle
+from rai_digital_twin.models.digital_twin_v1.model.types import *
 import datetime as dt
 
 class ReflexerStateVariables(TypedDict, total=True):

@@ -5,11 +5,17 @@ import random
 import logging
 import math
 
-import models.system_model_v3.model.parts.uniswap as uniswap
+import rai_digital_twin.models.digital_twin_v1.model.parts.uniswap as uniswap
 from .utils import print_time
 
 
 def p_liquidity_demand(params, substep, state_history, state):
+    """
+    Compute changes in Uniswap RAI / ETH / UNI balances
+    according to stochastic processes parametrized by
+    liquidity_demand_* params.
+    """
+
     if params["liquidity_demand_enabled"]:
         RAI_balance = state["RAI_balance"]
         ETH_balance = state["ETH_balance"]
@@ -27,16 +33,17 @@ def p_liquidity_demand(params, substep, state_history, state):
         UNI_delta = 0
         if swap:
             # Draw from swap process
-            RAI_delta = abs(
-                params["token_swap_events"](state["run"], state["timestep"]) * 1e-18
-            )
+            RAI_delta = abs(params["token_swap_events"](
+                state["run"], state["timestep"]) * 1e-18)
             RAI_delta = (
                 min(
-                    RAI_delta, RAI_balance * params["liquidity_demand_shock_percentage"]
+                    RAI_delta, RAI_balance *
+                    params["liquidity_demand_shock_percentage"]
                 )
                 if params["liquidity_demand_shock"]
                 else min(
-                    RAI_delta, RAI_balance * params["liquidity_demand_max_percentage"]
+                    RAI_delta, RAI_balance *
+                    params["liquidity_demand_max_percentage"]
                 )
             )
             RAI_delta = RAI_delta * direction
@@ -58,16 +65,19 @@ def p_liquidity_demand(params, substep, state_history, state):
         else:
             # Draw from liquidity process
             RAI_delta = abs(
-                params["liquidity_demand_events"](state["run"], state["timestep"])
+                params["liquidity_demand_events"](
+                    state["run"], state["timestep"])
                 * 1e-18
             )
             RAI_delta = (
                 min(
-                    RAI_delta, RAI_balance * params["liquidity_demand_shock_percentage"]
+                    RAI_delta, RAI_balance *
+                    params["liquidity_demand_shock_percentage"]
                 )
                 if params["liquidity_demand_shock"]
                 else min(
-                    RAI_delta, RAI_balance * params["liquidity_demand_max_percentage"]
+                    RAI_delta, RAI_balance *
+                    params["liquidity_demand_max_percentage"]
                 )
             )
             RAI_delta = RAI_delta * direction
@@ -121,7 +131,8 @@ def s_liquidity_demand(params, substep, state_history, state, policy_input):
 
 def s_liquidity_demand_mean(params, substep, state_history, state, policy_input):
     liquidity_demand = policy_input["RAI_delta"]
-    liquidity_demand_mean = (state["liquidity_demand_mean"] + liquidity_demand) / 2
+    liquidity_demand_mean = (
+        state["liquidity_demand_mean"] + liquidity_demand) / 2
     return "liquidity_demand_mean", liquidity_demand_mean
 
 
@@ -138,7 +149,7 @@ def p_market_price(params, substep, state_history, state):
     # Calculate the instantaneous RAI price
     # RAI_price = ETH_price * ETH_bal / RAI_bal
     market_price = state["ETH_balance"]
-    market_price /= state["RAI_balance"] 
+    market_price /= state["RAI_balance"]
     market_price *= state["eth_price"]
 
     # Retrieve RAI

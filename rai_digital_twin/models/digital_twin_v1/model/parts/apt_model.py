@@ -8,7 +8,7 @@ import statistics
 from .utils import approx_greater_equal_zero, assert_log, approx_eq
 from .debt_market import open_cdp_draw, open_cdp_lock, draw_to_liquidation_ratio, is_cdp_above_liquidation_ratio
 from .uniswap import get_output_price, get_input_price
-import models.system_model_v3.model.parts.failure_modes as failure
+import rai_digital_twin.models.digital_twin_v1.model.parts.failure_modes as failure
 
 
 def p_resolve_expected_market_price(params, substep, state_history, state):

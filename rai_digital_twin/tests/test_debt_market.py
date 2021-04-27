@@ -1,4 +1,4 @@
-import models.system_model_v2.model.parts.debt_market as debt_market
+import rai_digital_twin.models.system_model_v2.model.parts.debt_market as debt_market
 
 eth_price = 300
 target_price = 2.0
