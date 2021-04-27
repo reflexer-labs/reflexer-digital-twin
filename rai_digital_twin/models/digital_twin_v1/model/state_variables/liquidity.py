@@ -1,6 +1,4 @@
-# from .debt_market import eth_collateral
 from rai_digital_twin.models.digital_twin_v1.model.parts.debt_market import open_cdp_lock
-from rai_digital_twin.models.digital_twin_v1.model.state_variables.historical_state import eth_price
 from rai_digital_twin.models.digital_twin_v1.model.state_variables.system import redemption_price
 
 import pandas as pd

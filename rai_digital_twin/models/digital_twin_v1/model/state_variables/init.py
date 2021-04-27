@@ -2,7 +2,6 @@ from typing import Dict, TypedDict
 import pandas as pd
 from rai_digital_twin.models.digital_twin_v1.model.state_variables.liquidity import cdps, eth_collateral, principal_debt, uniswap_rai_balance, uniswap_eth_balance
 from rai_digital_twin.models.digital_twin_v1.model.state_variables.system import stability_fee, redemption_price
-from rai_digital_twin.models.digital_twin_v1.model.state_variables.historical_state import eth_price
 from rai_digital_twin.types import *
 import datetime as dt
 
@@ -73,7 +72,7 @@ state_variables = {
     'blockheight': 0, # block offset (init 0 simplicity)
     
     # Exogenous states
-    'eth_price': eth_price, # unit: dollars; updated from historical data as exogenous parameter
+    'eth_price': None, # unit: dollars; updated from historical data as exogenous parameter
     
     # CDP states
     'cdps': cdps, # A dataframe of CDPs (both open and closed)

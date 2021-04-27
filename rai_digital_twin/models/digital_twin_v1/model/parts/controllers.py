@@ -59,11 +59,7 @@ def update_redemption_price(_0, _1, _2, state, _4):
 
 def observe_errors(params, _1, _2, state):
     """
-    Calculate the error between the redemption and market price, 
-    using the error_term parameter.
-
-    The error_term parameter allows you to set whether the error is calculated
-    as redemption - market or market - redemption.
+    Calculate the error between the redemption and market price.
     """
     redemption_price = state["redemption_price"]
 
@@ -72,9 +68,7 @@ def observe_errors(params, _1, _2, state):
     else:
         pass
 
-    error_function = params["error_term"]
-    error = error_function(redemption_price, state["market_price_twap"])
-
+    error = (state["redemption_price"] - state["market_price_twap"])
     return {"error_star": error}
 
 
