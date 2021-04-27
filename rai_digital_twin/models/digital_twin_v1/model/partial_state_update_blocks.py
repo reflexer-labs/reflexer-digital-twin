@@ -2,18 +2,19 @@ import rai_digital_twin.models.digital_twin_v1.model.parts.markets as markets
 import rai_digital_twin.models.digital_twin_v1.model.parts.uniswap as uniswap
 import rai_digital_twin.models.digital_twin_v1.model.parts.init as init
 
-from .parts.governance import p_enable_controller
+from .parts.governance import p_governance_events
 
 from .parts.controllers import *
 from .parts.debt_market import *
 from .parts.time import *
 
 
-partial_state_update_blocks_unprocessed = [
+partial_state_update_blocks = [
     {
-        'label': 'Initialization',
+        'label': 'Initialization & Governance',
         'details': '',
         'policies': {
+            'governance_events': p_governance_events
 
         },
         'variables': {
@@ -215,5 +216,5 @@ partial_state_update_blocks_unprocessed = [
 
 partial_state_update_blocks = [psub
                                for psub
-                               in partial_state_update_blocks_unprocessed
+                               in partial_state_update_blocks
                                if psub.get('enabled, True') == True]
