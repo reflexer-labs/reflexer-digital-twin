@@ -1,4 +1,4 @@
-index,error_star,error_hat,old_error_star,old_error_hat,error_star_integral,error_hat_integral,error_star_derivative,error_hat_derivative,target_rate,target_price,market_price,debt_price,timedelta,timestamp,blockheight,simulation,subset,run,substep,timestep
+index,error_star,error_hat,old_error_star,old_error_hat,error_star_integral,error_hat_integral,error_star_derivative,error_hat_derivative,target_rate,redemption_price,market_price,debt_price,timedelta,timestamp,blockheight,simulation,subset,run,substep,timestep
 0,0,0,0,0,0,0,0,0,0,1,1,1,0,2020-09-07 10:05:33.331824,0,0,0,1,0,0
 6,0,0.001298519298677532074,0,0,0,4.127343590846535698740,0,0,0,1,1,1.001298519298677532074,6357,2020-09-07 11:51:30.331824,423,0,0,1,6,1
 12,-0.000487785065076550179,0.000809636693529982003,0,0,0,9.827797393775653766317,-0.000000090196942506798,-0.000000090196942506798,0.000000033873962852531,1.000183207171490842044,1.000487785065076550179,1.001297421758606532183,5408,2020-09-07 13:21:38.331824,783,0,0,1,6,2

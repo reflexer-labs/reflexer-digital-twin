@@ -1,7 +1,7 @@
 # from .debt_market import eth_collateral
 from rai_digital_twin.models.digital_twin_v1.model.parts.debt_market import open_cdp_lock
 from rai_digital_twin.models.digital_twin_v1.model.state_variables.historical_state import eth_price
-from rai_digital_twin.models.digital_twin_v1.model.state_variables.system import target_price
+from rai_digital_twin.models.digital_twin_v1.model.state_variables.system import redemption_price
 
 import pandas as pd
 
@@ -11,10 +11,10 @@ liquidation_buffer = 2
 liquidity_cdp_count = 0 # Set to zero to disable liquidity CDPs, and only use aggregate arbitrage CDP
 
 uniswap_cdp_rai_balance = 5e6
-uniswap_cdp_eth_collateral = uniswap_cdp_rai_balance * liquidation_ratio * liquidation_buffer * target_price / eth_price
+uniswap_cdp_eth_collateral = uniswap_cdp_rai_balance * liquidation_ratio * liquidation_buffer * redemption_price / eth_price
 
 arbitrage_cdp_rai_balance = 10e6
-arbitrage_cdp_eth_collateral = arbitrage_cdp_rai_balance * liquidation_ratio * target_price / eth_price
+arbitrage_cdp_eth_collateral = arbitrage_cdp_rai_balance * liquidation_ratio * redemption_price / eth_price
 
 # Create a pool of initial CDPs
 cdp_list = []
@@ -36,7 +36,7 @@ for i in range(liquidity_cdp_count):
     })
 
 
-cdp_list.append({**open_cdp_lock(arbitrage_cdp_eth_collateral, eth_price, target_price, liquidation_ratio), 'arbitrage': 1})
+cdp_list.append({**open_cdp_lock(arbitrage_cdp_eth_collateral, eth_price, redemption_price, liquidation_ratio), 'arbitrage': 1})
 
 cdps = pd.DataFrame(cdp_list)
 
@@ -44,4 +44,4 @@ eth_collateral = cdps["locked"].sum()
 principal_debt = cdps["drawn"].sum()
 
 uniswap_rai_balance = principal_debt
-uniswap_eth_balance = (uniswap_rai_balance * target_price) / eth_price
+uniswap_eth_balance = (uniswap_rai_balance * redemption_price) / eth_price

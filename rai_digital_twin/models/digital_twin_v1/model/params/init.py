@@ -40,7 +40,7 @@ class ReflexerModelParameters(TypedDict):
     ki: Per_USD_Seconds
     alpha: Per_RAY
     error_term: Callable[[USD_per_RAI, USD_per_RAI], USD_per_RAI]
-    rescale_target_price: bool
+    rescale_redemption_price: bool
     arbitrageur_considers_liquidation_ratio: bool
     interest_rate: float
     beta_1: USD_per_ETH
@@ -87,8 +87,8 @@ params = {
     'kp': [2e-7], # proportional term for the stability controller: units 1/USD
     'ki': [-5e-9], # integral term for the stability controller scaled by control period: units 1/(USD*seconds)
     'alpha': [.999 * RAY], # in 1/RAY
-    'error_term': [lambda target, measured: target - measured],
-    'rescale_target_price': [True], # scale the target price by the liquidation ratio
+    'error_term': [lambda redemption, measured: redemption - measured],
+    'rescale_redemption_price': [True], # scale the redemption price by the liquidation ratio
     
     # APT model
     'arbitrageur_considers_liquidation_ratio': [True],

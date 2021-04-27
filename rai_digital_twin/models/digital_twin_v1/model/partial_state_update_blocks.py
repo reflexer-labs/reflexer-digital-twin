@@ -1,3 +1,4 @@
+from rai_digital_twin.models.digital_twin_v1.model.parts.user_action import p_user_action
 import rai_digital_twin.models.digital_twin_v1.model.parts.markets as markets
 import rai_digital_twin.models.digital_twin_v1.model.parts.uniswap as uniswap
 import rai_digital_twin.models.digital_twin_v1.model.parts.init as init
@@ -18,7 +19,7 @@ partial_state_update_blocks = [
 
         },
         'variables': {
-            'target_price': init.initialize_target_price,
+            'redemption_price': init.initialize_redemption_price,
         }
     },
     {
@@ -129,25 +130,13 @@ partial_state_update_blocks = [
         }
     },
     {
-        'label': 'Controller',
+        'label': 'Redemption Price',
         'details': """
-        This block computes the stability control action 
-        """,
-        'policies': {
-            'governance': p_enable_controller,
-        },
-        'variables': {
-            'target_rate': update_target_rate,
-        }
-    },
-    {
-        'label': 'Target price',
-        'details': """
-        This block updates the target price based on stability control action 
+        This block updates the redemption price based on stability control action 
         """,
         'policies': {},
         'variables': {
-            'target_price': update_target_price,
+            'redemption_price': update_redemption_price,
         }
     },
     #################################################################
@@ -210,6 +199,21 @@ partial_state_update_blocks = [
         'policies': {},
         'variables': {
             'cdp_metrics': s_update_cdp_metrics,
+        }
+    }, {
+        'label': 'Aggregate User Action',
+        'description': """
+        Modify the macro system state according to the
+        Data-driven Linearized Aggregated Arbitrageur Model
+        Reference: https://hackmd.io/w-vfdZIMTDKwdEupeS3qxQ
+        """,
+        'policies': {
+            'user_action': p_user_action
+        },
+        'variables': {
+            'ETH_balance': None,
+            'RAI_balance': None, 
+            'cdps': None
         }
     }
 ]

@@ -1,7 +1,7 @@
 from typing import Dict, TypedDict
 import pandas as pd
 from rai_digital_twin.models.digital_twin_v1.model.state_variables.liquidity import cdps, eth_collateral, principal_debt, uniswap_rai_balance, uniswap_eth_balance
-from rai_digital_twin.models.digital_twin_v1.model.state_variables.system import stability_fee, target_price
+from rai_digital_twin.models.digital_twin_v1.model.state_variables.system import stability_fee, redemption_price
 from rai_digital_twin.models.digital_twin_v1.model.state_variables.historical_state import eth_price
 from rai_digital_twin.models.digital_twin_v1.model.parts.uniswap_oracle import UniswapOracle
 from rai_digital_twin.models.digital_twin_v1.model.types import *
@@ -54,8 +54,8 @@ class ReflexerStateVariables(TypedDict, total=True):
     stability_fee: Percentage_Per_Second
     market_price: USD_per_RAI
     market_price_twap: USD_per_RAI
-    target_price: USD_per_RAI
-    target_rate: Percentage_Per_Second
+    redemption_price: USD_per_RAI
+    redemption_rate: Percentage_Per_Second
 
     # APT model states
     eth_return: Percentage
@@ -118,16 +118,16 @@ state_variables = {
     
     # System states
     'stability_fee': stability_fee, # interest rate used to calculate the accrued interest; per second interest rate (1.5% per month)
-    'market_price': target_price, # unit: dollars; the secondary market clearing price
+    'market_price': redemption_price, # unit: dollars; the secondary market clearing price
     'market_price_twap': 0,
-    'target_price': target_price, # unit: dollars; equivalent to redemption price
-    'target_rate': 0 / (30 * 24 * 3600), # per second interest rate (X% per month), updated by controller
+    'redemption_price': redemption_price, # unit: dollars; equivalent to redemption price
+    'redemption_rate': 0 / (30 * 24 * 3600), # per second interest rate (X% per month), updated by controller
     
     # APT model states
     'eth_return': 0,
     'eth_gross_return': 0,
-    'expected_market_price': target_price, # root of non-arbitrage condition
-    'expected_debt_price': target_price, # predicted "debt" price, the intrinsic value of RAI according to the debt market activity and state
+    'expected_market_price': redemption_price, # root of non-arbitrage condition
+    'expected_debt_price': redemption_price, # predicted "debt" price, the intrinsic value of RAI according to the debt market activity and state
 
     # Controller states
     'error_star': 0, # price units
