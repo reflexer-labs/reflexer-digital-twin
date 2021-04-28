@@ -1,9 +1,7 @@
-import scipy.stats as sts
 import pandas as pd
-import math
 from .utils import approx_greater_equal_zero, assert_log
 from .uniswap import get_output_price, get_input_price
-import rai_digital_twin.models.digital_twin_v1.model.parts.failure_modes as failure
+import rai_digital_twin.failure_modes as failure
 
 import logging
 
@@ -199,75 +197,103 @@ def open_cdp_draw(draw, eth_price, redemption_price, liquidation_ratio):
     }
 
 
+def rebalance_cdp(params: dict,
+                  cdps: pd.DataFrame,
+                  eth_price: float,
+                  redemption_price: float,
+                  liquidation_ratio: float,
+                  ETH_balance: float,
+                  index: int,
+                  cdp: dict,
+                  ETH_delta: float,
+                  liquidation_buffer: float) -> tuple:
+    """
+
+    """
+    if cdp['arbitrage'] == 1:
+        liquidation_buffer = 1.0
+    else:
+        pass
+
+    args = (cdp,
+            eth_price,
+            redemption_price,
+            liquidation_ratio * liquidation_buffer)
+    cdp_above_liquidation_buffer = is_cdp_above_liquidation_ratio(*args)
+
+    if not cdp_above_liquidation_buffer:
+        # Wipe debt, using RAI from Uniswap
+        wiped = cdps.at[index, "wiped"]
+        args = (cdp,
+                eth_price,
+                redemption_price,
+                liquidation_ratio * liquidation_buffer,
+                params["raise_on_assert"])
+        wipe = wipe_to_liquidation_ratio(*args)
+
+        # Exchange ETH for RAIETH_delta, _ = get_output_price(wipe, ETH_balance, RAI_balance, uniswap_fee)
+        if not ETH_delta >= 0:
+            raise failure.InvalidSecondaryMarketDeltaException(f'{ETH_delta=}')
+        if not ETH_delta <= ETH_balance:
+            raise failure.InvalidSecondaryMarketDeltaException(f'{ETH_delta=}')
+        RAI_delta = -wipe
+        if not RAI_delta <= 0:
+            raise failure.InvalidSecondaryMarketDeltaException(f'{RAI_delta=}')
+
+        # Wipe amount on the CDPs
+        cdps.at[index, "wiped"] = wiped + wipe
+    else:
+        # Draw debt, exchanging RAI for ETH in Uniswap
+        drawn = cdps.at[index, "drawn"]
+        draw = draw_to_liquidation_ratio(
+            cdp,
+            eth_price,
+            redemption_price,
+            liquidation_ratio * liquidation_buffer,
+            params["raise_on_assert"],
+        )
+        # Exchange RAI for ETH_, ETH_delta = get_input_price(draw, RAI_balance, ETH_balance, uniswap_fee)
+        if not ETH_delta <= 0:
+            raise failure.InvalidSecondaryMarketDeltaException(f'{ETH_delta=}')
+        RAI_delta = draw
+        if not RAI_delta >= 0:
+            raise failure.InvalidSecondaryMarketDeltaException(f'{RAI_delta=}')
+        cdps.at[index, "drawn"] = drawn + draw
+    return RAI_delta, ETH_delta, cdps
+
+
 def p_rebalance_cdps(params, _1, _2, state):
+    """
+
+    """
     cdps = state["cdps"]
 
     eth_price = state["eth_price"]
     redemption_price = state["redemption_price"]
+    liquidation_buffer = state['liquidation_buffer']
     liquidation_ratio = params["liquidation_ratio"]
-    liquidation_buffer = params["liquidation_buffer"]
-    
-    RAI_balance = state['RAI_balance']
+
     ETH_balance = state['ETH_balance']
-    uniswap_fee = params['uniswap_fee']
 
     RAI_delta = 0
     ETH_delta = 0
-    UNI_delta = 0
 
     for index, cdp in cdps.query("open == 1").iterrows():
-        if cdp['arbitrage'] == 1:
-            liquidation_buffer = 1.0
-        
-        cdp_above_liquidation_buffer = is_cdp_above_liquidation_ratio(
-            cdp, eth_price, redemption_price, liquidation_ratio * liquidation_buffer
-        )
-
-        if not cdp_above_liquidation_buffer:
-            # Wipe debt, using RAI from Uniswap
-            wiped = cdps.at[index, "wiped"]
-            wipe = wipe_to_liquidation_ratio(
-                cdp,
-                eth_price,
-                redemption_price,
-                liquidation_ratio * liquidation_buffer,
-                params["raise_on_assert"],
-            )
-            # Exchange ETH for RAI
-            ETH_delta, _ = get_output_price(wipe, ETH_balance, RAI_balance, uniswap_fee)
-            if not ETH_delta >= 0: raise failure.InvalidSecondaryMarketDeltaException(f'{ETH_delta=}')
-            if not ETH_delta <= ETH_balance: raise failure.InvalidSecondaryMarketDeltaException(f'{ETH_delta=}')
-            RAI_delta = -wipe
-            if not RAI_delta <= 0: raise failure.InvalidSecondaryMarketDeltaException(f'{RAI_delta=}')
-            cdps.at[index, "wiped"] = wiped + wipe
-        else:
-            # Draw debt, exchanging RAI for ETH in Uniswap
-            drawn = cdps.at[index, "drawn"]
-            draw = draw_to_liquidation_ratio(
-                cdp,
-                eth_price,
-                redemption_price,
-                liquidation_ratio * liquidation_buffer,
-                params["raise_on_assert"],
-            )
-            # Exchange RAI for ETH
-            _, ETH_delta = get_input_price(draw, RAI_balance, ETH_balance, uniswap_fee)
-            if not ETH_delta <= 0: raise failure.InvalidSecondaryMarketDeltaException(f'{ETH_delta=}')
-            RAI_delta = draw
-            if not RAI_delta >= 0: raise failure.InvalidSecondaryMarketDeltaException(f'{RAI_delta=}')
-            cdps.at[index, "drawn"] = drawn + draw
-
-    if params['debug']:
-        open_cdps = len(cdps.query("open == 1"))
-        closed_cdps = len(cdps.query("open == 0"))
-        logging.debug(
-            f"p_rebalance_cdps() ~ Number of open CDPs: {open_cdps}; Number of closed CDPs: {closed_cdps}"
-        )
+        RAI_delta, ETH_delta, cdps = rebalance_cdp(params,
+                                                   cdps,
+                                                   eth_price,
+                                                   redemption_price,
+                                                   liquidation_ratio,
+                                                   ETH_balance,
+                                                   index,
+                                                   cdp,
+                                                   ETH_delta,
+                                                   liquidation_buffer)
 
     uniswap_state_delta = {
         'RAI_delta': RAI_delta,
         'ETH_delta': ETH_delta,
-        'UNI_delta': UNI_delta,
+        'UNI_delta': 0,
     }
 
     return {"cdps": cdps, **uniswap_state_delta}
@@ -313,7 +339,8 @@ def p_liquidate_cdps(params, _1, _2, state):
 
         try:
             v_bite = (
-                (drawn - wiped - u_bitten) * redemption_price * (1 + liquidation_penalty)
+                (drawn - wiped - u_bitten) *
+                redemption_price * (1 + liquidation_penalty)
             ) / eth_price
             assert v_bite >= 0, f"{v_bite} !>= 0 ~ {state}"
             assert v_bite <= (
@@ -353,16 +380,6 @@ def p_liquidate_cdps(params, _1, _2, state):
     assert_log(v_3 >= 0, v_3, params["raise_on_assert"])
     assert_log(u_3 >= 0, u_3, params["raise_on_assert"])
     assert_log(w_3 >= 0, w_3, params["raise_on_assert"])
-
-    # try:
-    #     cdps = cdps.drop(liquidated_cdps.index)
-    # except KeyError:
-    #     print('Failed to drop CDPs')
-    #     raise
-
-    if debug: logging.debug(
-        f"{len(liquidated_cdps)} CDPs liquidated with v_2 {v_2} v_3 {v_3} u_3 {u_3} w_3 {w_3}"
-    )
 
     return {"cdps": cdps}
 
@@ -429,7 +446,6 @@ def s_update_principal_debt(params, substep, state_history, state, policy_input)
         raise failure.NegativeBalanceException(event)
 
     return "principal_debt", principal_debt
-
 
 
 def cdp_sum_suf(variable: str, cdp_column: str) -> callable:
