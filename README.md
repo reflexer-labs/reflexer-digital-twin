@@ -6,7 +6,7 @@ The Reflexer Digital Twin is a comprehensive modular toolkit for performing auto
 
 The backtesting and extrapolation components are powered by cadCAD, a framework for generalized dynamical systems that allows for expressing the behavioural and logical mechanisms behind crypto-economic systems.
 
-![RAI Digital Twin Components Diagram](https://hackmd.io/_uploads/BkaFfGy_d.png)
+![RAI Digital Twin Components Diagram](assets/dt-components.png)
 
 
 
