@@ -18,6 +18,14 @@ class ValidationMetricDefinition():
     loss_function: callable
 
 
+def loss(true_value: float,
+         predicted_value: float) -> float:
+    return (true_value - predicted_value) ** 2
+
+
+def aggregate_loss(loss_series: np.array) -> float:
+    return loss_series.mean()
+
 def generic_loss(sim_df,
                  test_df,
                  col: str) -> float:
@@ -26,9 +34,9 @@ def generic_loss(sim_df,
     """
     y = test_df[col]
     y_hat = sim_df[col]
-    error = y - y_hat
-    loss = error ** 2
-    return loss
+    y_error = loss(y, y_hat)
+    agg_loss = aggregate_loss(y_error)
+    return agg_loss
 
 
 def generic_metric_loss(col: str) -> Callable[[str], MetricLossFunction]:
@@ -50,7 +58,7 @@ def validation_loss(validation_metrics: Dict[str, float]) -> float:
     """
     Compute validation loss for a simulation.
     """
-    return np.mean(validation_metrics.values())
+    return np.mean(list(validation_metrics.values()))
 
 
 def simulation_metrics_loss(sim_df,
