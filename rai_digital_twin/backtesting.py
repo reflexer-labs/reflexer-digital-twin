@@ -20,11 +20,18 @@ class ValidationMetricDefinition():
 
 def loss(true_value: float,
          predicted_value: float) -> float:
+    """
+    Time-wise loss function.
+    """
     return (true_value - predicted_value) ** 2
 
 
 def aggregate_loss(loss_series: np.array) -> float:
+    """
+    Loss function for a time-series.
+    """
     return loss_series.mean()
+
 
 def generic_loss(sim_df,
                  test_df,
