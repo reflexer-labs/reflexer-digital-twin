@@ -1,14 +1,55 @@
 # Reflexer Digital Twin
 
-## Index
+## Introduction
+
+The Reflexer Digital Twin is a comprehensive modular toolkit for performing automated routine tests and system predictions that are aware of the controller fundamentals as well as the available live data.
+
+The backtesting and extrapolation components are powered by cadCAD, a framework for generalized dynamical systems that allows for expressing the behavioural and logical mechanisms behind crypto-economic systems.
+
+![RAI Digital Twin Components Diagram](https://hackmd.io/_uploads/BkaFfGy_d.png)
 
 
 
+Specifically, it accomplishes the following functions:
 
-### Stochastic Generators - WIP
+- Data Interface: The DT has integration with the same live data that the RAI controller, as well as integrations with Data Lakes for exporting result sets.
+- Backtesting: The DT is able to verify the past controller behaviour to make sure that it is working as intended.
+- System Identification: The DT is able to identify and quantify past patterns for usage in extrapolation and scientific contexts.
+- Future State Extrapolation: The DT is able to make use of data-driven mechanisms in order to extrapolate and predict the system trajectory over the future.
+- Report Generation: The DT is able to generate diagnostics and rich visualizations that informs about the state of the system with a acessible focus.
 
-### Data - WIP
+## Usage 
 
+### Execution
+
+### Result Analysis
+
+### Testing
+
+The Reflexer Digital Twin uses `pytest` for unit and integration testing. In order to make use of it, just pass:
+
+``python -m pytest``
+
+
+## Components
+
+### Reports
+
+TODO
+
+### Data interface
+
+TODO
+
+### Backtesting
+
+TODO
+### System Identification
+
+TODO
+### Future State Extrapolation
+
+TODO
 ## References
 
 - Scope document: https://hackmd.io/NXJNI2YVQziB3STBNH2Wjw
