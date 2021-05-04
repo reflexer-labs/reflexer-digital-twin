@@ -78,8 +78,11 @@ def extrapolation_cycle() -> object:
     backtest_model(historical_df)
 
     estimated_params = estimate_parameters(input_data)
+
     fit_parameters = stochastic_fit(input_data)
+
     extrapolated_signals = extrapolate_signals(fit_parameters)
+    
     extrapolated_data = extrapolate_data(
         extrapolated_signals, estimated_params)
     return extrapolated_data
