@@ -4,13 +4,12 @@ import pandas as pd
 from pandas.core.frame import DataFrame
 
 
-from rai_digital_twin.models.digital_twin_v1.model.types import *
+from rai_digital_twin.types import *
 
 import rai_digital_twin.models.options as options
 from rai_digital_twin.models.constants import SPY, RAY
 
 from rai_digital_twin.models.digital_twin_v1.model.state_variables.system import stability_fee
-from rai_digital_twin.models.digital_twin_v1.model.state_variables.historical_state import eth_price_df, liquidity_demand_df, token_swap_df
 
 
 '''
@@ -19,30 +18,17 @@ See https://medium.com/reflexer-labs/introducing-proto-rai-c4cf1f013ef for curre
 
 
 class ReflexerModelParameters(TypedDict):
-    debug: bool
     raise_on_assert: bool
-    free_memory_states: List[str]
     IntegralType: object
     # IntegralType
     eth_price: Callable[[Run, Timestep], List[USD_per_ETH]]
-    liquidity_demand_events: Callable[[Run, Timestep, DataFrame], exaRAI]
-    token_swap_events: Callable[[Run, Timestep, DataFrame], exaRAI]
     seconds_passed: Callable[[Timestep, DataFrame], Seconds]
-    liquidity_demand_enabled: bool
-    liquidity_demand_shock: bool
-    liquidity_demand_max_percentage: Percentage
-    liquidity_demand_shock_percentage: Percentage
     expected_blocktime: Seconds
     control_period: Seconds
-    controller_enabled: bool
-    enable_controller_time: Seconds
     kp: Per_USD
     ki: Per_USD_Seconds
     alpha: Per_RAY
-    error_term: Callable[[USD_per_RAI, USD_per_RAI], USD_per_RAI]
     rescale_redemption_price: bool
-    arbitrageur_considers_liquidation_ratio: bool
-    interest_rate: float
     beta_1: USD_per_ETH
     beta_2: USD_per_RAI
     liquidation_ratio: Percentage

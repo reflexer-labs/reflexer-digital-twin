@@ -4,6 +4,7 @@ from rai_digital_twin.models.digital_twin_v1.model.state_variables.system import
 import pandas as pd
 
 
+eth_price = 5 # TODO
 liquidation_ratio = 1.45
 liquidation_buffer = 2
 liquidity_cdp_count = 0 # Set to zero to disable liquidity CDPs, and only use aggregate arbitrage CDP
