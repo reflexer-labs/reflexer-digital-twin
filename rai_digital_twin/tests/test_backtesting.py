@@ -1,8 +1,11 @@
+import pandas as pd
+import numpy as np
+from pytest import approx
+
 from cadCAD_tools import easy_run
 from rai_digital_twin import default_model
 from rai_digital_twin.backtesting import VALIDATION_METRICS, generic_loss, simulation_loss, simulation_metrics_loss, validation_loss
 
-from pytest import approx
 
 def test_identical_backtesting():
 
@@ -52,5 +55,11 @@ def test_semi_identical_backtesting():
     assert simulation_loss(sim_df, test_df_1) == simulation_loss(test_df_1, sim_df)
     assert simulation_loss(test_df_2, sim_df) == simulation_loss(sim_df, test_df_2)
     assert simulation_loss(test_df_2, test_df_1) == simulation_loss(test_df_1, test_df_2)
+
+    # Loss of a random dataframe must be higher than sim df against itself
+    random_matrix = np.random.randint(0, 100, size=sim_df.shape)
+    random_df = pd.DataFrame(random_matrix, columns=numeric_cols)
+    assert simulation_loss(sim_df, random_df) > simulation_loss(sim_df, sim_df)
+
 
 
