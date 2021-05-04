@@ -8,7 +8,9 @@ from rai_digital_twin.backtesting import VALIDATION_METRICS, generic_loss, simul
 
 
 def test_identical_backtesting():
-
+    """
+    Make sure that results when testing a df against itself is consistent.
+    """
     # Run the model on default arguments
     sim_df = easy_run(*default_model.run_args,
                   assign_params=False)
@@ -33,6 +35,9 @@ def test_identical_backtesting():
     
     
 def test_semi_identical_backtesting():
+    """
+    Make sure that testing a df against known semi identical dfs are consistent.
+    """
     # Run the model on default arguments
     sim_df = easy_run(*default_model.run_args,
                   assign_params=False)
