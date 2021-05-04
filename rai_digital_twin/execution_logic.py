@@ -1,17 +1,42 @@
-
+from .backtesting import simulation_loss
+import pandas as pd
+from cadCAD_tools import easy_run
 import click
 
 
 def save_artifact():
     return None
 
+def retrieve_historical_data() -> pd.DataFrame:
+    pass
 
 
-def prepare(report_path: str = None) -> object:
+def prepare(report_path: str = None) -> dict:
     """
     Retrieves all required historical and prior data.
     """
-    pass
+    input_data = {}
+    input_data['historical_data'] = retrieve_historical_data()
+    return input_data
+
+
+def backtest_model(historical_data: pd.DataFrame) -> None:
+
+    initial_conditions = {}
+    params = {}
+    partial_state_update_blocks = {}
+    timesteps = len(historical_data)
+
+    sim_df = easy_run(initial_conditions,
+                      params,
+                      partial_state_update_blocks,
+                      timesteps,
+                      1,
+                      use_labels=False,
+                      assign_params=False,
+                      drop_substeps=True)
+
+    return None
 
 
 def stochastic_fit(input_data: object,
@@ -48,10 +73,17 @@ def extrapolate_data(signals: object,
 
 
 def extrapolation_cycle() -> object:
-    prepared_data = prepare()
-    estimated_params = estimate_parameters(prepared_data)
-    fit_parameters = stochastic_fit(prepared_data)
+    input_data = prepare()
+    historical_df = input_data['historical_data']
+    backtest_model(historical_df)
+
+    estimated_params = estimate_parameters(input_data)
+    fit_parameters = stochastic_fit(input_data)
     extrapolated_signals = extrapolate_signals(fit_parameters)
     extrapolated_data = extrapolate_data(
         extrapolated_signals, estimated_params)
     return extrapolated_data
+
+
+if __name__ == '__main__':
+    extrapolation_cycle()

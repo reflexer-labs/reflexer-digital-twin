@@ -1,9 +1,7 @@
-import scipy.stats as sts
 import pandas as pd
-import math
 from .utils import approx_greater_equal_zero, assert_log
 from .uniswap import get_output_price, get_input_price
-import rai_digital_twin.models.digital_twin_v1.model.parts.failure_modes as failure
+import rai_digital_twin.failure_modes as failure
 
 import logging
 
@@ -46,7 +44,7 @@ def s_update_stability_fee(params, substep, state_history, state, policy_input):
 ############################################################################################################################################
 
 
-def is_cdp_above_liquidation_ratio(cdp, eth_price, target_price, liquidation_ratio):
+def is_cdp_above_liquidation_ratio(cdp, eth_price, redemption_price, liquidation_ratio):
     locked = cdp["locked"]
     freed = cdp["freed"]
     drawn = cdp["drawn"]
@@ -57,10 +55,10 @@ def is_cdp_above_liquidation_ratio(cdp, eth_price, target_price, liquidation_rat
     # ETH * USD/ETH >= RAI * USD/RAI * unitless
     return (locked - freed - v_bitten) * eth_price >= (
         drawn - wiped - u_bitten
-    ) * target_price * liquidation_ratio
+    ) * redemption_price * liquidation_ratio
 
 
-def is_cdp_at_liquidation_ratio(cdp, eth_price, target_price, liquidation_ratio):
+def is_cdp_at_liquidation_ratio(cdp, eth_price, redemption_price, liquidation_ratio):
     locked = cdp["locked"]
     freed = cdp["freed"]
     drawn = cdp["drawn"]
@@ -71,11 +69,11 @@ def is_cdp_at_liquidation_ratio(cdp, eth_price, target_price, liquidation_ratio)
     # ETH * USD/ETH >= RAI * USD/RAI * unitless
     return (locked - freed - v_bitten) * eth_price == (
         drawn - wiped - u_bitten
-    ) * target_price * liquidation_ratio
+    ) * redemption_price * liquidation_ratio
 
 
 def wipe_to_liquidation_ratio(
-    cdp, eth_price, target_price, liquidation_ratio, _raise=True
+    cdp, eth_price, redemption_price, liquidation_ratio, _raise=True
 ):
     locked = cdp["locked"]
     freed = cdp["freed"]
@@ -86,7 +84,7 @@ def wipe_to_liquidation_ratio(
 
     # RAI - (USD/ETH) * ETH / (unitless * USD/RAI) -> RAI
     wipe = (drawn - wiped - u_bitten) - (locked - freed - v_bitten) * eth_price / (
-        liquidation_ratio * target_price
+        liquidation_ratio * redemption_price
     )
     if not approx_greater_equal_zero(wipe, abs_tol=1e-3):
         raise failure.InvalidCDPTransactionException(f"wipe: {locals()}")
@@ -99,7 +97,7 @@ def wipe_to_liquidation_ratio(
 
 
 def draw_to_liquidation_ratio(
-    cdp, eth_price, target_price, liquidation_ratio, _raise=True
+    cdp, eth_price, redemption_price, liquidation_ratio, _raise=True
 ):
     locked = cdp["locked"]
     freed = cdp["freed"]
@@ -110,7 +108,7 @@ def draw_to_liquidation_ratio(
 
     # (USD/ETH) * ETH / (USD/RAI * unitless) - RAI
     draw = (locked - freed - v_bitten) * eth_price / (
-        target_price * liquidation_ratio
+        redemption_price * liquidation_ratio
     ) - (drawn - wiped - u_bitten)
     if not approx_greater_equal_zero(draw, abs_tol=1e-3):
         raise failure.InvalidCDPTransactionException(f"draw: {locals()}")
@@ -120,7 +118,7 @@ def draw_to_liquidation_ratio(
 
 
 def lock_to_liquidation_ratio(
-    cdp, eth_price, target_price, liquidation_ratio, _raise=True
+    cdp, eth_price, redemption_price, liquidation_ratio, _raise=True
 ):
     locked = cdp["locked"]
     freed = cdp["freed"]
@@ -131,7 +129,7 @@ def lock_to_liquidation_ratio(
 
     # (USD/RAI * RAI * unitless - ETH * USD/ETH) / USD/ETH -> ETH
     lock = (
-        (drawn - wiped - u_bitten) * target_price * liquidation_ratio
+        (drawn - wiped - u_bitten) * redemption_price * liquidation_ratio
         - (locked - freed - v_bitten) * eth_price
     ) / eth_price
     if not approx_greater_equal_zero(lock, abs_tol=1e-3):
@@ -142,7 +140,7 @@ def lock_to_liquidation_ratio(
 
 
 def free_to_liquidation_ratio(
-    cdp, eth_price, target_price, liquidation_ratio, _raise=True
+    cdp, eth_price, redemption_price, liquidation_ratio, _raise=True
 ):
     locked = cdp["locked"]
     freed = cdp["freed"]
@@ -154,7 +152,7 @@ def free_to_liquidation_ratio(
     # (ETH * USD/ETH - unitless * RAI * USD/RAI) / (USD/ETH) -> ETH
     free = (
         (locked - freed - v_bitten) * eth_price
-        - liquidation_ratio * (drawn - wiped - u_bitten) * target_price
+        - liquidation_ratio * (drawn - wiped - u_bitten) * redemption_price
     ) / eth_price
     if not approx_greater_equal_zero(free, abs_tol=1e-3):
         raise failure.InvalidCDPTransactionException(f"free: {free}")
@@ -163,9 +161,9 @@ def free_to_liquidation_ratio(
     return free
 
 
-def open_cdp_lock(lock, eth_price, target_price, liquidation_ratio):
+def open_cdp_lock(lock, eth_price, redemption_price, liquidation_ratio):
     # ETH * USD/ETH / (USD/RAI * unitless) -> RAI
-    draw = lock * eth_price / (target_price * liquidation_ratio)
+    draw = lock * eth_price / (redemption_price * liquidation_ratio)
     return {
         "open": 1,
         "time": 0,
@@ -181,9 +179,9 @@ def open_cdp_lock(lock, eth_price, target_price, liquidation_ratio):
     }
 
 
-def open_cdp_draw(draw, eth_price, target_price, liquidation_ratio):
+def open_cdp_draw(draw, eth_price, redemption_price, liquidation_ratio):
     # (RAI * USD/RAI * unitless) / (USD/ETH) -> ETH
-    lock = (draw * target_price * liquidation_ratio) / eth_price
+    lock = (draw * redemption_price * liquidation_ratio) / eth_price
     return {
         "open": 1,
         "time": 0,
@@ -199,83 +197,111 @@ def open_cdp_draw(draw, eth_price, target_price, liquidation_ratio):
     }
 
 
-def p_rebalance_cdps(params, substep, state_history, state):
+def rebalance_cdp(params: dict,
+                  cdps: pd.DataFrame,
+                  eth_price: float,
+                  redemption_price: float,
+                  liquidation_ratio: float,
+                  ETH_balance: float,
+                  index: int,
+                  cdp: dict,
+                  ETH_delta: float,
+                  liquidation_buffer: float) -> tuple:
+    """
+
+    """
+    if cdp['arbitrage'] == 1:
+        liquidation_buffer = 1.0
+    else:
+        pass
+
+    args = (cdp,
+            eth_price,
+            redemption_price,
+            liquidation_ratio * liquidation_buffer)
+    cdp_above_liquidation_buffer = is_cdp_above_liquidation_ratio(*args)
+
+    if not cdp_above_liquidation_buffer:
+        # Wipe debt, using RAI from Uniswap
+        wiped = cdps.at[index, "wiped"]
+        args = (cdp,
+                eth_price,
+                redemption_price,
+                liquidation_ratio * liquidation_buffer,
+                params["raise_on_assert"])
+        wipe = wipe_to_liquidation_ratio(*args)
+
+        # Exchange ETH for RAIETH_delta, _ = get_output_price(wipe, ETH_balance, RAI_balance, uniswap_fee)
+        if not ETH_delta >= 0:
+            raise failure.InvalidSecondaryMarketDeltaException(f'{ETH_delta=}')
+        if not ETH_delta <= ETH_balance:
+            raise failure.InvalidSecondaryMarketDeltaException(f'{ETH_delta=}')
+        RAI_delta = -wipe
+        if not RAI_delta <= 0:
+            raise failure.InvalidSecondaryMarketDeltaException(f'{RAI_delta=}')
+
+        # Wipe amount on the CDPs
+        cdps.at[index, "wiped"] = wiped + wipe
+    else:
+        # Draw debt, exchanging RAI for ETH in Uniswap
+        drawn = cdps.at[index, "drawn"]
+        draw = draw_to_liquidation_ratio(
+            cdp,
+            eth_price,
+            redemption_price,
+            liquidation_ratio * liquidation_buffer,
+            params["raise_on_assert"],
+        )
+        # Exchange RAI for ETH_, ETH_delta = get_input_price(draw, RAI_balance, ETH_balance, uniswap_fee)
+        if not ETH_delta <= 0:
+            raise failure.InvalidSecondaryMarketDeltaException(f'{ETH_delta=}')
+        RAI_delta = draw
+        if not RAI_delta >= 0:
+            raise failure.InvalidSecondaryMarketDeltaException(f'{RAI_delta=}')
+        cdps.at[index, "drawn"] = drawn + draw
+    return RAI_delta, ETH_delta, cdps
+
+
+def p_rebalance_cdps(params, _1, _2, state):
+    """
+
+    """
     cdps = state["cdps"]
 
     eth_price = state["eth_price"]
-    target_price = state["target_price"]
+    redemption_price = state["redemption_price"]
+    liquidation_buffer = state['liquidation_buffer']
     liquidation_ratio = params["liquidation_ratio"]
-    liquidation_buffer = params["liquidation_buffer"]
-    
-    RAI_balance = state['RAI_balance']
+
     ETH_balance = state['ETH_balance']
-    uniswap_fee = params['uniswap_fee']
 
     RAI_delta = 0
     ETH_delta = 0
-    UNI_delta = 0
 
     for index, cdp in cdps.query("open == 1").iterrows():
-        if cdp['arbitrage'] == 1:
-            liquidation_buffer = 1.0
-        
-        cdp_above_liquidation_buffer = is_cdp_above_liquidation_ratio(
-            cdp, eth_price, target_price, liquidation_ratio * liquidation_buffer
-        )
-
-        if not cdp_above_liquidation_buffer:
-            # Wipe debt, using RAI from Uniswap
-            wiped = cdps.at[index, "wiped"]
-            wipe = wipe_to_liquidation_ratio(
-                cdp,
-                eth_price,
-                target_price,
-                liquidation_ratio * liquidation_buffer,
-                params["raise_on_assert"],
-            )
-            # Exchange ETH for RAI
-            ETH_delta, _ = get_output_price(wipe, ETH_balance, RAI_balance, uniswap_fee)
-            if not ETH_delta >= 0: raise failure.InvalidSecondaryMarketDeltaException(f'{ETH_delta=}')
-            if not ETH_delta <= ETH_balance: raise failure.InvalidSecondaryMarketDeltaException(f'{ETH_delta=}')
-            RAI_delta = -wipe
-            if not RAI_delta <= 0: raise failure.InvalidSecondaryMarketDeltaException(f'{RAI_delta=}')
-            cdps.at[index, "wiped"] = wiped + wipe
-        else:
-            # Draw debt, exchanging RAI for ETH in Uniswap
-            drawn = cdps.at[index, "drawn"]
-            draw = draw_to_liquidation_ratio(
-                cdp,
-                eth_price,
-                target_price,
-                liquidation_ratio * liquidation_buffer,
-                params["raise_on_assert"],
-            )
-            # Exchange RAI for ETH
-            _, ETH_delta = get_input_price(draw, RAI_balance, ETH_balance, uniswap_fee)
-            if not ETH_delta <= 0: raise failure.InvalidSecondaryMarketDeltaException(f'{ETH_delta=}')
-            RAI_delta = draw
-            if not RAI_delta >= 0: raise failure.InvalidSecondaryMarketDeltaException(f'{RAI_delta=}')
-            cdps.at[index, "drawn"] = drawn + draw
-
-    if params['debug']:
-        open_cdps = len(cdps.query("open == 1"))
-        closed_cdps = len(cdps.query("open == 0"))
-        logging.debug(
-            f"p_rebalance_cdps() ~ Number of open CDPs: {open_cdps}; Number of closed CDPs: {closed_cdps}"
-        )
+        RAI_delta, ETH_delta, cdps = rebalance_cdp(params,
+                                                   cdps,
+                                                   eth_price,
+                                                   redemption_price,
+                                                   liquidation_ratio,
+                                                   ETH_balance,
+                                                   index,
+                                                   cdp,
+                                                   ETH_delta,
+                                                   liquidation_buffer)
 
     uniswap_state_delta = {
         'RAI_delta': RAI_delta,
         'ETH_delta': ETH_delta,
-        'UNI_delta': UNI_delta,
+        'UNI_delta': 0,
     }
 
     return {"cdps": cdps, **uniswap_state_delta}
 
 
-def p_liquidate_cdps(params, substep, state_history, state):
+def p_liquidate_cdps(params, _1, _2, state):
     eth_price = state["eth_price"]
-    target_price = state["target_price"]
+    redemption_price = state["redemption_price"]
     liquidation_penalty = params["liquidation_penalty"]
     liquidation_ratio = params["liquidation_ratio"]
 
@@ -286,7 +312,7 @@ def p_liquidate_cdps(params, substep, state_history, state):
         try:
             # The aggregate arbitrage CDP is assumed to never be liquidated
             liquidated_cdps = cdps.query("open == 1 and arbitrage == 0").query(
-                f"(locked - freed - v_bitten) * {eth_price} < (drawn - wiped - u_bitten) * {target_price} * {liquidation_ratio}"
+                f"(locked - freed - v_bitten) * {eth_price} < (drawn - wiped - u_bitten) * {redemption_price} * {liquidation_ratio}"
             )
         except:
             print(state)
@@ -313,7 +339,8 @@ def p_liquidate_cdps(params, substep, state_history, state):
 
         try:
             v_bite = (
-                (drawn - wiped - u_bitten) * target_price * (1 + liquidation_penalty)
+                (drawn - wiped - u_bitten) *
+                redemption_price * (1 + liquidation_penalty)
             ) / eth_price
             assert v_bite >= 0, f"{v_bite} !>= 0 ~ {state}"
             assert v_bite <= (
@@ -353,16 +380,6 @@ def p_liquidate_cdps(params, substep, state_history, state):
     assert_log(v_3 >= 0, v_3, params["raise_on_assert"])
     assert_log(u_3 >= 0, u_3, params["raise_on_assert"])
     assert_log(w_3 >= 0, w_3, params["raise_on_assert"])
-
-    # try:
-    #     cdps = cdps.drop(liquidated_cdps.index)
-    # except KeyError:
-    #     print('Failed to drop CDPs')
-    #     raise
-
-    if debug: logging.debug(
-        f"{len(liquidated_cdps)} CDPs liquidated with v_2 {v_2} v_3 {v_3} u_3 {u_3} w_3 {w_3}"
-    )
 
     return {"cdps": cdps}
 
@@ -431,28 +448,14 @@ def s_update_principal_debt(params, substep, state_history, state, policy_input)
     return "principal_debt", principal_debt
 
 
-def s_update_eth_locked(params, substep, state_history, state, policy_input):
-    return "eth_locked", state['cdps']["locked"].sum()
-
-
-def s_update_eth_freed(params, substep, state_history, state, policy_input):
-    return "eth_freed", state['cdps']["freed"].sum()
-
-
-def s_update_eth_bitten(params, substep, state_history, state, policy_input):
-    return "eth_bitten", state['cdps']["v_bitten"].sum()
-
-
-def s_update_rai_drawn(params, substep, state_history, state, policy_input):
-    return "rai_drawn", state['cdps']["drawn"].sum()
-
-
-def s_update_rai_wiped(params, substep, state_history, state, policy_input):
-    return "rai_wiped", state['cdps']["wiped"].sum()
-
-
-def s_update_rai_bitten(params, substep, state_history, state, policy_input):
-    return "rai_bitten", state['cdps']["u_bitten"].sum()
+def cdp_sum_suf(variable: str, cdp_column: str) -> callable:
+    """
+    Generates a State Update Function that sums over the
+    cdps state variable
+    """
+    def suf(params, substep, state_history, state, policy_input):
+        return variable, state['cdps'][cdp_column].sum()
+    return suf
 
 
 def s_update_system_revenue(params, substep, state_history, state, policy_input):
@@ -462,7 +465,7 @@ def s_update_system_revenue(params, substep, state_history, state, policy_input)
 
 
 def calculate_accrued_interest(
-    stability_fee, target_rate, timedelta, debt, accrued_interest
+    stability_fee, redemption_rate, timedelta, debt, accrued_interest
 ):
     return (((1 + stability_fee)) ** timedelta - 1) * (debt + accrued_interest)
 
@@ -472,11 +475,11 @@ def s_update_accrued_interest(params, substep, state_history, state, policy_inpu
     principal_debt = state["principal_debt"]
 
     stability_fee = state["stability_fee"]
-    target_rate = state["target_rate"]
+    redemption_rate = state["redemption_rate"]
     timedelta = state["timedelta"]
 
     accrued_interest = calculate_accrued_interest(
-        stability_fee, target_rate, timedelta, principal_debt, previous_accrued_interest
+        stability_fee, redemption_rate, timedelta, principal_debt, previous_accrued_interest
     )
     return "accrued_interest", previous_accrued_interest + accrued_interest
 
@@ -490,7 +493,7 @@ def s_update_interest_bitten(params, substep, state_history, state, policy_input
 def s_update_cdp_interest(params, substep, state_history, state, policy_input):
     cdps = state["cdps"]
     stability_fee = state["stability_fee"]
-    target_rate = state["target_rate"]
+    redemption_rate = state["redemption_rate"]
     timedelta = state["timedelta"]
 
     def resolve_cdp_interest(cdp):
@@ -499,7 +502,7 @@ def s_update_cdp_interest(params, substep, state_history, state, policy_input):
             previous_accrued_interest = cdp["dripped"]
             cdp["dripped"] = calculate_accrued_interest(
                 stability_fee,
-                target_rate,
+                redemption_rate,
                 timedelta,
                 principal_debt,
                 previous_accrued_interest,
@@ -518,10 +521,10 @@ def s_update_cdp_metrics(params, substep, state_history, state, policy_input):
         "open_cdp_count": len(cdps.query("open == 1")),
         "closed_cdp_count": len(cdps.query("open == 0")),
         "mean_cdp_collateral": pd.eval(
-            "cdp_collateral = cdps.locked - cdps.freed - cdps.v_bitten", target=cdps
+            "cdp_collateral = cdps.locked - cdps.freed - cdps.v_bitten", redemption=cdps
         )["cdp_collateral"].mean(),
         "median_cdp_collateral": pd.eval(
-            "cdp_collateral = cdps.locked - cdps.freed - cdps.v_bitten", target=cdps
+            "cdp_collateral = cdps.locked - cdps.freed - cdps.v_bitten", redemption=cdps
         )["cdp_collateral"].median(),
     }
     return "cdp_metrics", cdp_metrics

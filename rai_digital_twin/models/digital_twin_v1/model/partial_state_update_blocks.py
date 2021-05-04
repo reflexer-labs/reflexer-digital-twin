@@ -1,26 +1,25 @@
+from rai_digital_twin.models.digital_twin_v1.model.parts.user_action import p_user_action
 import rai_digital_twin.models.digital_twin_v1.model.parts.markets as markets
 import rai_digital_twin.models.digital_twin_v1.model.parts.uniswap as uniswap
 import rai_digital_twin.models.digital_twin_v1.model.parts.init as init
 
-from .parts.utils import s_update_sim_metrics, p_free_memory, s_collect_events
-from .parts.governance import p_enable_controller
+from .parts.governance import p_governance_events
 
 from .parts.controllers import *
 from .parts.debt_market import *
 from .parts.time import *
-from .parts.apt_model import *
 
 
-partial_state_update_blocks_unprocessed = [
+partial_state_update_blocks = [
     {
-        'label': 'Initialization & Memory management',
+        'label': 'Initialization & Governance',
         'details': '',
         'policies': {
-            'free_memory': p_free_memory,
-            'random_seed': init.initialize_seed,
+            'governance_events': p_governance_events
+
         },
         'variables': {
-            'target_price': init.initialize_target_price,
+            'redemption_price': init.initialize_redemption_price,
         }
     },
     {
@@ -37,63 +36,17 @@ partial_state_update_blocks_unprocessed = [
             'cumulative_time': update_cumulative_time
         }
     },
-    #################################################################
-    {
-        'label': 'Liquidity',
-        'details': 'Stochastic process for Uniswap events',
-        'enabled': True,
-        'policies': {
-            'liquidity_demand': markets.p_liquidity_demand
-        },
-        'variables': {
-            'RAI_balance': uniswap.update_RAI_balance,
-            'ETH_balance': uniswap.update_ETH_balance,
-            'UNI_supply': uniswap.update_UNI_supply,
-            'liquidity_demand': markets.s_liquidity_demand,
-            'liquidity_demand_mean': markets.s_liquidity_demand_mean,
-            'market_slippage': markets.s_slippage,
-        }
-    },
     {
         'label': 'Market Price',
-        'policies': {
-            'market_price': markets.p_market_price
-        },
-        'variables': {
-            'market_price': markets.s_market_price,
-            'market_price_twap': markets.s_market_price_twap,
-            'uniswap_oracle': markets.s_uniswap_oracle
-        }
-    },
-    {
-        'label': 'Expected Market Price',
-        'details': '''
-            Resolve expected price and store in state
-        ''',
-        'policies': {
-            'market': p_resolve_expected_market_price
-        },
-        'variables': {
-            'expected_market_price': s_store_expected_market_price
-        }
-    },
-    {
-        'label': 'Arbitrageur',
         'details': """
-            APT model
+        Retrieves the Uniswap Market Price
         """,
         'policies': {
-            'arbitrage': p_arbitrageur_model
         },
         'variables': {
-            'cdps': s_store_cdps,
-            'optimal_values': s_store_optimal_values,
-            'RAI_balance': uniswap.update_RAI_balance,
-            'ETH_balance': uniswap.update_ETH_balance,
-            'UNI_supply': uniswap.update_UNI_supply,
+            'market_price_twap': markets.s_market_price_twap
         }
     },
-    #################################################################
     {
         'label': 'Aggregate states 1',
         'details': '''
@@ -101,12 +54,12 @@ partial_state_update_blocks_unprocessed = [
         ''',
         'policies': {},
         'variables': {
-            'eth_locked': s_update_eth_locked,
-            'eth_freed': s_update_eth_freed,
-            'eth_bitten': s_update_eth_bitten,
-            'rai_drawn': s_update_rai_drawn,
-            'rai_wiped': s_update_rai_wiped,
-            'rai_bitten': s_update_rai_bitten,
+            'eth_locked': cdp_sum_suf('eth_locked', 'locked'),
+            'eth_freed': cdp_sum_suf('eth_freed', 'freed'),
+            'eth_bitten': cdp_sum_suf('eth_bitten', 'v_bitten'),
+            'rai_drawn': cdp_sum_suf('eth_drawn', 'drawn'),
+            'rai_wiped': cdp_sum_suf('eth_wiped', 'wiped'),
+            'rai_bitten': cdp_sum_suf('eth_bitten', 'u_bitten'),
         }
     },
     {
@@ -145,8 +98,7 @@ partial_state_update_blocks_unprocessed = [
         'variables': {
             'cdps': s_store_cdps,
             'RAI_balance': uniswap.update_RAI_balance,
-            'ETH_balance': uniswap.update_ETH_balance,
-            'UNI_supply': uniswap.update_UNI_supply,
+            'ETH_balance': uniswap.update_ETH_balance
         }
     },
     #################################################################
@@ -165,8 +117,7 @@ partial_state_update_blocks_unprocessed = [
     {
         'label': 'Compute error',
         'details': """
-        This block computes and stores the error terms
-        required to compute the various control actions
+        Retrieve error terms required to compute the various control actions
         """,
         'policies': {
             'observe': observe_errors
@@ -177,25 +128,13 @@ partial_state_update_blocks_unprocessed = [
         }
     },
     {
-        'label': 'Controller',
+        'label': 'Redemption Price',
         'details': """
-        This block computes the stability control action 
-        """,
-        'policies': {
-            'governance': p_enable_controller,
-        },
-        'variables': {
-            'target_rate': update_target_rate,
-        }
-    },
-    {
-        'label': 'Target price',
-        'details': """
-        This block updates the target price based on stability control action 
+        New redemption price based on stability control action 
         """,
         'policies': {},
         'variables': {
-            'target_price': update_target_price,
+            'redemption_price': update_redemption_price,
         }
     },
     #################################################################
@@ -215,12 +154,12 @@ partial_state_update_blocks_unprocessed = [
         ''',
         'policies': {},
         'variables': {
-            'eth_locked': s_update_eth_locked,
-            'eth_freed': s_update_eth_freed,
-            'eth_bitten': s_update_eth_bitten,
-            'rai_drawn': s_update_rai_drawn,
-            'rai_wiped': s_update_rai_wiped,
-            'rai_bitten': s_update_rai_bitten,
+            'eth_locked': cdp_sum_suf('eth_locked', 'locked'),
+            'eth_freed': cdp_sum_suf('eth_freed', 'freed'),
+            'eth_bitten': cdp_sum_suf('eth_bitten', 'v_bitten'),
+            'rai_drawn': cdp_sum_suf('eth_drawn', 'drawn'),
+            'rai_wiped': cdp_sum_suf('eth_wiped', 'wiped'),
+            'rai_bitten': cdp_sum_suf('eth_bitten', 'u_bitten'),
             'accrued_interest': s_update_interest_bitten,
             'system_revenue': s_update_system_revenue,
         }
@@ -259,8 +198,25 @@ partial_state_update_blocks_unprocessed = [
         'variables': {
             'cdp_metrics': s_update_cdp_metrics,
         }
+    }, {
+        'label': 'Aggregate User Action',
+        'description': """
+        Modify the macro system state according to the
+        Data-driven Linearized Aggregated Arbitrageur Model
+        Reference: https://hackmd.io/w-vfdZIMTDKwdEupeS3qxQ
+        """,
+        'policies': {
+            'user_action': p_user_action
+        },
+        'variables': {
+            'ETH_balance': None,
+            'RAI_balance': None, 
+            'cdps': None
+        }
     }
 ]
 
-partial_state_update_blocks = list(filter(lambda psub: psub.get(
-    'enabled', True), partial_state_update_blocks_unprocessed))
+partial_state_update_blocks = [psub
+                               for psub
+                               in partial_state_update_blocks
+                               if psub.get('enabled, True') == True]

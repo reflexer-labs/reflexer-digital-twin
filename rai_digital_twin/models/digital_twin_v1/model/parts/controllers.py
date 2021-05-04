@@ -1,83 +1,92 @@
 import rai_digital_twin.models.options as options
 import rai_digital_twin.models.constants as constants
-import rai_digital_twin.models.digital_twin_v1.model.parts.failure_modes as failure
+import rai_digital_twin.failure_modes as failure
 
 
-def update_target_rate(params, substep, state_history, state, policy_input):
+def update_redemption_rate(params, _1, _2, state, _4):
     """
-    Calculate the PI controller target rate using the Kp and Ki constants and the error states.
+    Calculate the PI controller redemption rate using the Kp and Ki constants
+    and the error states.
     """
-
-    if state['cumulative_time'] % params['control_period'] == 0:
-        error = state["error_star"]  # unit USD
-        error_integral = state["error_star_integral"]  # unit USD * seconds
-
-        target_rate = (
-            params["kp"] * error + (params["ki"] / params['control_period']) * error_integral
-        )
-
-        target_rate = target_rate if policy_input["controller_enabled"] else 0  # unitless
+    if params['controller_enabled'] is True:
+        # Only update the Redemption Rate if the current cumulative time
+        # is on par with the control period
+        control_parity = (state['cumulative_time'] % params['control_period'])
+        update_redemption_rate = (control_parity == 0)
+        if update_redemption_rate is True:
+            error = state["error_star"]
+            error_integral = state["error_star_integral"]
+            kp_correction = params["kp"] * error
+            ki_correction = params['ki'] * error_integral
+            ki_correction /= params['control_period']
+            redemption_rate = kp_correction + ki_correction
+        else:
+            redemption_rate = state['redemption_rate']
     else:
-        target_rate = state['target_rate'] if policy_input["controller_enabled"] else 0
+        redemption_rate = 0.0
 
-    return "target_rate", target_rate
+    return ("redemption_rate", redemption_rate)
 
 
-def update_target_price(params, substep, state_history, state, policy_input):
+def update_redemption_price(_0, _1, _2, state, _4):
     """
-    Update the controller target_price state ("redemption price") according to the controller target_rate state ("redemption rate")
+    Update the controller redemption_price state ("redemption price") according
+    to the controller redemption_rate state ("redemption rate")
 
     Notes:
     * exp(bt) = (1+b)**t for low values of b; but to avoid compounding errors
     * we should probably stick to the same implementation as the solidity version
-    * target_price =  state['target_price'] * FXnum(state['target_rate'] * state['timedelta']).exp()
-    * target_price =  state['target_price'] * math.exp(state['target_rate'] * state['timedelta'])
+    * redemption_price =  state['redemption_price'] * FXnum(state['redemption_rate'] * state['timedelta']).exp()
+    * redemption_price =  state['redemption_price'] * math.exp(state['redemption_rate'] * state['timedelta'])
     """
 
-    target_price = state["target_price"]
+    redemption_price = state["redemption_price"]
+
     try:
-        target_price = (
-            state["target_price"] * (1 + state["target_rate"]) ** state["timedelta"]
-        )
+        interest = (1 + state['redemption_rate']) ** state["timedelta"]
+        redemption_price *= interest
     except OverflowError as e:
-        raise failure.ControllerTargetOverflowException((e, target_price))
+        raise failure.ControllerTargetOverflowException(
+            (e, redemption_price))
 
-    if target_price < 0:
-        target_price = 0
+    if redemption_price < 0:
+        redemption_price = 0
+    else:
+        pass
 
-    return "target_price", target_price
+    return ("redemption_price", redemption_price)
 
 
-def observe_errors(params, substep, state_history, state):
+def observe_errors(params, _1, _2, state):
     """
-    Calculate the error between the target and market price, using the error_term parameter.
-    The error_term parameter allows you to set whether the error is calculated as target - market or market - target.
+    Calculate the error between the redemption and market price.
     """
+    redemption_price = state["redemption_price"]
 
-    target_price = state["target_price"] * params["liquidation_ratio"] if params["rescale_target_price"] else state["target_price"]
-    error = params["error_term"](target_price, state["market_price_twap"])
+    if params["rescale_redemption_price"] is True:
+        redemption_price *= params["liquidation_ratio"]
+    else:
+        pass
 
+    error = (state["redemption_price"] - state["market_price_twap"])
     return {"error_star": error}
 
 
-def store_error_star(params, substep, state_history, state, policy_input):
+def store_error_star(_0, _1, _2, policy_input):
     """
-    Store the error_star state, which is the error between the target and market price.
+    Store the error_star state, 
+    which is the error between the redemption and market price.
     """
-
     error = policy_input["error_star"]
-
     return "error_star", error
 
 
-def update_error_star_integral(params, substep, state_history, state, policy_input):
+def update_error_star_integral(params, _1, _2, state, policy_input):
     """
     Update and store the error integral state.
 
-    Calculate the error integral using numerical integration (trapezoid rule):
-    See https://github.com/cadCAD-org/demos/blob/master/tutorials/numerical_computation/numerical_integration_1.ipynb
+    Calculate the error integral using numerical integration (trapezoid rule).
     """
-
     # Numerical integration (trapezoid rule)
     error_star_integral = state["error_star_integral"]
     old_error = state["error_star"]  # unit: USD
@@ -90,9 +99,10 @@ def update_error_star_integral(params, substep, state_history, state, policy_inp
     if params[options.IntegralType.__name__] == options.IntegralType.LEAKY.value:
         alpha = params["alpha"]
         remaing_frac = float(alpha / constants.RAY) ** timedelta  # unitless
-        remaining = int(remaing_frac * error_star_integral)  # unit: USD * seconds
+        # unit: USD * seconds
+        remaining = int(remaing_frac * error_star_integral)
         error_integral = remaining + area  # unit: USD * seconds
     else:
         error_integral = error_star_integral + area  # unit: USD * seconds
 
-    return "error_star_integral", error_integral  # unit: USD * seconds
+    return ("error_star_integral", error_integral)

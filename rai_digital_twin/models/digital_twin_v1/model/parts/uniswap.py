@@ -15,12 +15,6 @@ def update_ETH_balance(params, substep, state_history, state, policy_input):
     if not updated_ETH_balance > 0: raise failure.NegativeBalanceException(f'Uniswap ETH {ETH_balance=} {ETH_delta=}')
     return "ETH_balance", updated_ETH_balance
 
-def update_UNI_supply(params, substep, state_history, state, policy_input):
-    UNI_supply = state['UNI_supply']
-    UNI_delta = policy_input['UNI_delta']
-    updated_UNI_supply = UNI_supply + UNI_delta
-    if not updated_UNI_supply > 0: raise failure.NegativeBalanceException(f'Uniswap UNI {UNI_supply=} {UNI_delta=}')
-    return "UNI_supply", updated_UNI_supply
 
 # Uniswap functions
 # See https://github.com/runtimeverification/verified-smart-contracts/blob/uniswap/uniswap/x-y-k.pdf for original v1 specification

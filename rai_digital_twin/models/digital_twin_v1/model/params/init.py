@@ -40,7 +40,7 @@ class ReflexerModelParameters(TypedDict):
     ki: Per_USD_Seconds
     alpha: Per_RAY
     error_term: Callable[[USD_per_RAI, USD_per_RAI], USD_per_RAI]
-    rescale_target_price: bool
+    rescale_redemption_price: bool
     arbitrageur_considers_liquidation_ratio: bool
     interest_rate: float
     beta_1: USD_per_ETH
@@ -55,44 +55,29 @@ class ReflexerModelParameters(TypedDict):
     swap_gas_used: Gwei
     cdp_gas_used: Gwei
 
-
+ETH_PRICE_SERIES = []
+SECONDS_PER_TIMESTEP = 3600
 
 params = {
     # Admin parameters
-    'debug': [False], # Print debug messages (see APT model)
     'raise_on_assert': [True], # See assert_log() in utils.py
-    'free_memory_states': [['events', 'cdps', 'uniswap_oracle']],
 
     # Configuration options
     options.IntegralType.__name__: [options.IntegralType.LEAKY.value],
 
     # Exogenous states, loaded as parameter at every timestep - these are lambda functions, and have to be called
-    'eth_price': [lambda run, timestep, df=eth_price_df: df[str(run-1)].iloc[timestep]],
-    'liquidity_demand_events': [lambda run, timestep, df=liquidity_demand_df: df[str(run-1)].iloc[timestep]],
-    'token_swap_events': [lambda run, timestep, df=token_swap_df: df[str(run-1)].iloc[timestep]],
-    'seconds_passed': [lambda timestep, df=None: 3600],
+    'eth_price': [ETH_PRICE_SERIES],
+    'seconds_passed': [SECONDS_PER_TIMESTEP],
     
-    'liquidity_demand_enabled': [True], # turn on or off all shocks
-    'liquidity_demand_shock': [False], # introduce shocks (up to 50% of secondary market pool)
-    'liquidity_demand_max_percentage': [0.1], # max percentage of secondary market pool when no shocks introduced using liquidity_demand_shock
-    'liquidity_demand_shock_percentage': [0.5], # max percentage of secondary market pool when shocks introduced using liquidity_demand_shock
-
     # Time parameters
     'expected_blocktime': [15], # seconds
-    'control_period': [3600 * 4], # seconds; must be multiple of cumulative time
+    'control_period': [SECONDS_PER_TIMESTEP * 4], # seconds; must be multiple of cumulative time
     
     # Controller parameters
-    'controller_enabled': [True],
-    'enable_controller_time': [7 * 24 * 3600], # delay in enabling controller (7 days)
     'kp': [2e-7], # proportional term for the stability controller: units 1/USD
     'ki': [-5e-9], # integral term for the stability controller scaled by control period: units 1/(USD*seconds)
     'alpha': [.999 * RAY], # in 1/RAY
-    'error_term': [lambda target, measured: target - measured],
-    'rescale_target_price': [True], # scale the target price by the liquidation ratio
-    
-    # APT model
-    'arbitrageur_considers_liquidation_ratio': [True],
-    'interest_rate': [1.03], # Real-world expected interest rate, for determining profitable arbitrage opportunities
+    'rescale_redemption_price': [True], # scale the redemption price by the liquidation ratio
 
     # APT OLS model
     # OLS values (Feb. 6, 2021) for beta_1 and beta_2
@@ -106,7 +91,7 @@ params = {
     'debt_ceiling': [1e9],
 
     # System parameters
-    'stability_fee': [lambda timestep, df=None: stability_fee], # per second interest rate (x% per month)
+    'stability_fee': [stability_fee], # per second interest rate (x% per month)
 
     # Uniswap parameters
     'uniswap_fee': [0.003], # 0.3%
