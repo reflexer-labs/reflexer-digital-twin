@@ -1,4 +1,4 @@
-import rai_digital_twin.models.system_model_v2.model.parts.debt_market as debt_market
+import rai_digital_twin.models.digital_twin_v1.model.parts.debt_market as debt_market
 
 eth_price = 300
 redemption_price = 2.0

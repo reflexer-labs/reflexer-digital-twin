@@ -1,4 +1,4 @@
-import rai_digital_twin.models.digital_twin_v1.model.parts.failure_modes as failure
+import rai_digital_twin.failure_modes as failure
 
 
 def update_RAI_balance(params, substep, state_history, state, policy_input):
