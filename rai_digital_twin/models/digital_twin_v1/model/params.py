@@ -1,5 +1,4 @@
 from rai_digital_twin.types import *
-
 from rai_digital_twin.models.constants import RAY
 
 ETH_PRICE_SERIES: List[float] = []
