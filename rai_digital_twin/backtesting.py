@@ -5,7 +5,7 @@ Functions and definitions for calculating the validation loss of a
 backtested simulation.
 """
 from dataclasses import dataclass
-from typing import Dict, NamedTuple, Callable
+from typing import Dict, NamedTuple, Callable, List
 from collections import namedtuple
 import numpy as np
 
@@ -26,7 +26,7 @@ def loss(true_value: float,
     return (true_value - predicted_value) ** 2
 
 
-def aggregate_loss(loss_series: list[float]) -> float:
+def aggregate_loss(loss_series: List[float]) -> float:
     """
     Loss function for a time-series.
     """

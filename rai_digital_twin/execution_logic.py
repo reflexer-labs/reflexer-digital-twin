@@ -1,6 +1,10 @@
-from .backtesting import simulation_loss
 import pandas as pd
+from typing import Dict, List
+
 from cadCAD_tools import easy_run
+
+from .backtesting import simulation_loss
+
 
 def save_artifact():
     return None
@@ -20,9 +24,9 @@ def prepare(report_path: str = None) -> dict:
 
 def backtest_model(historical_data: pd.DataFrame) -> None:
 
-    initial_conditions: dict[str, object] = {}
-    params: dict[str, list[object]] = {}
-    partial_state_update_blocks: list[dict[str, object]] = []
+    initial_conditions: Dict[str, object] = {}
+    params: Dict[str, List[object]] = {}
+    partial_state_update_blocks: List[Dict[str, object]] = []
     timesteps = len(historical_data)
 
     sim_df = easy_run(initial_conditions,
@@ -33,6 +37,10 @@ def backtest_model(historical_data: pd.DataFrame) -> None:
                       use_labels=False,
                       assign_params=False,
                       drop_substeps=True)
+
+    test_df = None
+
+    loss = simulation_loss(sim_df, test_df)
 
     return None
 

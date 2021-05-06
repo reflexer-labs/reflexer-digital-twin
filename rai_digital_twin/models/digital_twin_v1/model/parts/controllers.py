@@ -1,4 +1,3 @@
-import rai_digital_twin.models.options as options
 import rai_digital_twin.models.constants as constants
 import rai_digital_twin.failure_modes as failure
 
@@ -96,7 +95,9 @@ def update_error_star_integral(params, _1, _2, state, policy_input):
     area = mean_error * timedelta  # unit: USD * seconds
 
     # Select whether to implement a leaky integral or not
-    if params[options.IntegralType.__name__] == options.IntegralType.LEAKY.value:
+    is_leaky = state['leaky_integral_activated']
+
+    if is_leaky:
         alpha = params["alpha"]
         remaing_frac = float(alpha / constants.RAY) ** timedelta  # unitless
         # unit: USD * seconds

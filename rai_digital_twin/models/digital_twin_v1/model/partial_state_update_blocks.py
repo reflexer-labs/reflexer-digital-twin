@@ -1,9 +1,15 @@
+from typing import List
+
+from .parts.time import resolve_time_passed, store_timedelta, update_timestamp, update_cumulative_time
+
 from .parts.user_action import p_user_action
+
 from .parts import markets
 from .parts import initialization as init
-from .parts.governance import p_governance_events
-from .parts.uniswap import uniswap
 
+from .parts.governance import p_governance_events
+
+from .parts.uniswap import update_ETH_balance, update_RAI_balance
 
 from .parts.controllers import observe_errors
 from .parts.controllers import store_error_star, update_error_star_integral
@@ -17,11 +23,10 @@ from .parts.debt_market import s_update_system_revenue
 from .parts.debt_market import s_update_accrued_interest, s_update_cdp_interest
 from .parts.debt_market import s_aggregate_w_1, s_aggregate_w_2, s_aggregate_w_3
 from .parts.debt_market import s_update_interest_bitten, s_update_stability_fee
-from .parts.debt_market import s_update_cdp_metrics
-from .parts.time import resolve_time_passed, store_timedelta, update_timestamp, update_cumulative_time
+from .parts.debt_market import p_resolve_eth_price, s_update_eth_price
 
 
-partial_state_update_blocks = [
+partial_state_update_blocks: List[dict] = [
     {
         'label': 'Initialization & Governance',
         'details': '',
@@ -108,8 +113,8 @@ partial_state_update_blocks = [
         },
         'variables': {
             'cdps': s_store_cdps,
-            'RAI_balance': uniswap.update_RAI_balance,
-            'ETH_balance': uniswap.update_ETH_balance
+            'RAI_balance': update_RAI_balance,
+            'ETH_balance': update_ETH_balance
         }
     },
     #################################################################
@@ -197,19 +202,10 @@ partial_state_update_blocks = [
             'exogenous_eth_process': p_resolve_eth_price,
         },
         'variables': {
-            'eth_price': s_update_eth_price,
-            'eth_return': s_update_eth_return,
-            'eth_gross_return': s_update_eth_gross_return
+            'eth_price': s_update_eth_price
         }
     },
-    #################################################################
     {
-        'label': 'CDP metrics',
-        'policies': {},
-        'variables': {
-            'cdp_metrics': s_update_cdp_metrics,
-        }
-    }, {
         'label': 'Aggregate User Action',
         'description': """
         Modify the macro system state according to the
@@ -221,7 +217,7 @@ partial_state_update_blocks = [
         },
         'variables': {
             'ETH_balance': None,
-            'RAI_balance': None, 
+            'RAI_balance': None,
             'cdps': None
         }
     }

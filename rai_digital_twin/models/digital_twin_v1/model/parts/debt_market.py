@@ -1,16 +1,13 @@
 import pandas as pd
 from .utils import approx_greater_equal_zero, assert_log
-from .uniswap import get_output_price, get_input_price
 import rai_digital_twin.failure_modes as failure
 import logging
-from cadCAD_tools.types import StateUpdateFunction
-############################################################################################################################################
 
 
 def p_resolve_eth_price(params, substep, state_history, state):
-    eth_price = params["eth_price"](state["run"], state["timestep"])
-    delta_eth_price = eth_price - state_history[-1][-1]["eth_price"]
-
+    current_eth_price = params["eth_price"](state["run"], state["timestep"])
+    past_eth_price = state_history[-1][-1]["eth_price"]
+    delta_eth_price = current_eth_price - past_eth_price
     return {"delta_eth_price": delta_eth_price}
 
 
@@ -19,20 +16,6 @@ def s_update_eth_price(params, substep, state_history, state, policy_input):
     delta_eth_price = policy_input["delta_eth_price"]
 
     return "eth_price", eth_price + delta_eth_price
-
-
-def s_update_eth_return(params, substep, state_history, state, policy_input):
-    eth_price = state["eth_price"]
-    delta_eth_price = policy_input["delta_eth_price"]
-
-    return "eth_return", delta_eth_price / eth_price
-
-
-def s_update_eth_gross_return(params, substep, state_history, state, policy_input):
-    eth_price = state["eth_price"]
-    eth_gross_return = eth_price / state_history[-1][-1]["eth_price"]
-
-    return "eth_gross_return", eth_gross_return
 
 
 def s_update_stability_fee(params, substep, state_history, state, policy_input):
@@ -229,18 +212,17 @@ def rebalance_cdp(params: dict,
                      liquidation_ratio * liquidation_buffer,
                      params["raise_on_assert"])
         wipe = wipe_to_liquidation_ratio(*wipe_args)
+        RAI_delta = -wipe
 
-        # Exchange ETH for RAIETH_delta, _ = get_output_price(wipe, ETH_balance, RAI_balance, uniswap_fee)
         if not ETH_delta >= 0:
             raise failure.InvalidSecondaryMarketDeltaException(f'{ETH_delta=}')
-        if not ETH_delta <= ETH_balance:
+        elif not ETH_delta <= ETH_balance:
             raise failure.InvalidSecondaryMarketDeltaException(f'{ETH_delta=}')
-        RAI_delta = -wipe
-        if not RAI_delta <= 0:
+        elif not RAI_delta <= 0:
             raise failure.InvalidSecondaryMarketDeltaException(f'{RAI_delta=}')
-
-        # Wipe amount on the CDPs
-        cdps.at[index, "wiped"] = wiped + wipe
+        else:
+            # Wipe amount on the CDPs
+            cdps.at[index, "wiped"] = wiped + wipe
     else:
         # Draw debt, exchanging RAI for ETH in Uniswap
         drawn = cdps.at[index, "drawn"]
@@ -422,13 +404,12 @@ def s_update_eth_collateral(params, substep, state_history, state, policy_input)
     eth_bitten = state["eth_bitten"]
 
     eth_collateral = eth_locked - eth_freed - eth_bitten
-    event = (
-        f"ETH collateral < 0: {eth_collateral} ~ {(eth_locked, eth_freed, eth_bitten)}"
-    )
-    if not approx_greater_equal_zero(eth_collateral, 1e-2):
-        raise failure.NegativeBalanceException(event)
 
-    return "eth_collateral", eth_collateral
+    if not approx_greater_equal_zero(eth_collateral, 1e-2):
+        event = f"ETH collateral < 0: {eth_collateral} ~ {(eth_locked, eth_freed, eth_bitten)}"
+        raise failure.NegativeBalanceException(event)
+    else:
+        return ("eth_collateral", eth_collateral)
 
 
 def s_update_principal_debt(params, substep, state_history, state, policy_input):
@@ -438,16 +419,14 @@ def s_update_principal_debt(params, substep, state_history, state, policy_input)
 
     principal_debt = rai_drawn - rai_wiped - rai_bitten
 
-    event = (
-        f"Principal debt < 0: {principal_debt} ~ {(rai_drawn, rai_wiped, rai_bitten)}"
-    )
     if not approx_greater_equal_zero(principal_debt, 1e-2):
+        event = f"Principal debt < 0: {principal_debt} ~ {(rai_drawn, rai_wiped, rai_bitten)}"
         raise failure.NegativeBalanceException(event)
+    else:
+        return "principal_debt", principal_debt
 
-    return "principal_debt", principal_debt
 
-
-def cdp_sum_suf(variable: str, cdp_column: str) -> StateUpdateFunction:
+def cdp_sum_suf(variable: str, cdp_column: str) -> object:
     """
     Generates a State Update Function that sums over the
     cdps state variable
@@ -512,18 +491,3 @@ def s_update_cdp_interest(params, substep, state_history, state, policy_input):
 
     return "cdps", cdps
 
-
-def s_update_cdp_metrics(params, substep, state_history, state, policy_input):
-    cdps = state["cdps"]
-    cdp_metrics = {
-        "cdp_count": len(cdps),
-        "open_cdp_count": len(cdps.query("open == 1")),
-        "closed_cdp_count": len(cdps.query("open == 0")),
-        "mean_cdp_collateral": pd.eval(
-            "cdp_collateral = cdps.locked - cdps.freed - cdps.v_bitten", redemption=cdps
-        )["cdp_collateral"].mean(),
-        "median_cdp_collateral": pd.eval(
-            "cdp_collateral = cdps.locked - cdps.freed - cdps.v_bitten", redemption=cdps
-        )["cdp_collateral"].median(),
-    }
-    return "cdp_metrics", cdp_metrics
