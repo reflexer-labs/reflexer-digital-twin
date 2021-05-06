@@ -73,5 +73,5 @@ class GovernanceEvent(NamedTuple):
 class UserAction(TypedDict):
     add_ETH_collateral: ETH
     add_RAI_debt: RAI
-    add_RAI_reserve: RAI
-    add_ETH_reserve: ETH
+    RAI_delta: RAI
+    ETH_delta: ETH

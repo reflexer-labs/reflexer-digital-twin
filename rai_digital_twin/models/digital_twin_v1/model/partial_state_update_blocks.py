@@ -7,7 +7,7 @@ from .parts.time import s_store_timedelta, s_update_cumulative_time
 
 # Events
 from .parts.governance import p_governance_events
-from .parts.user_action import p_user_action
+from .parts.user_action import p_user_action, s_CDP_action
 
 # Exogenous Info
 from .parts.markets import s_ETH_balance, s_RAI_balance, s_market_price_twap
@@ -218,9 +218,9 @@ partial_state_update_blocks: List[dict] = [
             'user_action': p_user_action
         },
         'variables': {
-            'ETH_balance': None,
-            'RAI_balance': None,
-            'cdps': None
+            'ETH_balance': s_ETH_balance,
+            'RAI_balance': s_RAI_balance,
+            'cdps': s_CDP_action
         }
     }
 ]
