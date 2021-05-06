@@ -15,7 +15,7 @@ MetricLossFunction = Callable[[object, object], float]
 @dataclass
 class ValidationMetricDefinition():
     metric_type: object
-    loss_function: callable
+    loss_function: MetricLossFunction
 
 
 def loss(true_value: float,
@@ -26,11 +26,11 @@ def loss(true_value: float,
     return (true_value - predicted_value) ** 2
 
 
-def aggregate_loss(loss_series: np.array) -> float:
+def aggregate_loss(loss_series: list[float]) -> float:
     """
     Loss function for a time-series.
     """
-    return loss_series.mean()
+    return sum(loss_series) / len(loss_series)
 
 
 def generic_loss(sim_df,

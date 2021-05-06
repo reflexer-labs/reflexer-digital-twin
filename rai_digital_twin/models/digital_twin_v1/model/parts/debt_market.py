@@ -2,9 +2,8 @@ import pandas as pd
 from .utils import approx_greater_equal_zero, assert_log
 from .uniswap import get_output_price, get_input_price
 import rai_digital_twin.failure_modes as failure
-
 import logging
-
+from cadCAD_tools.types import StateUpdateFunction
 ############################################################################################################################################
 
 
@@ -224,12 +223,12 @@ def rebalance_cdp(params: dict,
     if not cdp_above_liquidation_buffer:
         # Wipe debt, using RAI from Uniswap
         wiped = cdps.at[index, "wiped"]
-        args = (cdp,
-                eth_price,
-                redemption_price,
-                liquidation_ratio * liquidation_buffer,
-                params["raise_on_assert"])
-        wipe = wipe_to_liquidation_ratio(*args)
+        wipe_args = (cdp,
+                     eth_price,
+                     redemption_price,
+                     liquidation_ratio * liquidation_buffer,
+                     params["raise_on_assert"])
+        wipe = wipe_to_liquidation_ratio(*wipe_args)
 
         # Exchange ETH for RAIETH_delta, _ = get_output_price(wipe, ETH_balance, RAI_balance, uniswap_fee)
         if not ETH_delta >= 0:
@@ -448,7 +447,7 @@ def s_update_principal_debt(params, substep, state_history, state, policy_input)
     return "principal_debt", principal_debt
 
 
-def cdp_sum_suf(variable: str, cdp_column: str) -> callable:
+def cdp_sum_suf(variable: str, cdp_column: str) -> StateUpdateFunction:
     """
     Generates a State Update Function that sums over the
     cdps state variable

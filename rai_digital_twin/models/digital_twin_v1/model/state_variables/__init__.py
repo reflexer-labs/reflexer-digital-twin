@@ -5,6 +5,7 @@ from rai_digital_twin.models.digital_twin_v1.model.state_variables.system import
 from rai_digital_twin.types import *
 import datetime as dt
 
+
 class ReflexerStateVariables(TypedDict, total=True):
     """
     Units and types of the state variables
@@ -55,7 +56,7 @@ class ReflexerStateVariables(TypedDict, total=True):
     error_star_integral: USD_Seconds_per_RAI
 
     # Uniswap states
-    market_slippage: Percentage   
+    market_slippage: Percentage
     RAI_balance: RAI
     ETH_balance: ETH
 
@@ -64,49 +65,56 @@ class ReflexerStateVariables(TypedDict, total=True):
 state_variables = {
     # Metadata / metrics
     'cdp_metrics': {},
-    
+
     # Time states
-    'timedelta': 0, # seconds
-    'cumulative_time': 0, # seconds
-    'timestamp': dt.datetime.strptime('2017-01-01', '%Y-%m-%d'), # type: datetime; start time
-    'blockheight': 0, # block offset (init 0 simplicity)
-    
+    'timedelta': 0,  # seconds
+    'cumulative_time': 0,  # seconds
+    'timestamp': dt.datetime.strptime('2017-01-01', '%Y-%m-%d'),  # start time
+    'blockheight': 0,  # block offset (init 0 simplicity)
+
     # Exogenous states
-    'eth_price': None, # unit: dollars; updated from historical data as exogenous parameter
-    
+    'eth_price': None,  # unit: dollars; updated from historical data as exogenous parameter
+
     # CDP states
-    'cdps': cdps, # A dataframe of CDPs (both open and closed)
+    'cdps': cdps,  # A dataframe of CDPs (both open and closed)
 
     # ETH collateral states
-    'eth_collateral': eth_collateral, # Total ETH collateral in the CDP system i.e. locked - freed - bitten
-    'eth_locked': eth_collateral, # Total ETH locked into CDPs
-    'eth_freed': 0, # Total ETH freed from CDPs
-    'eth_bitten': 0, # Total ETH bitten/liquidated from CDPs
-    
+    # Total ETH collateral in the CDP system i.e. locked - freed - bitten
+    'eth_collateral': eth_collateral,
+    'eth_locked': eth_collateral,  # Total ETH locked into CDPs
+    'eth_freed': 0,  # Total ETH freed from CDPs
+    'eth_bitten': 0,  # Total ETH bitten/liquidated from CDPs
+
     # Principal debt states
-    'principal_debt': principal_debt, # "D_1"; the total debt in the CDP system i.e. drawn - wiped - bitten
-    'rai_drawn': principal_debt, # total RAI debt minted from CDPs
-    'rai_wiped': 0, # total RAI debt wiped/burned from CDPs in repayment
-    'rai_bitten': 0, # total RAI liquidated from CDPs
-    
+    # "D_1"; the total debt in the CDP system i.e. drawn - wiped - bitten
+    'principal_debt': principal_debt,
+    'rai_drawn': principal_debt,  # total RAI debt minted from CDPs
+    'rai_wiped': 0,  # total RAI debt wiped/burned from CDPs in repayment
+    'rai_bitten': 0,  # total RAI liquidated from CDPs
+
     # Accrued interest states
-    'accrued_interest': 0, # "D_2"; the total interest accrued in the system i.e. current D_2 + w_1 - w_2 - w_3
-    'interest_bitten': 0, # cumulative w_3
-    'w_1': 0, # discrete "drip" event, in RAI
-    'w_2': 0, # discrete "shut"/"wipe" event, in RAI
-    'w_3': 0, # discrete "bite" event, in RAI
-    'system_revenue': 0, # "R"; value accrued by protocol token holders as result of contracting supply
-    
+    # "D_2"; the total interest accrued in the system i.e. current D_2 + w_1 - w_2 - w_3
+    'accrued_interest': 0,
+    'interest_bitten': 0,  # cumulative w_3
+    'w_1': 0,  # discrete "drip" event, in RAI
+    'w_2': 0,  # discrete "shut"/"wipe" event, in RAI
+    'w_3': 0,  # discrete "bite" event, in RAI
+    # "R"; value accrued by protocol token holders as result of contracting supply
+    'system_revenue': 0,
+
     # System states
-    'stability_fee': stability_fee, # interest rate used to calculate the accrued interest; per second interest rate (1.5% per month)
+    # interest rate used to calculate the accrued interest; per second interest rate (1.5% per month)
+    'stability_fee': stability_fee,
     'market_price_twap': 0,
-    'redemption_price': redemption_price, # unit: dollars; equivalent to redemption price
-    'redemption_rate': 0 / (30 * 24 * 3600), # per second interest rate (X% per month), updated by controller
-    
+    # unit: dollars; equivalent to redemption price
+    'redemption_price': redemption_price,
+    # per second interest rate (X% per month), updated by controller
+    'redemption_rate': 0 / (30 * 24 * 3600),
+
     # Controller states
-    'error_star': 0, # price units
-    'error_star_integral': 0, # price units x seconds
-    
+    'error_star': 0,  # price units
+    'error_star_integral': 0,  # price units x seconds
+
     # Uniswap states
     'market_slippage': 0,
     'RAI_balance': uniswap_rai_balance,
@@ -116,4 +124,5 @@ state_variables = {
 # Assert that the dict is consistent
 typed_dict_keys = set(ReflexerStateVariables.__annotations__.keys())
 state_var_keys = set(state_variables.keys())
-assert typed_dict_keys == state_var_keys, (state_var_keys - typed_dict_keys, typed_dict_keys - state_var_keys)
+assert typed_dict_keys == state_var_keys, (
+    state_var_keys - typed_dict_keys, typed_dict_keys - state_var_keys)

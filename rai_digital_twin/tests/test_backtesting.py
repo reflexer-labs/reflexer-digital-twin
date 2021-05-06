@@ -28,7 +28,9 @@ def test_identical_backtesting():
     # Assert consistency of the simulation metrics loss
     sim_metrics_losses = simulation_metrics_loss(sim_df, test_df)
     assert sim_metrics_losses.keys()  == VALIDATION_METRICS.keys()
-    assert sum(type(v) is float for v in sim_metrics_losses.values()) == len(sim_metrics_losses)
+    for key, value in sim_metrics_losses.items():
+        assert key in VALIDATION_METRICS.keys()
+        assert type(value) == float
 
     # Assert that the simulation loss is consistent
     assert simulation_loss(sim_df, test_df) == approx(0.0, 1e-5)
