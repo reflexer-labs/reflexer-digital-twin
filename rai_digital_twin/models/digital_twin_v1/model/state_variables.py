@@ -54,7 +54,8 @@ state_variables: dict[str, InitialValue] = {
     'cdps': InitialValue(cdps, List[CDP]),
 
     # ETH collateral states
-    # Total ETH collateral in the CDP system i.e. locked - freed - bitten
+    # Total ETH collateral in the CDP system i.e. 
+    # collateral = (locked - freed - bitten)
     'eth_collateral': InitialValue(eth_collateral, ETH),
     'eth_locked': InitialValue(eth_collateral, ETH),  # Total ETH locked into CDPs
     'eth_freed': InitialValue(0.0, ETH), # Total ETH freed from CDPs
@@ -62,7 +63,8 @@ state_variables: dict[str, InitialValue] = {
     'eth_bitten': InitialValue(0.0, ETH),
 
     # Principal debt states
-    # "D_1"; the total debt in the CDP system i.e. drawn - wiped - bitten
+    # "D_1"; the total debt in the CDP system i.e.
+    # principal_debt =  (drawn - wiped - bitten)
     'principal_debt': InitialValue(principal_debt, RAI),
     'rai_drawn': InitialValue(principal_debt, RAI),  # total RAI debt minted from CDPs
     # total RAI debt wiped/burned from CDPs in repayment

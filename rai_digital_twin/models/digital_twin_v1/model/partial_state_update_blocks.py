@@ -1,4 +1,6 @@
+from rai_digital_twin.models.digital_twin_v1.model.parts.backtesting import p_backtesting, s_cdp_backtesting
 from typing import List
+from cadCAD_tools import generic_suf
 
 # Meta stuff
 from .parts.initialization import initialize_redemption_price
@@ -30,17 +32,6 @@ from .parts.debt_market import p_resolve_eth_price, s_update_eth_price
 
 partial_state_update_blocks: List[dict] = [
     {
-        'label': 'Initialization & Governance',
-        'details': '',
-        'policies': {
-            'governance_events': p_governance_events
-
-        },
-        'variables': {
-            'redemption_price': initialize_redemption_price,
-        }
-    },
-    {
         'label': 'Time',
         'details': '''
             This block observes (or samples from data) the amount of time passed between events
@@ -53,22 +44,44 @@ partial_state_update_blocks: List[dict] = [
             'cumulative_time': s_update_cumulative_time
         }
     },
+        {
+        'label': 'Initialization & Governance',
+        'details': '',
+        'policies': {
+            'governance_events': p_governance_events
+
+        },
+        'variables': {
+            'redemption_price': initialize_redemption_price,
+        }
+    },
     {
-        'label': 'Market Price',
-        'details': """
-        Retrieves the Uniswap Market Price
-        """,
+        'label': 'Backtesting Exogenous Variables',
+        'flags': {'backtesting'},
+        'policies': {
+            'backtesting_data': p_backtesting
+        },
+        'variables': {
+            'eth_price': generic_suf('eth_price'),
+            'market_price_twap': generic_suf('market_price_twap'),
+            'RAI_balance': generic_suf('RAI_balance'),
+            'ETH_balance': generic_suf('ETH_balance'),
+            
+            'cdps': s_cdp_backtesting
+        }
+    },
+    {
+        'label': 'Extrapolation Exogenous Variables',
+        'flags': {'extrapolation'},
         'policies': {
         },
         'variables': {
+            'eth_price': None,
             'market_price_twap': s_market_price_twap
         }
     },
     {
         'label': 'Aggregate states 1',
-        'details': '''
-            Aggregate states
-        ''',
         'policies': {},
         'variables': {
             'eth_locked': cdp_sum_suf('eth_locked', 'locked'),
@@ -80,7 +93,7 @@ partial_state_update_blocks: List[dict] = [
         }
     },
     {
-        'label': 'Debt Market 1',
+        'label': 'Debt Market Aggregate State',
         'details': '''
             Update debt market state
         ''',
@@ -166,10 +179,7 @@ partial_state_update_blocks: List[dict] = [
         }
     },
     {
-        'label': 'Aggregate states 2',
-        'details': '''
-            Aggregate states
-        ''',
+        'label': 'Debt Market State Summary',
         'policies': {},
         'variables': {
             'eth_locked': cdp_sum_suf('eth_locked', 'locked'),
@@ -183,7 +193,7 @@ partial_state_update_blocks: List[dict] = [
         }
     },
     {
-        'label': 'Debt Market 2',
+        'label': 'Debt Market Aggregate State (2)',
         'details': '''
             Update debt market state
         ''',
@@ -194,21 +204,9 @@ partial_state_update_blocks: List[dict] = [
             'stability_fee': s_update_stability_fee,
         }
     },
-    #################################################################
-    {
-        'label': 'ETH price',
-        'details': '''
-            Exogenous ETH price process
-        ''',
-        'policies': {
-            'exogenous_eth_process': p_resolve_eth_price,
-        },
-        'variables': {
-            'eth_price': s_update_eth_price
-        }
-    },
     {
         'label': 'Aggregate User Action',
+        'flags': {'extrapolation'},
         'description': """
         Modify the macro system state according to the
         Data-driven Linearized Aggregated Arbitrageur Model

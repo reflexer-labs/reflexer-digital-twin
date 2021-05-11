@@ -1,21 +1,6 @@
 import pandas as pd
-from .utils import approx_greater_equal_zero, assert_log
 import rai_digital_twin.failure_modes as failure
 import logging
-
-
-def p_resolve_eth_price(params, substep, state_history, state):
-    current_eth_price = params["eth_price"](state["run"], state["timestep"])
-    past_eth_price = state_history[-1][-1]["eth_price"]
-    delta_eth_price = current_eth_price - past_eth_price
-    return {"delta_eth_price": delta_eth_price}
-
-
-def s_update_eth_price(params, substep, state_history, state, policy_input):
-    eth_price = state["eth_price"]
-    delta_eth_price = policy_input["delta_eth_price"]
-
-    return "eth_price", eth_price + delta_eth_price
 
 
 def s_update_stability_fee(params, substep, state_history, state, policy_input):
