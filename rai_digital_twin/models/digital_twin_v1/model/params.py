@@ -1,16 +1,18 @@
-from rai_digital_twin.types import *
+from cadCAD_tools.types import Param, ParamSweep
+from rai_digital_twin.types import USD_per_ETH, Seconds, Per_USD, RAI, ETH
+from rai_digital_twin.types import Per_RAY, Percentage, Gwei, Per_USD_Seconds
 from rai_digital_twin.models.constants import RAY
 
-ETH_PRICE_SERIES: List[float] = []
+ETH_PRICE_SERIES: list[float] = []
 SECONDS_PER_TIMESTEP = 3600
 
 
-params: Dict[str, Param] = {
+params: dict[str, Param] = {
     # Admin parameters
     'raise_on_assert': Param(True, bool),  # See assert_log() in utils.py
 
     # Exogenous states, loaded as parameter at every timestep - these are lambda functions, and have to be called
-    'eth_price': Param(ETH_PRICE_SERIES, List[USD_per_ETH]),
+    'eth_price': Param(ETH_PRICE_SERIES, list[USD_per_ETH]),
     'seconds_passed': Param(SECONDS_PER_TIMESTEP, Seconds),
 
     # Time parameters

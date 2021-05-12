@@ -413,7 +413,7 @@ def s_update_principal_debt(params, substep, state_history, state, policy_input)
         event = f"Principal debt < 0: {principal_debt} ~ {(rai_drawn, rai_wiped, rai_bitten)}"
         raise failure.NegativeBalanceException(event)
     else:
-        return "principal_debt", principal_debt
+        return ("principal_debt", principal_debt)
 
 
 def cdp_sum_suf(variable: str, cdp_column: str) -> object:

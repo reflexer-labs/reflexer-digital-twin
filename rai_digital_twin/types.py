@@ -1,6 +1,4 @@
-from typing import NamedTuple, Dict, TypedDict
-from enum import Enum
-from typing import Dict, TypedDict, List
+from dataclasses import dataclass
 
 ## Units
 
@@ -28,24 +26,8 @@ Run = int
 Timestep = int
 Gwei = int
 
-### cadCAD objects
-Parameters = Dict[str, object]
-State = Dict[str, object]
-PolicyInput = Dict[str, object]
-
-class InitialValue(NamedTuple):
-    value: object
-    unit: object
-
-class Param(NamedTuple):
-    value: object
-    unit: object
-
-class ParamSweep(NamedTuple):
-    value: list[object]
-    unit: object
-## Structures
-class CDP_Metric(TypedDict):
+@dataclass(frozen=True)
+class CDP_Metric():
     cdp_count: int
     open_cdp_count: int
     closed_cdp_count: int
@@ -53,24 +35,30 @@ class CDP_Metric(TypedDict):
     median_cdp_collateral: ETH
 
 
-class CDP(TypedDict):
-    open: float
-    time: float
-    locked: float
-    drawn: float
-    wiped: float
-    freed: float
-    w_wiped: float
-    dripped: float
-    v_bitten: float
-    u_bitten: float
-    w_bitten: float
+@dataclass()
+class CDP():
+    """
+    Struct encapsulating a Collaterized Debt Position state for a single SAFE.
+    """
+    open: bool # Is it active?
+    time: float #
+    locked: ETH # Locked collateral
+    drawn: RAI # 
+    wiped: ETH #
+    freed: ETH #
+    w_wiped: float # Not used
+    dripped: RAI # Accrued interest
+    v_bitten: ETH #
+    u_bitten: ETH #
+    w_bitten: RAI #
 
-class GovernanceEvent(NamedTuple):
+@dataclass(frozen=True)
+class GovernanceEvent():
     kind: str
     descriptor: dict
 
-class UserAction(TypedDict):
+@dataclass(frozen=True)
+class UserAction():
     add_ETH_collateral: ETH
     add_RAI_debt: RAI
     RAI_delta: RAI
