@@ -1,11 +1,10 @@
-from numpy import True_
+from cadCAD_tools.types import History, State, StateUpdate, VariableUpdate
 import pandas as pd
 import rai_digital_twin.failure_modes as failure
-import logging
+from rai_digital_twin.types import CDP, Percentage, RAI_per_USD
 
-## !! HACK !!
+# !! HACK !!
 approx_greater_equal_zero = lambda *args, **kwargs: True
-
 
 
 def s_update_stability_fee(params, substep, state_history, state, policy_input):
@@ -13,35 +12,20 @@ def s_update_stability_fee(params, substep, state_history, state, policy_input):
     return "stability_fee", stability_fee
 
 
-############################################################################################################################################
+def is_cdp_above_liquidation_ratio(cdp: CDP,
+                                eth_price: float,
+                                redemption_price: float,
+                                liquidation_ratio: float) -> bool:
+    cdp_collateral_in_usd = cdp.locked - cdp.freed - cdp.v_bitten
+    cdp_collateral_in_usd *= eth_price
+    cdp_debt_in_rai = cdp.drawn - cdp.wiped - cdp.u_bitten
 
+    cdp_liquidation_threshold_in_usd = cdp_debt_in_rai * redemption_price
+    cdp_liquidation_threshold_in_usd *= liquidation_ratio
 
-def is_cdp_above_liquidation_ratio(cdp, eth_price, redemption_price, liquidation_ratio):
-    locked = cdp["locked"]
-    freed = cdp["freed"]
-    drawn = cdp["drawn"]
-    wiped = cdp["wiped"]
-    v_bitten = cdp["v_bitten"]
-    u_bitten = cdp["u_bitten"]
+    is_above = cdp_collateral_in_usd >= cdp_liquidation_threshold_in_usd
 
-    # ETH * USD/ETH >= RAI * USD/RAI * unitless
-    return (locked - freed - v_bitten) * eth_price >= (
-        drawn - wiped - u_bitten
-    ) * redemption_price * liquidation_ratio
-
-
-def is_cdp_at_liquidation_ratio(cdp, eth_price, redemption_price, liquidation_ratio):
-    locked = cdp["locked"]
-    freed = cdp["freed"]
-    drawn = cdp["drawn"]
-    wiped = cdp["wiped"]
-    v_bitten = cdp["v_bitten"]
-    u_bitten = cdp["u_bitten"]
-
-    # ETH * USD/ETH >= RAI * USD/RAI * unitless
-    return (locked - freed - v_bitten) * eth_price == (
-        drawn - wiped - u_bitten
-    ) * redemption_price * liquidation_ratio
+    return is_above
 
 
 def wipe_to_liquidation_ratio(
@@ -53,7 +37,6 @@ def wipe_to_liquidation_ratio(
     wiped = cdp["wiped"]
     v_bitten = cdp["v_bitten"]
     u_bitten = cdp["u_bitten"]
-
 
     cdp_rai_debt = (drawn - wiped - u_bitten)
     cdp_eth_collateral = (locked - freed - v_bitten)
@@ -245,19 +228,20 @@ def p_rebalance_cdps(params, _1, _2, state):
     """
 
     """
+    # Parameters & Variables
+    liquidation_ratio = params["liquidation_ratio"]
     cdps = state["cdps"]
-
     eth_price = state["eth_price"]
     redemption_price = state["redemption_price"]
     liquidation_buffer = state['liquidation_buffer']
-    liquidation_ratio = params["liquidation_ratio"]
-
     ETH_balance = state['ETH_balance']
 
-    RAI_delta = 0
-    ETH_delta = 0
+    # ---
+    (RAI_delta, ETH_delta) = (0.0, 0.0)
+    open_cdps = cdps.query("open == 1")
 
-    for index, cdp in cdps.query("open == 1").iterrows():
+    # Rebalance each CDP
+    for index, cdp in open_cdps.iterrows():
         RAI_delta, ETH_delta, cdps = rebalance_cdp(params,
                                                    cdps,
                                                    eth_price,
@@ -269,107 +253,102 @@ def p_rebalance_cdps(params, _1, _2, state):
                                                    ETH_delta,
                                                    liquidation_buffer)
 
-    uniswap_state_delta = {
+    # Output
+    rebalancing_results = {
+        'cdps': cdps,
         'RAI_delta': RAI_delta,
         'ETH_delta': ETH_delta,
         'UNI_delta': 0,
     }
 
-    return {"cdps": cdps, **uniswap_state_delta}
+    return rebalancing_results
+
+
+def liquidate_cdp(cdp: CDP,
+                  liquidation_penalty: Percentage,
+                  rai_price_in_eth: RAI_per_USD) -> CDP:
+    """
+    Liquidate CDP
+    """
+    # Auxiliary variables
+    cdp_principal_debt = cdp.drawn - cdp.wiped - cdp.u_bitten
+    cdp_collateral = cdp.locked - cdp.freed - cdp.v_bitten
+    bite_fraction = (1 + liquidation_penalty)
+
+    # ETH to be bitten
+    v_bite = cdp_principal_debt * rai_price_in_eth * bite_fraction
+
+    # Liquidation action
+    (v_bite, free, u_bite, w_bite) = (0.0, 0.0, 0.0, 0.0)
+
+    # Feasibility constraints
+    conditions = [0.0 <= v_bite <= cdp_collateral,
+                  0.0 <= free <= cdp_collateral - v_bite,
+                  0.0 <= w_bite,
+                  0.0 <= u_bite, + cdp_principal_debt]
+
+    # Bite CDP debt and free some of the ETH collateral if
+    # conditions are true.
+    if sum(conditions) / len(conditions) == 1.0:
+        v_bite = v_bite
+        free = cdp_collateral - v_bite,
+        w_bite = cdp.dripped
+        u_bite = cdp_principal_debt
+    # Else, just bite it without freeing CDP ETH collateral
+    else:
+        v_bite = cdp_collateral
+        free = 0.0
+        u_bite = cdp_principal_debt
+        w_bite = cdp.dripped
+
+    # Update CDP state
+    cdp.v_bitten = cdp.v_bitten + v_bite
+    cdp.freed = cdp.freed + free
+    cdp.u_bitten = cdp.u_bitten + u_bite
+    cdp.w_bitten = cdp.w_bitten + w_bite
+    cdp.open = 0
+
+    # Return CDP
+    return cdp
 
 
 def p_liquidate_cdps(params, _1, _2, state):
-    eth_price = state["eth_price"]
-    redemption_price = state["redemption_price"]
+    """
+    CDP Liquidation Policy
+    """
+    # Parameters & Variables
     liquidation_penalty = params["liquidation_penalty"]
     liquidation_ratio = params["liquidation_ratio"]
-
-    rai_price_in_eth = redemption_price / eth_price
-
+    eth_price = state["eth_price"]
+    redemption_price = state["redemption_price"]
     cdps = state["cdps"]
     cdps_copy = cdps.copy()
-    liquidated_cdps = pd.DataFrame()
-    if len(cdps) > 0:
-        try:
-            # The aggregate arbitrage CDP is assumed to never be liquidated
-            liquidated_cdps = cdps.query("open == 1 and arbitrage == 0").query(
-                f"(locked - freed - v_bitten) * {eth_price} < (drawn - wiped - u_bitten) * {redemption_price} * {liquidation_ratio}"
-            )
-        except:
-            print(state)
-            raise
 
+    # Auxiliary Variables
+    rai_price_in_eth = redemption_price / eth_price
+    liquidation_price = redemption_price * liquidation_ratio
+
+    # Compute relevant metrics for CDP liquidation
+    def f(df): return (df.locked - df.freed - df.v_bitten) * eth_price
+    def g(df): return (df.drawn - df.wiped - df.u_bitten) * liquidation_price
+    CDP_METRICS = {'collateral_in_rai': f,
+                   'liquidation_threshold_in_rai': g}
+
+    # Retrieve all CDPs to be liquidated
+    QUERY = """open == 1 & arbitrage == 0 & collateral_in_rai < liquidation_threshold_in_rai"""
+
+    # Retrieve data frame with CDPs to be liquidated
+    liquidated_cdps = (cdps.assign(**CDP_METRICS)
+                           .query(QUERY)
+                       )
+
+    # Liquidate CDPs and update the debt market state
     for index, cdp in liquidated_cdps.iterrows():
-        locked = cdps.at[index, "locked"]
-        freed = cdps.at[index, "freed"]
-        drawn = cdps.at[index, "drawn"]
-        wiped = cdps.at[index, "wiped"]
-        dripped = cdps.at[index, "dripped"]
-        v_bitten = cdps.at[index, "v_bitten"]
-        u_bitten = cdps.at[index, "u_bitten"]
-        w_bitten = cdps.at[index, "w_bitten"]
+        cdp = liquidate_cdp(cdp, liquidation_penalty, rai_price_in_eth)
+        cdps.iloc[index] = cdp
 
-        assert_log(locked >= 0, locked, params["raise_on_assert"])
-        assert_log(freed >= 0, freed, params["raise_on_assert"])
-        assert_log(drawn >= 0, drawn, params["raise_on_assert"])
-        assert_log(wiped >= 0, wiped, params["raise_on_assert"])
-        assert_log(dripped >= 0, dripped, params["raise_on_assert"])
-        assert_log(v_bitten >= 0, v_bitten, params["raise_on_assert"])
-        assert_log(u_bitten >= 0, u_bitten, params["raise_on_assert"])
-        assert_log(w_bitten >= 0, w_bitten, params["raise_on_assert"])\
-
-        cdp_principal_debt = drawn - wiped - u_bitten
-        bite_fraction = (1 + liquidation_penalty)
-
-        v_bite = cdp_principal_debt * rai_price_in_eth * bite_fraction            
-        try:
-            assert v_bite >= 0, f"{v_bite} !>= 0 ~ {state}"
-            assert v_bite <= (
-                locked - freed - v_bitten
-            ), f"Liquidation short of collateral: {v_bite} !<= {locked - freed - v_bitten}"
-            free = locked - freed - v_bitten - v_bite
-            assert free >= 0, f"{free} !>= {0}"
-            assert (
-                locked >= freed + free + v_bitten + v_bite
-            ), f"locked eq check: {(locked, freed, free, v_bitten, v_bite)}"
-            w_bite = dripped
-            assert w_bite >= 0, f"w_bite: {w_bite}"
-            u_bite = cdp_principal_debt
-            assert u_bite >= 0, f"u_bite: {u_bite}"
-            assert (
-                u_bite <= drawn - wiped - u_bitten
-            ), f"Liquidation invalid u_bite: {u_bite} !<= {drawn - wiped - u_bitten}"
-        except AssertionError as err:
-            logging.warning(err)
-            v_bite = locked - freed - v_bitten
-            u_bite = drawn - wiped - u_bitten
-            free = 0
-            w_bite = dripped
-
-        cdps.at[index, "v_bitten"] = v_bitten + v_bite
-        cdps.at[index, "freed"] = freed + free
-        cdps.at[index, "u_bitten"] = u_bitten + u_bite
-        cdps.at[index, "w_bitten"] = w_bitten + w_bite
-        cdps.at[index, "open"] = 0
-
-    v_2 = cdps["freed"].sum() - cdps_copy["freed"].sum()
-    v_3 = cdps["v_bitten"].sum() - cdps_copy["v_bitten"].sum()
-    u_3 = cdps["u_bitten"].sum() - cdps_copy["u_bitten"].sum()
-    bite_in_rai = cdps["w_bitten"].sum() - cdps_copy["w_bitten"].sum()
-
-    assert_log(v_2 >= 0, v_2, params["raise_on_assert"])
-    assert_log(v_3 >= 0, v_3, params["raise_on_assert"])
-    assert_log(u_3 >= 0, u_3, params["raise_on_assert"])
-    assert_log(bite_in_rai >= 0, bite_in_rai, params["raise_on_assert"])
-
+    # Return new CDP states
     return {"cdps": cdps}
-
-
-############################################################################################################################################
-
-
-def s_store_cdps(params, substep, state_history, state, policy_input):
-    return "cdps", policy_input["cdps"]
 
 
 ############################################################################################################################################
@@ -378,25 +357,19 @@ Aggregate the state values from CDP state
 """
 
 
-def get_cdps_state_change(state, state_history, key):
+def get_cdps_state_change(state: State,
+                          state_history: History,
+                          key: str) -> float:
     cdps = state["cdps"]
     previous_cdps = state_history[-1][-1]["cdps"]
     return cdps[key].sum() - previous_cdps[key].sum()
 
 
-def s_aggregate_drip_in_rai(params, substep, state_history, state, policy_input):
-    return "drip_in_rai", get_cdps_state_change(state, state_history, "dripped")
+def cdp_state_change_metric(variable: str, cdp_attribute: str) -> StateUpdate:
+    def suf(_1, _2, history, state, _5) -> VariableUpdate:
+        return (variable, get_cdps_state_change(state, history, cdp_attribute))
+    return suf
 
-
-def s_aggregate_wipe_in_rai(params, substep, state_history, state, policy_input):
-    return "wipe_in_rai", get_cdps_state_change(state, state_history, "w_wiped")
-
-
-def s_aggregate_bite_in_rai(params, substep, state_history, state, policy_input):
-    return "bite_in_rai", get_cdps_state_change(state, state_history, "w_bitten")
-
-
-############################################################################################################################################
 
 def s_update_eth_collateral(params, substep, state_history, state, policy_input):
     eth_locked = state["eth_locked"]
@@ -490,4 +463,3 @@ def s_update_cdp_interest(params, substep, state_history, state, policy_input):
     cdps = cdps.apply(resolve_cdp_interest, axis=1)
 
     return "cdps", cdps
-

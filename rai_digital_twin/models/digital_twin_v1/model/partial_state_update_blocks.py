@@ -20,7 +20,7 @@ from .parts.controllers import store_error_star, update_error_star_integral
 from .parts.controllers import update_redemption_price, update_redemption_rate
 
 # Debt Market
-from .parts.debt_market import p_liquidate_cdps, p_rebalance_cdps
+from .parts.debt_market import cdp_state_change_metric, p_liquidate_cdps, p_rebalance_cdps
 from .parts.debt_market import cdp_sum_suf, s_update_eth_collateral, s_update_principal_debt
 from .parts.debt_market import s_store_cdps
 from .parts.debt_market import s_update_system_revenue
@@ -112,7 +112,7 @@ partial_state_update_blocks: List[dict] = [
             'liquidate_cdps': p_liquidate_cdps
         },
         'variables': {
-            'cdps': s_store_cdps,
+            'cdps': generic_suf('cdps'),
         }
     },
     {
@@ -124,7 +124,7 @@ partial_state_update_blocks: List[dict] = [
             'rebalance_cdps': p_rebalance_cdps,
         },
         'variables': {
-            'cdps': s_store_cdps,
+            'cdps': generic_suf('cdps'),
             'RAI_balance': s_RAI_balance,
             'ETH_balance': s_ETH_balance
         }
@@ -171,9 +171,9 @@ partial_state_update_blocks: List[dict] = [
         'label': 'Aggregate W',
         'policies': {},
         'variables': {
-            'drip_in_rai': s_aggregate_drip_in_rai,
-            'wipe_in_rai': s_aggregate_wipe_in_rai,
-            'bite_in_rai': s_aggregate_bite_in_rai,
+            'drip_in_rai': cdp_state_change_metric('drip_in_rai', 'dripped'),
+            'wipe_in_rai': cdp_state_change_metric('wipe_in_rai', 'w_wiped'),
+            'bite_in_rai': cdp_state_change_metric('bite_in_rai', 'w_bitten')
         }
     },
     {
