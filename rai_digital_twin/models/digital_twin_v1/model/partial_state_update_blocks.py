@@ -25,7 +25,7 @@ from .parts.debt_market import cdp_sum_suf, s_update_eth_collateral, s_update_pr
 from .parts.debt_market import s_store_cdps
 from .parts.debt_market import s_update_system_revenue
 from .parts.debt_market import s_update_accrued_interest, s_update_cdp_interest
-from .parts.debt_market import s_aggregate_w_1, s_aggregate_w_2, s_aggregate_w_3
+from .parts.debt_market import s_aggregate_drip_in_rai, s_aggregate_wipe_in_rai, s_aggregate_bite_in_rai
 from .parts.debt_market import s_update_interest_bitten, s_update_stability_fee
 from .parts.debt_market import p_resolve_eth_price, s_update_eth_price
 
@@ -173,9 +173,9 @@ partial_state_update_blocks: List[dict] = [
         'label': 'Aggregate W',
         'policies': {},
         'variables': {
-            'w_1': s_aggregate_w_1,
-            'w_2': s_aggregate_w_2,
-            'w_3': s_aggregate_w_3,
+            'drip_in_rai': s_aggregate_drip_in_rai,
+            'wipe_in_rai': s_aggregate_wipe_in_rai,
+            'bite_in_rai': s_aggregate_bite_in_rai,
         }
     },
     {

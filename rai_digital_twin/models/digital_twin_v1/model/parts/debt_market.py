@@ -340,12 +340,12 @@ def p_liquidate_cdps(params, _1, _2, state):
     v_2 = cdps["freed"].sum() - cdps_copy["freed"].sum()
     v_3 = cdps["v_bitten"].sum() - cdps_copy["v_bitten"].sum()
     u_3 = cdps["u_bitten"].sum() - cdps_copy["u_bitten"].sum()
-    w_3 = cdps["w_bitten"].sum() - cdps_copy["w_bitten"].sum()
+    bite_in_rai = cdps["w_bitten"].sum() - cdps_copy["w_bitten"].sum()
 
     assert_log(v_2 >= 0, v_2, params["raise_on_assert"])
     assert_log(v_3 >= 0, v_3, params["raise_on_assert"])
     assert_log(u_3 >= 0, u_3, params["raise_on_assert"])
-    assert_log(w_3 >= 0, w_3, params["raise_on_assert"])
+    assert_log(bite_in_rai >= 0, bite_in_rai, params["raise_on_assert"])
 
     return {"cdps": cdps}
 
@@ -369,16 +369,16 @@ def get_cdps_state_change(state, state_history, key):
     return cdps[key].sum() - previous_cdps[key].sum()
 
 
-def s_aggregate_w_1(params, substep, state_history, state, policy_input):
-    return "w_1", get_cdps_state_change(state, state_history, "dripped")
+def s_aggregate_drip_in_rai(params, substep, state_history, state, policy_input):
+    return "drip_in_rai", get_cdps_state_change(state, state_history, "dripped")
 
 
-def s_aggregate_w_2(params, substep, state_history, state, policy_input):
-    return "w_2", get_cdps_state_change(state, state_history, "w_wiped")
+def s_aggregate_wipe_in_rai(params, substep, state_history, state, policy_input):
+    return "wipe_in_rai", get_cdps_state_change(state, state_history, "w_wiped")
 
 
-def s_aggregate_w_3(params, substep, state_history, state, policy_input):
-    return "w_3", get_cdps_state_change(state, state_history, "w_bitten")
+def s_aggregate_bite_in_rai(params, substep, state_history, state, policy_input):
+    return "bite_in_rai", get_cdps_state_change(state, state_history, "w_bitten")
 
 
 ############################################################################################################################################
@@ -423,8 +423,8 @@ def cdp_sum_suf(variable: str, cdp_column: str) -> object:
 
 def s_update_system_revenue(params, substep, state_history, state, policy_input):
     system_revenue = state["system_revenue"]
-    w_2 = state["w_2"]
-    return "system_revenue", system_revenue + w_2
+    wipe_in_rai = state["wipe_in_rai"]
+    return "system_revenue", system_revenue + wipe_in_rai
 
 
 def calculate_accrued_interest(
@@ -449,8 +449,8 @@ def s_update_accrued_interest(params, substep, state_history, state, policy_inpu
 
 def s_update_interest_bitten(params, substep, state_history, state, policy_input):
     previous_accrued_interest = state["accrued_interest"]
-    w_3 = state["w_3"]
-    return "accrued_interest", previous_accrued_interest - w_3
+    bite_in_rai = state["bite_in_rai"]
+    return "accrued_interest", previous_accrued_interest - bite_in_rai
 
 
 def s_update_cdp_interest(params, substep, state_history, state, policy_input):

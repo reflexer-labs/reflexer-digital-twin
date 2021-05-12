@@ -55,29 +55,30 @@ state_variables: dict[str, InitialValue] = {
 
     # ETH collateral states
     # Total ETH collateral in the CDP system i.e. 
-    # collateral = (locked - freed - bitten)
-    'eth_collateral': InitialValue(eth_collateral, ETH),
-    'eth_locked': InitialValue(eth_collateral, ETH),  # Total ETH locked into CDPs
-    'eth_freed': InitialValue(0.0, ETH), # Total ETH freed from CDPs
-    # Total ETH bitten/liquidated from CDPs
-    'eth_bitten': InitialValue(0.0, ETH),
+    # Q(t + 1) = Q + v_1 - v_2 - v_3
+    # v_1 = V_1(t + 1) - V(t), and so on.
+    'eth_collateral': InitialValue(eth_collateral, ETH), # Q term
+    'eth_locked': InitialValue(eth_collateral, ETH),  # Total ETH locked. V_1(t)
+    'eth_freed': InitialValue(0.0, ETH), # Total ETH freed. V_2(t)
+    'eth_bitten': InitialValue(0.0, ETH),   # Total ETH bitten. V(_3)
 
     # Principal debt states
     # "D_1"; the total debt in the CDP system i.e.
-    # principal_debt =  (drawn - wiped - bitten)
-    'principal_debt': InitialValue(principal_debt, RAI),
-    'rai_drawn': InitialValue(principal_debt, RAI),  # total RAI debt minted from CDPs
-    # total RAI debt wiped/burned from CDPs in repayment
-    'rai_wiped': InitialValue(0, RAI),
-    'rai_bitten': InitialValue(0, RAI),  # total RAI liquidated from CDPs
+    # D_1(t + 1) =  D_1(t) + u_1 - u_2 - u_3
+    # u_1 = U_1(t + 1) - U_1(t - 1), and so on
+    'principal_debt': InitialValue(principal_debt, RAI), # D_1(t)
+    'rai_drawn': InitialValue(principal_debt, RAI),  # U_1(t)
+    'rai_wiped': InitialValue(0, RAI), # U_2(t)
+    'rai_bitten': InitialValue(0, RAI),  # U_3(t)
 
     # Accrued interest states
-    # "D_2"; the total interest accrued in the system i.e. current D_2 + w_1 - w_2 - w_3
-    'accrued_interest': InitialValue(0, RAI),
-    'interest_bitten': InitialValue(0, RAI),  # cumulative w_3
-    'w_1': InitialValue(0, RAI),  # discrete "drip" event, in RAI
-    'w_2': InitialValue(0, RAI),  # discrete "shut"/"wipe" event, in RAI
-    'w_3': InitialValue(0, RAI),  # discrete "bite" event, in RAI
+    # "D_2"; the total interest accrued in the system 
+    # i.e. D_2(t + 1) = D_2(t) + w_1 - w_2 - w_3
+    'accrued_interest': InitialValue(0, RAI), # D_2(t)
+    'interest_bitten': InitialValue(0, RAI),  # cumulative bite_in_rai
+    'drip_in_rai': InitialValue(0, RAI), # w_1 
+    'wipe_in_rai': InitialValue(0, RAI), # w_2
+    'bite_in_rai': InitialValue(0, RAI),  # w_3
     # "R"; value accrued by protocol token holders as result of contracting supply
     'system_revenue': InitialValue(0, RAI),
 
