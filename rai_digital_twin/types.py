@@ -42,15 +42,15 @@ class CDP():
     """
     open: bool # Is it active?
     time: float #
-    locked: ETH # Locked collateral
-    drawn: RAI # 
-    wiped: ETH #
-    freed: ETH #
-    w_wiped: float # Not used
-    dripped: RAI # Accrued interest
-    v_bitten: ETH #
-    u_bitten: ETH #
-    w_bitten: RAI #
+    locked: ETH # Locked collateral, V_1
+    drawn: RAI # U_1
+    wiped: RAI # U_2
+    freed: ETH # V_2
+    w_wiped: RAI # Accrued Interest wiped amount
+    dripped: RAI # Accrued interest, D_2
+    v_bitten: ETH # ETH Collateral liquidated amount, V_3
+    u_bitten: RAI # Principal Debt liquidated amount, U_3
+    w_bitten: RAI # Accrued Interest liquidated amount, W_3
 
 @dataclass(frozen=True)
 class GovernanceEvent():

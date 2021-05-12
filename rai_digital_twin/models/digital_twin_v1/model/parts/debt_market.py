@@ -54,18 +54,26 @@ def wipe_to_liquidation_ratio(
     v_bitten = cdp["v_bitten"]
     u_bitten = cdp["u_bitten"]
 
-    # RAI - (USD/ETH) * ETH / (unitless * USD/RAI) -> RAI
-    wipe = (drawn - wiped - u_bitten) - (locked - freed - v_bitten) * eth_price / (
-        liquidation_ratio * redemption_price
-    )
-    if not approx_greater_equal_zero(wipe, abs_tol=1e-3):
+
+    cdp_rai_debt = (drawn - wiped - u_bitten)
+    cdp_eth_collateral = (locked - freed - v_bitten)
+    cdp_rai_collateral = cdp_eth_collateral * eth_price
+    net_debt = cdp_rai_debt - cdp_rai_collateral
+
+    liquidation_price = liquidation_ratio * redemption_price
+    rai_to_wipe = net_debt / liquidation_price
+
+    if not approx_greater_equal_zero(rai_to_wipe, abs_tol=1e-3):
         raise failure.InvalidCDPTransactionException(f"wipe: {locals()}")
-    wipe = max(wipe, 0)
-
-    if drawn <= wiped + wipe + u_bitten:
-        wipe = 0
-
-    return wipe
+    else:
+        rai_to_wipe = max(rai_to_wipe, 0)
+        # Only wipe if the CDP drawn amount is higher than the
+        # total wiped + bitten amount
+        if drawn <= wiped + rai_to_wipe + u_bitten:
+            rai_to_wipe = 0
+        else:
+            pass
+        return rai_to_wipe
 
 
 def draw_to_liquidation_ratio(
@@ -276,6 +284,8 @@ def p_liquidate_cdps(params, _1, _2, state):
     liquidation_penalty = params["liquidation_penalty"]
     liquidation_ratio = params["liquidation_ratio"]
 
+    rai_price_in_eth = redemption_price / eth_price
+
     cdps = state["cdps"]
     cdps_copy = cdps.copy()
     liquidated_cdps = pd.DataFrame()
@@ -306,13 +316,13 @@ def p_liquidate_cdps(params, _1, _2, state):
         assert_log(dripped >= 0, dripped, params["raise_on_assert"])
         assert_log(v_bitten >= 0, v_bitten, params["raise_on_assert"])
         assert_log(u_bitten >= 0, u_bitten, params["raise_on_assert"])
-        assert_log(w_bitten >= 0, w_bitten, params["raise_on_assert"])
+        assert_log(w_bitten >= 0, w_bitten, params["raise_on_assert"])\
 
+        cdp_principal_debt = drawn - wiped - u_bitten
+        bite_fraction = (1 + liquidation_penalty)
+
+        v_bite = cdp_principal_debt * rai_price_in_eth * bite_fraction            
         try:
-            v_bite = (
-                (drawn - wiped - u_bitten) *
-                redemption_price * (1 + liquidation_penalty)
-            ) / eth_price
             assert v_bite >= 0, f"{v_bite} !>= 0 ~ {state}"
             assert v_bite <= (
                 locked - freed - v_bitten
@@ -324,7 +334,7 @@ def p_liquidate_cdps(params, _1, _2, state):
             ), f"locked eq check: {(locked, freed, free, v_bitten, v_bite)}"
             w_bite = dripped
             assert w_bite >= 0, f"w_bite: {w_bite}"
-            u_bite = drawn - wiped - u_bitten
+            u_bite = cdp_principal_debt
             assert u_bite >= 0, f"u_bite: {u_bite}"
             assert (
                 u_bite <= drawn - wiped - u_bitten

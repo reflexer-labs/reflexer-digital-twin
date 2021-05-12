@@ -85,9 +85,9 @@ partial_state_update_blocks: List[dict] = [
             'eth_locked': cdp_sum_suf('eth_locked', 'locked'),
             'eth_freed': cdp_sum_suf('eth_freed', 'freed'),
             'eth_bitten': cdp_sum_suf('eth_bitten', 'v_bitten'),
-            'rai_drawn': cdp_sum_suf('eth_drawn', 'drawn'),
-            'rai_wiped': cdp_sum_suf('eth_wiped', 'wiped'),
-            'rai_bitten': cdp_sum_suf('eth_bitten', 'u_bitten'),
+            'rai_drawn': cdp_sum_suf('rai_drawn', 'drawn'),
+            'rai_wiped': cdp_sum_suf('rai_wiped', 'wiped'),
+            'rai_bitten': cdp_sum_suf('rai_bitten', 'u_bitten'),
         }
     },
     {
