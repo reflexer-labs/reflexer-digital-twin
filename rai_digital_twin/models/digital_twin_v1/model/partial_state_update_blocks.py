@@ -27,7 +27,6 @@ from .parts.debt_market import s_update_system_revenue
 from .parts.debt_market import s_update_accrued_interest, s_update_cdp_interest
 from .parts.debt_market import s_aggregate_drip_in_rai, s_aggregate_wipe_in_rai, s_aggregate_bite_in_rai
 from .parts.debt_market import s_update_interest_bitten, s_update_stability_fee
-from .parts.debt_market import p_resolve_eth_price, s_update_eth_price
 
 
 partial_state_update_blocks: List[dict] = [
@@ -66,7 +65,6 @@ partial_state_update_blocks: List[dict] = [
             'market_price_twap': generic_suf('market_price_twap'),
             'RAI_balance': generic_suf('RAI_balance'),
             'ETH_balance': generic_suf('ETH_balance'),
-            
             'cdps': s_cdp_backtesting
         }
     },

@@ -3,8 +3,6 @@ import logging
 from datetime import datetime
 import time
 
-zfrom rai_digital_twin.models.config_wrapper import ConfigWrapper
-
 
 def run(mod) -> pd.DataFrame:
     config.append() # Append the simulation config to the cadCAD `configs` list
@@ -21,7 +19,6 @@ def run(mod) -> pd.DataFrame:
     logging.info('Started simulation')
     start = time.time()
 
-    results = 
 
     end = time.time()
     

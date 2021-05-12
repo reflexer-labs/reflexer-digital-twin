@@ -56,8 +56,8 @@ def generic_metric_loss(col: str) -> Callable[[str], MetricLossFunction]:
 
 
 VALIDATION_METRICS = {
-    'redemption_price': ValidationMetricDefinition(float, generic_metric_loss('redemption_price')),
-    'redemption_rate': ValidationMetricDefinition(float, generic_metric_loss('redemption_rate'))
+    'redemption_price': ValidationMetricDefinition(float, generic_metric_loss('redemption_price'))
+    #'redemption_rate': ValidationMetricDefinition(float, generic_metric_loss('redemption_rate'))
 }
 
 

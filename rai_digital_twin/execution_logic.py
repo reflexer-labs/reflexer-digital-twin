@@ -3,7 +3,11 @@ from typing import Dict, List
 
 from cadCAD_tools import easy_run
 
+
+
 from .backtesting import simulation_loss
+
+from rai_digital_twin import default_model
 
 
 def save_artifact():
@@ -33,10 +37,7 @@ def backtest_model(historical_data: pd.DataFrame) -> None:
                       params,
                       partial_state_update_blocks,
                       timesteps,
-                      1,
-                      use_labels=False,
-                      assign_params=False,
-                      drop_substeps=True)
+                      1)
 
     test_df = None
 
@@ -79,13 +80,14 @@ def extrapolate_data(signals: object,
 
 
 def extrapolation_cycle() -> object:
+
     input_data = prepare()
+
     historical_df = input_data['historical_data']
+
     backtest_model(historical_df)
-
-    estimated_params = estimate_parameters(input_data)
-
-    fit_parameters = stochastic_fit(input_data)
+    estimated_params = estimate_parameters(historical_df)
+    fit_parameters = stochastic_fit(historical_df)
 
     extrapolated_signals = extrapolate_signals(fit_parameters)
     

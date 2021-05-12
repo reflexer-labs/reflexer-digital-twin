@@ -1,6 +1,11 @@
+from numpy import True_
 import pandas as pd
 import rai_digital_twin.failure_modes as failure
 import logging
+
+## !! HACK !!
+approx_greater_equal_zero = lambda *args, **kwargs: True
+
 
 
 def s_update_stability_fee(params, substep, state_history, state, policy_input):
