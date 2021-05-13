@@ -1,7 +1,7 @@
 from cadCAD_tools.types import History, State, StateUpdate, VariableUpdate
 import pandas as pd
 import rai_digital_twin.failure_modes as failure
-from rai_digital_twin.types import CDP, Percentage, RAI_per_USD
+from rai_digital_twin.types import CDP, ETH, Percentage, RAI_per_USD, USD, USD_per_ETH, USD_per_RAI
 
 # !! HACK !!
 approx_greater_equal_zero = lambda *args, **kwargs: True
@@ -12,67 +12,29 @@ def s_update_stability_fee(params, substep, state_history, state, policy_input):
     return "stability_fee", stability_fee
 
 
-def is_cdp_above_liquidation_ratio(cdp: CDP,
-                                eth_price: float,
-                                redemption_price: float,
-                                liquidation_ratio: float) -> bool:
-    cdp_collateral_in_usd = cdp.locked - cdp.freed - cdp.v_bitten
-    cdp_collateral_in_usd *= eth_price
-    cdp_debt_in_rai = cdp.drawn - cdp.wiped - cdp.u_bitten
-
-    cdp_liquidation_threshold_in_usd = cdp_debt_in_rai * redemption_price
-    cdp_liquidation_threshold_in_usd *= liquidation_ratio
-
-    is_above = cdp_collateral_in_usd >= cdp_liquidation_threshold_in_usd
-
-    return is_above
-
-
 def wipe_to_liquidation_ratio(
     cdp, eth_price, redemption_price, liquidation_ratio, _raise=True
 ):
-    locked = cdp["locked"]
-    freed = cdp["freed"]
-    drawn = cdp["drawn"]
-    wiped = cdp["wiped"]
-    v_bitten = cdp["v_bitten"]
-    u_bitten = cdp["u_bitten"]
-
-    cdp_rai_debt = (drawn - wiped - u_bitten)
-    cdp_eth_collateral = (locked - freed - v_bitten)
-    cdp_rai_collateral = cdp_eth_collateral * eth_price
-    net_debt = cdp_rai_debt - cdp_rai_collateral
-
-    liquidation_price = liquidation_ratio * redemption_price
-    rai_to_wipe = net_debt / liquidation_price
-
-    if not approx_greater_equal_zero(rai_to_wipe, abs_tol=1e-3):
-        raise failure.InvalidCDPTransactionException(f"wipe: {locals()}")
+    net_debt = cdp.net_debt(eth_price, redemption_price)
+    rai_to_wipe = net_debt / liquidation_ratio
+    rai_to_wipe = max(rai_to_wipe, 0)
+    # Only wipe if the CDP drawn amount is higher than the
+    # total wiped + bitten amount
+    if cdp.drawn <= cdp.wiped + rai_to_wipe + cdp.u_bitten:
+        rai_to_wipe = 0
     else:
-        rai_to_wipe = max(rai_to_wipe, 0)
-        # Only wipe if the CDP drawn amount is higher than the
-        # total wiped + bitten amount
-        if drawn <= wiped + rai_to_wipe + u_bitten:
-            rai_to_wipe = 0
-        else:
-            pass
-        return rai_to_wipe
+        pass
+    return rai_to_wipe
 
 
 def draw_to_liquidation_ratio(
     cdp, eth_price, redemption_price, liquidation_ratio, _raise=True
 ):
-    locked = cdp["locked"]
-    freed = cdp["freed"]
-    drawn = cdp["drawn"]
-    wiped = cdp["wiped"]
-    v_bitten = cdp["v_bitten"]
-    u_bitten = cdp["u_bitten"]
 
     # (USD/ETH) * ETH / (USD/RAI * unitless) - RAI
-    draw = (locked - freed - v_bitten) * eth_price / (
+    draw = (cdp.locked - cdp.freed - cdp.v_bitten) * eth_price / (
         redemption_price * liquidation_ratio
-    ) - (drawn - wiped - u_bitten)
+    ) - (cdp.drawn - cdp.wiped - cdp.u_bitten)
     if not approx_greater_equal_zero(draw, abs_tol=1e-3):
         raise failure.InvalidCDPTransactionException(f"draw: {locals()}")
     draw = max(draw, 0)

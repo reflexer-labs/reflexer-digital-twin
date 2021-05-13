@@ -17,6 +17,7 @@ def decode_event(event: GovernanceEvent) -> PolicyInput:
 
     return action
 
+
 def p_governance_events(params, _1, _2, state):
     """
     Policy to decode governance events.
