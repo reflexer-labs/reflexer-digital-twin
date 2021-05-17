@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from enum import Enum
 
 # Units
 
@@ -26,6 +27,10 @@ Run = int
 Timestep = int
 Gwei = int
 
+TimestepDict = list[dict[str, object]]
+class GovernanceEventKind(Enum):
+    change_pid_params = 1
+
 @dataclass(frozen=True)
 class GovernanceEvent():
     kind: str
@@ -39,51 +44,24 @@ class UserAction():
     RAI_delta: RAI
     ETH_delta: ETH
 
+@dataclass(frozen=True)
+class ControllerParams():
+    kp: Per_USD
+    ki: Per_USD_Seconds
+    leaky_factor: Percentage
+    period: Seconds
+    enabled: bool
 
-@dataclass()
-class CDP():
-    """
-    Struct encapsulating a Collaterized Debt Position state for a single SAFE.
-    """
-    open: bool  # Is it active?
-    time: float
-    locked: ETH  # Locked collateral, V_1
-    drawn: RAI  # U_1
-    wiped: RAI  # U_2
-    freed: ETH  # V_2
-    w_wiped: RAI  # Accrued Interest wiped amount
-    dripped: RAI  # Accrued interest, D_2
-    v_bitten: ETH  # ETH Collateral liquidated amount, V_3
-    u_bitten: RAI  # Principal Debt liquidated amount, U_3
-    w_bitten: RAI  # Accrued Interest liquidated amount, W_3
+@dataclass(frozen=True)
+class ControllerState():
+    redemption_price: USD_per_RAI
+    redemption_rate: Percentage
+    proportional_error: USD_per_RAI
+    integral_error: USD_Seconds_per_RAI
 
-    @property
-    def collateral_in_eth(self) -> ETH:
-        return self.locked - self.freed - self.v_bitten
-
-    @property
-    def debt_in_rai(self) -> RAI:
-        return self.drawn - self.wiped - self.u_bitten
-
-    def collateral_in_usd(self, eth_price: USD_per_ETH) -> USD:
-        return self.collateral_in_eth * eth_price
-
-    def debt_in_usd(self, redemption_price: USD_per_RAI) -> USD:
-        return self.debt_in_rai * redemption_price
-
-    def liquidation_threshold_in_usd(self,
-                                     redemption_price: USD_per_RAI,
-                                     liquidation_ratio: Percentage) -> USD:
-        return self.debt_in_usd(redemption_price) * liquidation_ratio
-
-
-    def is_above_liquidation_ratio(self,
-                                   eth_price: USD_per_ETH,
-                                   redemption_price: USD_per_RAI,
-                                   liquidation_ratio: Percentage) -> bool:
-        threshold = self.liquidation_threshold_in_usd(redemption_price,
-                                                      liquidation_ratio)
-        return (self.collateral_in_usd(eth_price) >= threshold)
-
-    def net_debt(self, eth_price, redemption_price):
-        return self.debt_in_usd(redemption_price) - self.collateral_in_usd(eth_price)
+@dataclass(frozen=True)
+class TokenState():
+    rai_reserve: RAI
+    eth_reserve: ETH
+    rai_debt: RAI
+    eth_locked: ETH

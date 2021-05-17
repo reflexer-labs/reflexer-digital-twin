@@ -1,31 +1,19 @@
 from typing import Union
 from cadCAD_tools.types import Param, ParamSweep
 from cadCAD_tools.preparation import prepare_params
-from rai_digital_twin.types import USD_per_ETH, Seconds, Per_USD, RAI, ETH
-from rai_digital_twin.types import Percentage, Gwei, Per_USD_Seconds
-from rai_digital_twin.models.constants import RAY
+from rai_digital_twin.types import GovernanceEvent, Seconds, Timestep, TimestepDict
 
-ETH_PRICE_SERIES: list[float] = []
 SECONDS_PER_TIMESTEP: Seconds = 3600
-CONTROL_PERIOD: Seconds = 4 * 60 * 60
+
+
+GOVERNANCE_EVENTS = {0: GovernanceEvent('enable_controll')}
 
 raw_params: dict[str, Union[Param, ParamSweep]] = {
-    # Exogenous states, loaded as parameter at every timestep - these are lambda functions, and have to be called
-    'eth_price': Param(ETH_PRICE_SERIES, list[USD_per_ETH]),
-    'seconds_passed': Param(SECONDS_PER_TIMESTEP, Seconds),
-
-    # Time parameters
+    'seconds_per_timestep': Param(SECONDS_PER_TIMESTEP, Seconds),
     'expected_blocktime': Param(15, Seconds),
-    # must be multiple of cumulative time
-    'control_period': Param(CONTROL_PERIOD, Seconds),
-
-    # Controller parameters
-    # Proportional term
-    'kp': Param(2e-7, Per_USD),
-    # Integral term scaled by control period
-    'ki': Param(-5e-9, Per_USD_Seconds), 
-    # Leaky integral term
-    'alpha': Param(0.999, Percentage), 
+    'governance_events': Param(None, dict[Timestep, GovernanceEvent]),
+    'backtesting_data': Param(None, TimestepDict),
+    'exogenous_data': Param(None, TimestepDict)
 }
 
 params = prepare_params(raw_params)

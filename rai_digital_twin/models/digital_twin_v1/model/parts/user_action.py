@@ -15,19 +15,5 @@ def p_user_action(params, _1, _2, state) -> UserAction:
     """
 
     """
+    return {}
 
-    mode = params['user_action_mode']
-
-    if mode == 'backtesting':
-        t = state['timestep']
-        user_action = params['user_action_history'][t]
-    elif mode == 'projection':
-        user_action = extrapolate_user_action(params, state)
-    else:
-        pass
-
-    return user_action
-
-
-def s_CDP_action(params, _1, _2, state, signal):
-    return ('cdps', state['cdps'])

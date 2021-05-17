@@ -6,22 +6,20 @@ from .parts.time import p_resolve_time_passed
 from .parts.time import s_store_timedelta, s_update_cumulative_time
 
 # Backtesting
-from .parts.backtesting import p_backtesting
+from .parts.backtesting import p_backtesting, s_token_state
 
 # Extrapolation
 # (...)
 
 # Events
-from .parts.governance import p_governance_events
-from .parts.user_action import p_user_action, s_CDP_action
+from .parts.governance import p_governance_events, s_pid_params
+from .parts.user_action import p_user_action
 
 # Exogenous Info
-from .parts.markets import s_ETH_balance, s_RAI_balance, s_market_price_twap
+from .parts.exogenous import p_exogenous
 
 # Controllers
-from .parts.controllers import p_observe_errors
-from .parts.controllers import s_error_star_integral
-from .parts.controllers import s_redemption_price, s_redemption_rate
+from .parts.controllers import p_observe_errors, s_pid_error, s_pid_redemption
 
 
 partial_state_update_blocks: List[dict] = [
@@ -46,6 +44,7 @@ partial_state_update_blocks: List[dict] = [
 
         },
         'variables': {
+            'pid_params': s_pid_params
         }
     },
     {
@@ -55,20 +54,17 @@ partial_state_update_blocks: List[dict] = [
             'backtesting_data': p_backtesting
         },
         'variables': {
-            'eth_price': generic_suf('eth_price'),
-            'market_price_twap': generic_suf('market_price_twap'),
-            'RAI_balance': generic_suf('RAI_balance'),
-            'ETH_balance': generic_suf('ETH_balance')
+            'token_state': s_token_state
         }
     },
     {
-        'label': 'Extrapolation Exogenous Variables',
-        'flags': {'extrapolation'},
+        'label': 'Exogenous Variables',
         'policies': {
+            'exogenous data': p_exogenous
         },
         'variables': {
-            'eth_price': None,
-            'market_price_twap': s_market_price_twap
+            'eth_price': generic_suf('eth_price'),
+            'market_price': generic_suf('market_price')
         }
     },
     #################################################################
@@ -81,8 +77,7 @@ partial_state_update_blocks: List[dict] = [
             'observe': p_observe_errors
         },
         'variables': {
-            'error_star': generic_suf('error_star'),
-            'error_star_integral': s_error_star_integral,
+            'pid_state': s_pid_error
         }
     },
     {
@@ -92,8 +87,7 @@ partial_state_update_blocks: List[dict] = [
         """,
         'policies': {},
         'variables': {
-            'redemption_price': s_redemption_price,
-            'redemption_rate': s_redemption_rate
+            'pid_state': s_pid_redemption
         }
     },
     {
@@ -105,9 +99,7 @@ partial_state_update_blocks: List[dict] = [
             'user_action': p_user_action
         },
         'variables': {
-            'ETH_balance': s_ETH_balance,
-            'RAI_balance': s_RAI_balance,
-            'cdps': s_CDP_action
+            'token_state': s_token_state
         }
     }
 ]
