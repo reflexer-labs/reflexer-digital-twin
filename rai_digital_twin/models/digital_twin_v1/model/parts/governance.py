@@ -1,10 +1,11 @@
 """
 
 """
-from rai_digital_twin.types import GovernanceEvent, PolicyInput
+from rai_digital_twin.types import GovernanceEvent
+from cadCAD_tools.types import Signal
 
 
-def decode_event(event: GovernanceEvent) -> PolicyInput:
+def decode_event(event: GovernanceEvent) -> Signal:
     """
     Transforms Governance Events into Actionable Policy Inputs.
     """
