@@ -24,10 +24,7 @@ from .parts.controllers import p_observe_errors, s_pid_error, s_pid_redemption
 
 partial_state_update_blocks: List[dict] = [
     {
-        'label': 'Time',
-        'details': '''
-            This block observes (or samples from data) the amount of time passed between events
-        ''',
+        'label': 'Time Tracking',
         'policies': {
             'time_process': p_resolve_time_passed
         },
@@ -37,42 +34,22 @@ partial_state_update_blocks: List[dict] = [
         }
     },
         {
-        'label': 'Initialization & Governance',
-        'details': '',
+        'label': 'Governance & Backtesting',
         'policies': {
-            'governance_events': p_governance_events
+            'governance_events': p_governance_events,
+            'backtesting_data': p_backtesting, # Only used on backtesting
+            'exogenous data': p_exogenous
 
         },
         'variables': {
-            'pid_params': s_pid_params
-        }
-    },
-    {
-        'label': 'Backtesting Exogenous Variables',
-        'flags': {'backtesting'},
-        'policies': {
-            'backtesting_data': p_backtesting
-        },
-        'variables': {
-            'token_state': s_token_state
-        }
-    },
-    {
-        'label': 'Exogenous Variables',
-        'policies': {
-            'exogenous data': p_exogenous
-        },
-        'variables': {
+            'pid_params': s_pid_params,
+            'token_state': s_token_state, # Only used on backtesting
             'eth_price': generic_suf('eth_price'),
             'market_price': generic_suf('market_price')
         }
     },
-    #################################################################
     {
-        'label': 'Compute error',
-        'details': """
-        Retrieve error terms required to compute the various control actions
-        """,
+        'label': 'Compute controller error',
         'policies': {
             'observe': p_observe_errors
         },
@@ -81,20 +58,15 @@ partial_state_update_blocks: List[dict] = [
         }
     },
     {
-        'label': 'Redemption Price & Rate',
-        'details': """
-        New redemption price & rate based on stability control action 
-        """,
+        'label': 'Compute controller Redemption Price & Rate',
         'policies': {},
         'variables': {
             'pid_state': s_pid_redemption
         }
     },
     {
+        # Only used for extrapolation
         'label': 'Aggregate User Action',
-        'flags': {'extrapolation'},
-        'description': """
-        """,
         'policies': {
             'user_action': p_user_action
         },
