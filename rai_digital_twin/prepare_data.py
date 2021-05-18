@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import json
-from rai_digital_twin.types import ControllerState, GovernanceEvent, Timestep, TokenState, BacktestingData
+from rai_digital_twin.types import ControllerState, GovernanceEvent, GovernanceEventKind, Height, Timestep, TokenState, BacktestingData
 
 
 def row_to_controller_state(row: pd.Series) -> ControllerState:
@@ -18,32 +18,91 @@ def row_to_token_state(row: pd.Series) -> TokenState:
                       row.collateral)
 
 
-def extract_exogenous_data(df: pd.DataFrame) -> list[dict[str, float]]:
+def extract_exogenous_data(df: pd.DataFrame) -> dict[Timestep, dict[str, float]]:
+    """
+    Extract exogenous variables from historical dataframe.
+    """
     EXOGENOUS_MAP = {'marketPriceEth': 'eth_price',
-                  'marketPriceUsd': 'market_price'}
+                     'marketPriceUsd': 'market_price'}
 
     exogenous_data = (df.loc[:, EXOGENOUS_MAP.keys()]
-                    .rename(columns=EXOGENOUS_MAP)
-                    .to_dict(orient='records'))
+                      .rename(columns=EXOGENOUS_MAP)
+                      .to_dict(orient='index'))
     return exogenous_data
+
+
+def load_backtesting_data(path: str) -> BacktestingData:
+    """
+    Make the historical clean for backtesting.
+    """
+    # Load CSV file
+    df = (pd.read_csv(path)
+            .sort_values('block_time', ascending=False)
+            .reset_index())
+
+    # Retrieve historical info
+    token_states = df.apply(row_to_token_state, axis=1).to_dict(orient='index')
+    exogenous_data = extract_exogenous_data(df)
+    heights = df.block_time.tolist()
+    pid_states = df.apply(row_to_controller_state, axis=1).to_dict(orient='index')
+
+    # Output
+    return BacktestingData(token_states, exogenous_data, heights, pid_states)
+
+
+def retrieve_raw_events(params_df: pd.DataFrame,
+                        initial_height: Height) -> list[dict]:
+    first_event = None
+    raw_events = []
+    for event in params_df:
+        eth_block = event['eth_block']
+        if eth_block < initial_height:
+            first_event = event
+        elif eth_block >= initial_height:
+            raw_events.append(event)
+    raw_events.insert(0, first_event)
+    return raw_events
+
+
+def interpolate_timestep(heights_per_timesteps: dict[Timestep, Height],
+                         height_to_interpolate: Height) -> Timestep:
+    """
+    Note: heights per timestep must be ordered
+    """
+    for (timestep, height) in heights_per_timesteps.items():
+        if height >= height_to_interpolate:
+            return timestep
+    return -1
             
 
-def parse_backtesting_data(path: str) -> BacktestingData:
-    df = pd.read_csv(path)
-    pid_states = df.apply(row_to_controller_state, axis=1).tolist()
-    token_states = df.apply(row_to_token_state, axis=1).tolist()
-    exogenous_data = extract_exogenous_data(df)
-    return BacktestingData(token_states, exogenous_data, pid_states)
-
-
-def parse_governance_events(path: str) -> dict[Timestep, GovernanceEvent]:
-    with open(path, 'r') as fid:
-        raw_events: list = json.load(fid)
-
+def parse_raw_events(raw_events: list[dict],
+                     heights: dict[Timestep, Height]) -> dict[Timestep, GovernanceEvent]:
+    # Map the raw events into (Timestep, GovernanceEvent) relations
     events = {}
     for raw_event in raw_events:
-        event = parse_event(raw_event)
-    return {}
+        event = GovernanceEvent(GovernanceEventKind.change_pid_params,
+                                raw_event)
+
+        timestep = interpolate_timestep(heights, raw_event['eth_block'])
+        if timestep >= 0:
+            timestep = int(timestep)
+            events[timestep] = event
+        else:
+            continue
+    return events
+
+
+def load_governance_events(path: str,
+                           heights: dict[Timestep, Height]) -> dict[Timestep, GovernanceEvent]:
+
+    params_df = pd.read_csv(path).sort_values(
+        'eth_block').to_dict(orient='records')
+
+    initial_height = list(heights.values())[0]
+    raw_events = retrieve_raw_events(params_df, initial_height)
+    events = parse_raw_events(raw_events, heights)
+    return events
+
 
 def download_past_data():
     pass

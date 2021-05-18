@@ -33,7 +33,7 @@ class GovernanceEventKind(Enum):
 
 @dataclass(frozen=True)
 class GovernanceEvent():
-    kind: str
+    kind: GovernanceEventKind
     descriptor: dict
 
 
@@ -73,10 +73,10 @@ class UserActionParams():
     debt_ceiling: RAI
     fitted_param_1: None
 
-
 @dataclass(frozen=True)
 class BacktestingData():
-    token_states: list[TokenState]
-    exogenous_data: list[dict[str, float]]
-    pid_states: list[ControllerState]
+    token_states: dict[Timestep, TokenState]
+    exogenous_data: dict[Timestep, dict[str, float]]
+    heights: dict[Timestep, Height]
+    pid_states: dict[Timestep, ControllerState]
     

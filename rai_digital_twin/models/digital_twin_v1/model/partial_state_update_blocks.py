@@ -3,7 +3,7 @@ from cadCAD_tools import generic_suf
 
 # Meta stuff
 from .parts.time import p_resolve_time_passed
-from .parts.time import s_store_timedelta, s_update_cumulative_time
+from .parts.time import s_update_cumulative_time
 
 # Token State (Backtesting & Extrapolation)
 from .parts.token_state import s_token_state
@@ -26,8 +26,9 @@ partial_state_update_blocks: List[dict] = [
             'time_process': p_resolve_time_passed
         },
         'variables': {
-            'timedelta': s_store_timedelta,
-            'cumulative_time': s_update_cumulative_time
+            'timedelta': generic_suf('timedelta', 'seconds_passed'),
+            'cumulative_time': s_update_cumulative_time,
+            'height': generic_suf('height')
         }
     },
         {

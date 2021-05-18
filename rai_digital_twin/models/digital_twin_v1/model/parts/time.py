@@ -1,18 +1,23 @@
 import datetime as dt
 
-def p_resolve_time_passed(params, substep, state_history, state):
-    timestep_to_seconds_function = params['seconds_passed']
-    seconds = timestep_to_seconds_function(state['timestep'])
-    return {'seconds_passed': seconds}
+def p_resolve_time_passed(params, _2, _3, state):
+    # Params & variables
+    heights = params['heights']
+    expected_blocktime = params['expected_blocktime']
+    t = state['timestep']
+    height = state['height']
+
+    # Compute how much time it went
+    new_height = heights[t]['height']
+    height_difference = new_height - height
+    seconds_passed = height_difference * expected_blocktime
+
+    # Output
+    return {'seconds_passed': seconds_passed,
+            'height': new_height}
 
 
-def s_store_timedelta(params, substep, state_history, state, policy_input):
-    value = policy_input['seconds_passed']
-    key = 'timedelta'
-    return (key, value)
-
-
-def s_update_cumulative_time(params, substep, state_history, state, policy_input):
+def s_update_cumulative_time(_1, _2, _3, state, policy_input):
     seconds = policy_input['seconds_passed']
     value = state['cumulative_time'] + seconds
     return ('cumulative_time', value)

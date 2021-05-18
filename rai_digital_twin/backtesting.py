@@ -33,31 +33,43 @@ def aggregate_loss(loss_series: List[float]) -> float:
     return sum(loss_series) / len(loss_series)
 
 
-def generic_loss(sim_df,
-                 test_df,
-                 col: str) -> float:
-    """
-    Default loss function
-    """
-    y = test_df[col]
-    y_hat = sim_df[col]
+def generic_loss(y, y_hat) -> float:
     y_error = loss(y, y_hat)
     agg_loss = aggregate_loss(y_error)
     return agg_loss
 
 
-def generic_metric_loss(col: str) -> Callable[[str], MetricLossFunction]:
+def generic_column_loss(sim_df,
+                        test_df,
+                        col: str) -> float:
+    """
+    Default loss function
+    """
+    y = test_df[col]
+    y_hat = sim_df[col]
+    return generic_loss(y, y_hat)
+
+
+def generic_nested_metric_loss(col: str, key: str):
+    def loss_function(sim_df, test_df) -> float:
+        y = sim_df[col].map(lambda x: x[key])
+        y_hat = test_df[col][key].map(lambda x: x[key])
+        return generic_loss(y, y_hat)
+    return loss_function
+
+
+def generic_metric_loss(col: str):
     """
     Generates loss functions for a given column.
     """
     def loss_function(sim_df, test_df) -> float:
-        return generic_loss(sim_df, test_df, col)
+        return generic_column_loss(sim_df, test_df, col)
     return loss_function
 
 
 VALIDATION_METRICS = {
     'redemption_price': ValidationMetricDefinition(float, generic_metric_loss('redemption_price'))
-    #'redemption_rate': ValidationMetricDefinition(float, generic_metric_loss('redemption_rate'))
+    # 'redemption_rate': ValidationMetricDefinition(float, generic_metric_loss('redemption_rate'))
 }
 
 
