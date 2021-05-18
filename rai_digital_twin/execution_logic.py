@@ -2,9 +2,6 @@ import pandas as pd
 from typing import Dict, List
 
 from cadCAD_tools import easy_run
-
-
-
 from .backtesting import simulation_loss
 
 from rai_digital_twin import default_model
@@ -28,14 +25,21 @@ def prepare(report_path: str = None) -> dict:
 
 def backtest_model(historical_data: pd.DataFrame) -> None:
 
-    initial_conditions: Dict[str, object] = {}
-    params: Dict[str, List[object]] = {}
-    partial_state_update_blocks: List[Dict[str, object]] = []
+
+    initial_exogenous_data = exogenous_data.iloc[0]
+
+    params = default_model.parameters
+    params.update(governance_events=governance_events)
+    params.update(backtesting_data=token_states)
+    params.update(exogenous_data=exogenous_data)
+
+
+    partial_state_update_blocks = default_model.timestep_block
     timesteps = len(historical_data)
 
-    sim_df = easy_run(initial_conditions,
+    sim_df = easy_run(default_model.initial_state,
                       params,
-                      partial_state_update_blocks,
+                      default_model.timestep_block,
                       timesteps,
                       1)
 

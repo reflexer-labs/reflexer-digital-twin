@@ -65,3 +65,10 @@ class TokenState():
     eth_reserve: ETH
     rai_debt: RAI
     eth_locked: ETH
+
+
+@dataclass(frozen=True)
+class UserActionParams():
+    liquidation_ratio: Percentage
+    debt_ceiling: RAI
+    fitted_param_1: None

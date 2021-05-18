@@ -6,7 +6,7 @@ from rai_digital_twin.types import GovernanceEvent, Seconds, Timestep, TimestepD
 SECONDS_PER_TIMESTEP: Seconds = 3600
 
 
-GOVERNANCE_EVENTS = {0: GovernanceEvent('enable_controll')}
+GOVERNANCE_EVENTS = {0: GovernanceEvent('enable_control', {'enabled': True})}
 
 raw_params: dict[str, Union[Param, ParamSweep]] = {
     'seconds_per_timestep': Param(SECONDS_PER_TIMESTEP, Seconds),
