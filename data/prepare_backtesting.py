@@ -1,6 +1,5 @@
 # %%
 
-from rai_digital_twin.types import ControllerState, TokenState
 import sys
 import pandas as pd
 import numpy as np
@@ -10,6 +9,7 @@ import numpy as np
 sys.path.append("..")
 
 # %%
+from rai_digital_twin.types import ControllerState, TokenState
 
 # %%
 df = pd.read_csv('states.csv')
@@ -39,10 +39,7 @@ def row_to_token_state(row: dict) -> TokenState:
 
 # For validation only
 pid_states = df.apply(row_to_controller_state, axis=1).tolist()
-
 token_states = df.apply(row_to_token_state, axis=1).tolist()
-eth_price = df.marketPriceEth.tolist()
-market_price = df.marketPriceUsd.tolist()
 
 # %%
 EXOGENOUS_COLS = {'marketPriceEth': 'eth_price',

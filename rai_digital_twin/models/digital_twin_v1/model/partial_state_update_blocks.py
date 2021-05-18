@@ -5,20 +5,17 @@ from cadCAD_tools import generic_suf
 from .parts.time import p_resolve_time_passed
 from .parts.time import s_store_timedelta, s_update_cumulative_time
 
-# Backtesting
-from .parts.backtesting import p_backtesting, s_token_state
-
-# Extrapolation
-# (...)
+# Token State (Backtesting & Extrapolation)
+from .parts.token_state import s_token_state
+from .parts.token_state import p_backtesting, p_user_action
 
 # Events
 from .parts.governance import p_governance_events, s_pid_params
-from .parts.user_action import p_user_action
 
 # Exogenous Info
 from .parts.exogenous import p_exogenous
 
-# Controllers
+# Controller
 from .parts.controllers import p_observe_errors, s_pid_error, s_pid_redemption
 
 

@@ -72,3 +72,11 @@ class UserActionParams():
     liquidation_ratio: Percentage
     debt_ceiling: RAI
     fitted_param_1: None
+
+
+@dataclass(frozen=True)
+class BacktestingData():
+    token_states: list[TokenState]
+    exogenous_data: list[dict[str, float]]
+    pid_states: list[ControllerState]
+    

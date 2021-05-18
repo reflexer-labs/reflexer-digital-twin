@@ -1,10 +1,26 @@
 
 
-from rai_digital_twin.types import TokenState
-from cadCAD_tools.types import VariableUpdate
+from rai_digital_twin.types import TokenState, UserAction
+from cadCAD_tools.types import Params, Signal, State, VariableUpdate
 
 
-def p_backtesting(params, _2, _3, state):
+def extrapolate_user_action(params: Params,
+                            state: State) -> UserAction:
+    """
+    Extrapolate User Action from
+    https://hackmd.io/w-vfdZIMTDKwdEupeS3qxQ
+    """
+    pass
+
+
+def p_user_action(params, _1, _2, state) -> Signal:
+    """
+
+    """
+    return {}
+
+
+def p_backtesting(params, _2, _3, state) -> Signal:
     t = state['timestep']
     backtesting_data = params['backtesting_data']
     current_data = backtesting_data[t]
