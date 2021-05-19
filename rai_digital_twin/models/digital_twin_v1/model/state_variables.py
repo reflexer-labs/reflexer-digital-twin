@@ -23,18 +23,16 @@ INITIAL_TOKEN_STATE = TokenState(rai_reserve=801.933727,
                                  rai_debt=3048.35849,
                                  eth_locked=16.89236)
 
-REFLEXER_LAUNCH_HEIGHT = 11861791
-
 # NB: These initial states may be overriden in the relevant notebook or experiment process
 raw_state_variables: dict[str, InitialValue] = {
     # Time states
-    'timedelta': InitialValue(0, Seconds),
-    'cumulative_time': InitialValue(0, Seconds),
-    'blockheight': InitialValue(REFLEXER_LAUNCH_HEIGHT, Height),
+    'timedelta': InitialValue(None, Seconds),
+    'cumulative_time': InitialValue(None, Seconds),
+    'height': InitialValue(None, Height),
 
     # Exogenous states
     'eth_price': InitialValue(INITIAL_ETH_PRICE, USD_per_ETH),
-    'market_price_twap': InitialValue(INITIAL_MARKET_PRICE, USD_per_RAI),
+    'market_price': InitialValue(INITIAL_MARKET_PRICE, USD_per_RAI),
 
     # Controller state
     'pid_params': InitialValue(INITIAL_CONTROLLER_PARAMS, ControllerParams),

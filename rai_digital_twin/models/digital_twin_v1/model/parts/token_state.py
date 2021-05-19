@@ -24,7 +24,7 @@ def p_backtesting(params, _2, _3, state) -> Signal:
     t = state['timestep']
     backtesting_data = params['backtesting_data']
     current_data = backtesting_data[t]
-    return current_data
+    return {'token_state': current_data}
 
 
 def s_token_state(_1, _2, _3, state, signal) -> VariableUpdate:

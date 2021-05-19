@@ -38,7 +38,12 @@ def p_governance_events(params, _1, _2, state):
 
 def s_pid_params(_1, _2, _3, state, signal):
     if 'pid_params' in signal:
-        new_pid_params = ControllerParams(**signal['pid_params'])
+        params = signal['pid_params']
+        new_pid_params = ControllerParams(params['kp'],
+                                          params['ki'],
+                                          params['leaky_factor'],
+                                          params['period'],
+                                          params['enabled'])
     else:
         new_pid_params = state['pid_params']
     return ('pid_params', new_pid_params)

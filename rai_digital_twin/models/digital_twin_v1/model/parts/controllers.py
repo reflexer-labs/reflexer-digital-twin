@@ -13,17 +13,12 @@ def redemption_rate(pid_params: ControllerParams,
     if pid_params.enabled:
         # Update the Redemption Rate if the current cumulative time
         # is on par with the control period.
-        control_parity = (cumulative_time % pid_params.period)
-        update_redemption_rate = (control_parity == 0)
-        if update_redemption_rate is True:
-            proportional_rate = pid_params.kp * pid_state.proportional_error
-            integral_rate = pid_params.ki * pid_state.integral_error
-            integral_rate /= pid_params.period
-            new_redemption_rate = proportional_rate + integral_rate
-        else:
-            new_redemption_rate = pid_state.redemption_rate
+        proportional_rate = pid_params.kp * pid_state.proportional_error
+        integral_rate = pid_params.ki * pid_state.integral_error
+        integral_rate /= pid_params.period
+        new_redemption_rate = proportional_rate + integral_rate
     else:
-        new_redemption_rate = 0.0
+        new_redemption_rate = 1.0
     return new_redemption_rate
 
 
@@ -31,7 +26,7 @@ def p_observe_errors(_1, _2, _3, state):
     """
     Calculate the error between the redemption and market price.
     """
-    error = (state["pid_state"].redemption_price - state["market_price_twap"])
+    error = (state["pid_state"].redemption_price - state["market_price"])
     return {"error_star": error}
 
 
@@ -46,22 +41,28 @@ def s_pid_error(_1, _2, _3, state, signal):
     timedelta = state["timedelta"]
     new_error = signal["error_star"]
 
-    previous_integral = pid_state.integral_error
-    old_error = pid_state.proportional_error
+    if timedelta is not None:
+        previous_integral = pid_state.integral_error
+        old_error = pid_state.proportional_error
 
-    # Numerical integration (trapezoid rule)
-    mean_error = (old_error + new_error) / 2
-    area = mean_error * timedelta
+        # Numerical integration (trapezoid rule)
+        mean_error = (old_error + new_error) / 2
+        area = mean_error * timedelta
 
-    # Perform leaky integration (alpha=1 means no leaky)
-    scaled_alpha = pid_params.leaky_factor ** timedelta
-    effective_previous_integral = scaled_alpha * previous_integral
-    error_integral = effective_previous_integral + area
+        # Perform leaky integration (alpha=1 means no leaky)
+        if pid_params.ki > 0:
+            scaled_alpha = pid_params.leaky_factor ** timedelta
+            effective_previous_integral = scaled_alpha * previous_integral
+            error_integral = effective_previous_integral + area
+        else:
+            error_integral = 0.0
 
-    new_pid_state = ControllerState(pid_state.redemption_price,
-                                    pid_state.redemption_rate,
-                                    new_error,
-                                    error_integral)
+        new_pid_state = ControllerState(pid_state.redemption_price,
+                                        pid_state.redemption_rate,
+                                        new_error,
+                                        error_integral)
+    else:
+        new_pid_state = pid_state
 
     return ('pid_state', new_pid_state)
 
@@ -77,17 +78,21 @@ def s_pid_redemption(_1, _2, _3, state, _5):
     cumulative_time = state['cumulative_time']
 
     # Compute new redemption price
-    interest = exp(pid_state.redemption_rate * timedelta)
-    new_redemption_price = pid_state.redemption_price * interest
 
-    # Compute new redemption rate
-    new_redemption_rate = redemption_rate(pid_params,
-                                          pid_state,
-                                          cumulative_time)
+    if timedelta is not None:
+        interest = (1 + pid_state.redemption_rate) ** timedelta
+        new_redemption_price = pid_state.redemption_price * interest
 
-    # Return output
-    new_pid_state = ControllerState(new_redemption_price,
-                                    new_redemption_rate,
-                                    pid_state.proportional_error,
-                                    pid_state.integral_error)
+        # Compute new redemption rate
+        new_redemption_rate = redemption_rate(pid_params,
+                                            pid_state,
+                                            cumulative_time)
+
+        # Return output
+        new_pid_state = ControllerState(new_redemption_price,
+                                        new_redemption_rate,
+                                        pid_state.proportional_error,
+                                        pid_state.integral_error)
+    else:
+        new_pid_state = pid_state
     return ('pid_state', new_pid_state)

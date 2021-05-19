@@ -6,7 +6,7 @@ from rai_digital_twin.types import ControllerState, GovernanceEvent, GovernanceE
 
 def row_to_controller_state(row: pd.Series) -> ControllerState:
     return ControllerState(row.RedemptionPrice,
-                           row.RedemptionRateAnnualizedRate,
+                           row.RedemptionRateHourlyRate,
                            np.nan,
                            np.nan)
 
@@ -37,14 +37,15 @@ def load_backtesting_data(path: str) -> BacktestingData:
     """
     # Load CSV file
     df = (pd.read_csv(path)
-            .sort_values('block_time', ascending=False)
-            .reset_index())
-
+            .sort_values('block_number', ascending=True)
+            .reset_index(drop=True)
+            .assign(marketPriceEth=lambda df: 1 / df.marketPriceEth)
+            .assign(RedemptionRateHourlyRate= lambda df: df.RedemptionRateHourlyRate - 1))
     # Retrieve historical info
-    token_states = df.apply(row_to_token_state, axis=1).to_dict(orient='index')
+    token_states = df.apply(row_to_token_state, axis=1).to_dict()
     exogenous_data = extract_exogenous_data(df)
-    heights = df.block_time.tolist()
-    pid_states = df.apply(row_to_controller_state, axis=1).to_dict(orient='index')
+    heights = df.block_number.to_dict()
+    pid_states = df.apply(row_to_controller_state, axis=1).to_dict()
 
     # Output
     return BacktestingData(token_states, exogenous_data, heights, pid_states)
@@ -97,7 +98,6 @@ def load_governance_events(path: str,
 
     params_df = pd.read_csv(path).sort_values(
         'eth_block').to_dict(orient='records')
-
     initial_height = list(heights.values())[0]
     raw_events = retrieve_raw_events(params_df, initial_height)
     events = parse_raw_events(raw_events, heights)

@@ -1,5 +1,7 @@
 from dataclasses import dataclass
+from collections import defaultdict
 from enum import Enum
+import numpy as np
 
 # Units
 
@@ -80,3 +82,5 @@ class BacktestingData():
     heights: dict[Timestep, Height]
     pid_states: dict[Timestep, ControllerState]
     
+
+NaNDict: dict = defaultdict(lambda: np.nan)

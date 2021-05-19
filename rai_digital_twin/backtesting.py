@@ -98,6 +98,6 @@ def simulation_loss(sim_df: object,
     """
     Compute a simulation loss
     """
-    metrics_loss = simulation_metrics_loss(sim_df, test_df)
+    metrics_loss = simulation_metrics_loss(sim_df.fillna(0), test_df.fillna(0))
     sim_loss = validation_loss(metrics_loss)
     return sim_loss

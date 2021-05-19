@@ -77,4 +77,4 @@ partial_state_update_blocks: List[dict] = [
 partial_state_update_blocks = [psub
                                for psub
                                in partial_state_update_blocks
-                               if psub.get('enabled, True') == True]
+                               if psub.get('enabled', True) == True]
