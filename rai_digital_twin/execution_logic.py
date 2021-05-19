@@ -51,7 +51,6 @@ def backtest_model(backtesting_data: BacktestingData,
     params.update(exogenous_data=[backtesting_data.exogenous_data])
 
     timesteps = len(backtesting_data.heights) - 1
-    #imesteps = 30
 
     sim_df = easy_run(initial_state,
                       params,
