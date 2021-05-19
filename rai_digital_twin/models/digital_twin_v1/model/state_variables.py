@@ -13,7 +13,7 @@ INITIAL_CONTROLLER_PARAMS = ControllerParams(ki=4e-8,
                                              enabled=True)
 
 INITIAL_CONTROLLER_STATE = ControllerState(redemption_price=3.14,
-                                           redemption_rate=0.0,
+                                           redemption_rate=1.0,
                                            proportional_error=0.0,
                                            integral_error=0.0)
 

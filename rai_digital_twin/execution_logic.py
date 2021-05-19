@@ -65,7 +65,6 @@ def backtest_model(backtesting_data: BacktestingData,
     test_df = pd.DataFrame.from_dict(
         backtesting_data.pid_states, orient='index')
     loss = simulation_loss(sim_df, test_df)
-
     print(f"Backtesting loss: {loss :.2%}")
 
     return (sim_df, test_df)

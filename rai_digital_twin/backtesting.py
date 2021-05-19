@@ -5,8 +5,7 @@ Functions and definitions for calculating the validation loss of a
 backtested simulation.
 """
 from dataclasses import dataclass
-from typing import Dict, NamedTuple, Callable, List
-from collections import namedtuple
+from typing import Dict, Callable, List
 import numpy as np
 
 MetricLossFunction = Callable[[object, object], float]
@@ -67,9 +66,15 @@ def generic_metric_loss(col: str):
     return loss_function
 
 
+def redemption_rate_loss(sim_df, test_df) -> float:
+    y_error = np.abs(sim_df.redemption_rate - test_df.redemption_rate)
+    agg_loss = aggregate_loss(y_error)
+    return agg_loss
+
+
 VALIDATION_METRICS = {
-    'redemption_price': ValidationMetricDefinition(float, generic_metric_loss('redemption_price'))
-    # 'redemption_rate': ValidationMetricDefinition(float, generic_metric_loss('redemption_rate'))
+    'redemption_price': ValidationMetricDefinition(float, generic_metric_loss('redemption_price')),
+    'redemption_rate': ValidationMetricDefinition(float, redemption_rate_loss)
 }
 
 
@@ -99,5 +104,6 @@ def simulation_loss(sim_df: object,
     Compute a simulation loss
     """
     metrics_loss = simulation_metrics_loss(sim_df.fillna(0), test_df.fillna(0))
+    print(metrics_loss)
     sim_loss = validation_loss(metrics_loss)
     return sim_loss
