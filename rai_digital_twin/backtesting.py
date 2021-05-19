@@ -23,7 +23,7 @@ def loss(true_value: float,
     """
     Time-wise loss function.
     """
-    return (true_value - predicted_value) ** 2
+    return  np.abs(true_value - predicted_value) / true_value
 
 
 def aggregate_loss(loss_series: List[float]) -> float:
