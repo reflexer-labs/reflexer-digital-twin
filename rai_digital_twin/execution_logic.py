@@ -90,20 +90,24 @@ def estimate_parameters(input_data: object,
 
 
 def extrapolate_signals(signal_params: FitParams,
+                        timesteps: int,
                         report_path: str = None) -> object:
     """
     Generate input signals from given parameters.
     """
-    timesteps = 100  # TODO
     samples = 1  # TODO
-    eth_series = generate_eth_samples(signal_params, timesteps, samples)
-    return eth_series
+    eth_series = list(generate_eth_samples(signal_params, timesteps, samples))
+    eth_price_list: list = eth_series[0]
+    exogenous_data = {t: {'eth_price': el}
+                      for t, el in enumerate(eth_price_list)}
+    return exogenous_data
 
 
 def extrapolate_data(signals: object,
                      params: object,
                      backtesting_data,
                      governance_events,
+                     N_t: int,
                      report_path: str = None) -> object:
     """
     Generate a extrapolation dataset.
@@ -112,8 +116,7 @@ def extrapolate_data(signals: object,
     # Index for the last available data points
     last_t = len(backtesting_data.heights) - 1
 
-    N_t = 200
-    seconds_per_timesteps = backtesting_data.pid_params[last_t].period
+    seconds_per_timesteps = (60 * 60)
     heights = {i: i * seconds_per_timesteps for i in range(N_t)}
 
     initial_state = default_model.initial_state
@@ -154,15 +157,19 @@ def extrapolation_cycle() -> object:
     stochastic_params = stochastic_fit(backtesting_df.exogenous_data)
     print("3. Performing System Identification\n---")
     identified_params = estimate_parameters(backtesting_df)
+
+    N_t = len(backtesting_df.heights) * 2
+
     print("4. Extrapolating Exogenous Signals\n---")
-    extrapolated_signals = extrapolate_signals(stochastic_params)
+    extrapolated_signals = extrapolate_signals(stochastic_params, N_t)
     print("5. Extrapolating Future Data\n---")
-    future_data = extrapolate_data(extrapolate_signals,
+    future_data = extrapolate_data(extrapolated_signals,
                                    identified_params,
                                    backtesting_df,
-                                   governance_events)
+                                   governance_events,
+                                   N_t)
     print("6. Done!\n---")
-    # return extrapolated_data
+    return future_data
 
 
 if __name__ == '__main__':

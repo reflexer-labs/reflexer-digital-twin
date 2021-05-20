@@ -13,7 +13,7 @@ from .parts.token_state import p_backtesting, p_user_action
 from .parts.governance import p_governance_events, s_pid_params
 
 # Exogenous Info
-from .parts.exogenous import p_exogenous
+from .parts.exogenous import p_exogenous, s_market_price
 
 # Controller
 from .parts.controllers import p_observe_errors, s_pid_error, s_pid_redemption
@@ -43,7 +43,7 @@ partial_state_update_blocks: List[dict] = [
             'pid_params': s_pid_params,
             'token_state': s_token_state, # Only used on backtesting
             'eth_price': generic_suf('eth_price'),
-            'market_price': generic_suf('market_price')
+            'market_price': s_market_price
         }
     },
     {

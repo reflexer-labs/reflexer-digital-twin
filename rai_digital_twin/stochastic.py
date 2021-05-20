@@ -72,9 +72,7 @@ def kalman_filter(observations, initialValue, truthValues=None, plot=False, para
 
     if paramExport == True:
         return xhat, P, xhatminus, Pminus, K
-
     else:
-
         return xhat
 
 
@@ -165,21 +163,21 @@ def generate_eth_samples(fit_params: FitParams,
         np.random.seed(seed=run)
 
         buffer_for_transcients = 100
-        samples = np.random.gamma(fit_params.shape,
-                                  fit_params.scale,
-                                  timesteps + buffer_for_transcients)
+        X = np.random.gamma(fit_params.shape,
+                            fit_params.scale,
+                            timesteps + buffer_for_transcients)
         # train kalman
-        xhat, _1, _2, _3 = kalman_filter(observations=samples[0:-1],
-                                         initialValue=samples[-1],
-                                         paramExport=True,
-                                         plot=False)
+        xhat = kalman_filter(observations=X[0:-1],
+                             initialValue=X[-1],
+                             paramExport=False,
+                             plot=False)
 
         yield xhat[buffer_for_transcients:]
 
 
 def fit_eth_price(X: list[float]) -> FitParams:
     model = pm.Model()
-    with model: 
+    with model:
         alpha = pm.Exponential('alpha', lam=2)
         beta = pm.Exponential('beta', lam=.1)
         g = pm.Gamma('g', alpha=alpha, beta=beta, observed=X)
@@ -199,5 +197,3 @@ def fit_predict_eth_price(X: np.array,
     fit_params = fit_eth_price(X)
     results = list(generate_eth_samples(fit_params, timesteps, samples))
     return results
-
-
