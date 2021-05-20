@@ -107,8 +107,9 @@ def extrapolation_cycle() -> object:
 
     backtesting_df, governance_events = prepare()
     backtest_model(backtesting_df, governance_events)
-    # estimated_params = estimate_parameters(historical_df)
-    # fit_parameters = stochastic_fit(historical_df)
+    fit_parameters = stochastic_fit(historical_df)
+        # estimated_params = estimate_parameters(historical_df)
+
 
     # extrapolated_signals = extrapolate_signals(fit_parameters)
 

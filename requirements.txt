@@ -1,0 +1,8 @@
+scipy
+statsmodels
+pymc3
+cadCAD
+cadCAD-tools
+matplotlib
+plotly
+pandas
