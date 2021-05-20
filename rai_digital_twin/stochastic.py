@@ -1,9 +1,11 @@
 # %%
 
+from typing import Iterable
 import pandas as pd
 import numpy as np
 from dataclasses import dataclass
 from scipy.stats import gamma
+import pymc3 as pm
 
 
 def kalman_filter(observations, initialValue, truthValues=None, plot=False, paramExport=False):
@@ -123,57 +125,79 @@ def kalman_filter_predict(xhat, P, xhatminus, Pminus, K, observations, truthValu
         return xhat
 
 
-def generate_eth_timeseries(xhat, P, xhatminus, Pminus, K):
-    eth_values = []
-    filter_values = {'xhat':xhat,'P':P,
-                     'xhatminus':xhatminus,'Pminus':Pminus,
-                     'K':K}
+@dataclass
+class FitParams():
+    shape: float
+    scale: float
 
-    for i in range(0,timesteps+1):
-        sample = np.random.gamma(fit_shape, fit_scale, 1)[0]
-        eth_values.append(sample)
-        xhat,P,xhatminus,Pminus,K = kalman_filter_predict(filter_values['xhat'],
-                                                      filter_values['P'],
-                                                      filter_values['xhatminus'],
-                                                      filter_values['Pminus'],
-                                                      filter_values['K'],
-                                                      eth_values,
-                                                      paramExport=True)
-        filter_values = {'xhat':xhat,'P':P,
-                     'xhatminus':xhatminus,'Pminus':Pminus,
-                     'K':K}
-
-    return eth_values, xhat, P, xhatminus, Pminus, K
 
 @dataclass
-class StochasticParams():
-    xhat: float
-    P: float
-    xhatminus: float
-    Pminus: float
-    K: float
+class FilterState():
+    xhat: list[float]
+    P: list[float]
+    xhatminus: list[float]
+    Pminus: list[float]
+    K: list[float]
 
 
-def fit_eth_price(X: list(float)) -> StochasticParams:
-    results = kalman_filter(observations=X[:-1],
-                            initialValue=X.values[-1],
-                            paramExport=True,
-                            plot=True)
+def generate_eth_timeseries(filter_values: FilterState,
+                            timesteps: int,
+                            fit_params: FitParams) -> Iterable[tuple[list[float], FilterState]]:
+    eth_values = []
+    for _ in range(0, timesteps + 1):
+        sample = np.random.gamma(fit_params.shape, fit_params.scale, 1)[0]
+        eth_values.append(sample)
+        new_state = kalman_filter_predict(filter_values['xhat'],
+                                          filter_values['P'],
+                                          filter_values['xhatminus'],
+                                          filter_values['Pminus'],
+                                          filter_values['K'],
+                                          eth_values,
+                                          paramExport=True)
+        new_filter_state = FilterState(new_state)
+        yield (eth_values, new_filter_state)
 
-    fit_params = StochasticParams(*results)
+
+def generate_eth_samples(fit_params: FitParams,
+                         timesteps: int,
+                         samples: int) -> Iterable[list[float]]:
+    for run in range(0, samples):
+        np.random.seed(seed=run)
+
+        buffer_for_transcients = 100
+        samples = np.random.gamma(fit_params.shape,
+                                  fit_params.scale,
+                                  timesteps + buffer_for_transcients)
+        # train kalman
+        xhat, _1, _2, _3 = kalman_filter(observations=samples[0:-1],
+                                         initialValue=samples[-1],
+                                         paramExport=True,
+                                         plot=False)
+
+        yield xhat[buffer_for_transcients:]
+
+
+def fit_eth_price(X: list[float]) -> FitParams:
+    model = pm.Model()
+    with model: 
+        alpha = pm.Exponential('alpha', lam=2)
+        beta = pm.Exponential('beta', lam=.1)
+        g = pm.Gamma('g', alpha=alpha, beta=beta, observed=X)
+        # BUG: we're limited for 1 core for now
+        trace = pm.sample(2000, return_inferencedata=True, cores=1)
+    a = np.mean(trace.posterior.alpha)
+    b = np.mean(trace.posterior.beta)
+
+    fit_params = FitParams(shape=a, scale=1 / b)
     return fit_params
-
-
-def predict_eth_price(params: StochasticParams,
-                      timesteps: int,
-                      samples: int) -> list[list[float]]:
-
-    for sample in range(samples):
-        for timestep in range(timesteps):
-    pass
 
 
 def fit_predict_eth_price(X: np.array,
                           timesteps: int,
                           samples: int) -> np.array:
-    pass
+
+    fit_params = fit_eth_price(X)
+    results = list(generate_eth_samples(fit_params, timesteps, samples))
+    return results
+
+

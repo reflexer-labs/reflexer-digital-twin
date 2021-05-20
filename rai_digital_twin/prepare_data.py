@@ -38,6 +38,7 @@ def load_backtesting_data(path: str) -> BacktestingData:
     # Load CSV file
     df = (pd.read_csv(path)
             .sort_values('block_number', ascending=True)
+            .head(100) # HACK
             .reset_index(drop=True)
             .assign(marketPriceEth=lambda df: 1 / df.marketPriceEth)
             .assign(RedemptionRateHourlyRate= lambda df: df.RedemptionRateHourlyRate - 1))
