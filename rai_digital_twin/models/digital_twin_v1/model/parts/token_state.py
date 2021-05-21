@@ -1,11 +1,11 @@
 
 
-from rai_digital_twin.types import TokenState, UserAction
+from rai_digital_twin.types import TokenState
 from cadCAD_tools.types import Params, Signal, State, VariableUpdate
 
 
 def extrapolate_user_action(params: Params,
-                            state: State) -> UserAction:
+                            state: State) -> TokenState:
     """
     Extrapolate User Action from
     https://hackmd.io/w-vfdZIMTDKwdEupeS3qxQ

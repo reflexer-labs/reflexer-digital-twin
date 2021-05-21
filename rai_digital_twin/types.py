@@ -1,7 +1,5 @@
 from dataclasses import dataclass
-from collections import defaultdict
 from enum import Enum
-import numpy as np
 
 # Units
 
@@ -38,14 +36,6 @@ class GovernanceEvent():
     kind: GovernanceEventKind
     descriptor: dict
 
-
-@dataclass(frozen=True)
-class UserAction():
-    add_ETH_collateral: ETH
-    add_RAI_debt: RAI
-    RAI_delta: RAI
-    ETH_delta: ETH
-
 @dataclass(frozen=True)
 class ControllerParams():
     kp: Per_USD
@@ -70,10 +60,24 @@ class TokenState():
 
 
 @dataclass(frozen=True)
+class TransformedTokenState():
+    # (delta_rai / debt_ceiling), or 'alpha'
+    delta_rai_debt_scaled: Percentage 
+    # (delta_liq_surplus / total_liq_surplus), or 'beta'
+    delta_liquidation_surplus: Percentage
+    # 'gamma'
+    delta_rai_reserve_scaled: Percentage
+    # 'delta'
+    delta_eth_reserve_scaled: Percentage
+
+
+@dataclass(frozen=True)
 class UserActionParams():
     liquidation_ratio: Percentage
     debt_ceiling: RAI
-    fitted_param_1: None
+    uniswap_fee: Percentage
+    consider_liquidation_ratio: bool
+
 
 @dataclass(frozen=True)
 class BacktestingData():
@@ -83,4 +87,3 @@ class BacktestingData():
     pid_states: dict[Timestep, ControllerState]
     
 
-NaNDict: dict = defaultdict(lambda: np.nan)
