@@ -22,7 +22,8 @@ def loss(true_value: float,
     """
     Time-wise loss function.
     """
-    return  np.abs(true_value - predicted_value) / true_value
+    residue = np.abs(true_value - predicted_value)
+    return residue
 
 
 def aggregate_loss(loss_series: List[float]) -> float:
@@ -104,6 +105,5 @@ def simulation_loss(sim_df: object,
     Compute a simulation loss
     """
     metrics_loss = simulation_metrics_loss(sim_df.fillna(0), test_df.fillna(0))
-    print(metrics_loss)
     sim_loss = validation_loss(metrics_loss)
     return sim_loss

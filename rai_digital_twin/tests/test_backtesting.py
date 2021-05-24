@@ -18,7 +18,7 @@ def test_identical_backtesting():
                       30,
                       1,
                       assign_params=False)
-    sim_df = post_processing(sim_df)
+    sim_df = post_processing(sim_df).fillna(0.0)
     test_df = sim_df.copy()
 
     cols = sim_df.dtypes

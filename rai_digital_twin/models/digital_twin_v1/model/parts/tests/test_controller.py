@@ -5,20 +5,14 @@ from pytest import approx
 def test_redemption_rate():
     state = {'pid_state': ControllerState(1, 0.01, 5.0, 5.0),
              'pid_params': ControllerParams(-1.0, 1.0, 1.0, 10, False),
-             'cumulative_time': 11,
              'redemption_rate': 0.01,
              'timedelta': 1}
 
     args = (None, None, None, state, None)
     new_redemption_rate = s_pid_redemption(*args)[-1].redemption_rate
-    assert new_redemption_rate == 0.0
-
+    assert new_redemption_rate == 1.0
+    
     state.update(pid_params=ControllerParams(-1.0, 1.0, 1.0, 10, True))
-    args = (None, None, None, state, None)
-    new_redemption_rate = s_pid_redemption(*args)[-1].redemption_rate
-    assert new_redemption_rate == state['pid_state'].redemption_rate
-
-    state.update(cumulative_time=state['pid_params'].period)
     args = (None, None, None, state, None)
     new_redemption_rate = s_pid_redemption(*args)[-1].redemption_rate
     assert new_redemption_rate == approx(-4.5)

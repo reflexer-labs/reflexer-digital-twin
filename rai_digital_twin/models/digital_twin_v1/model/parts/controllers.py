@@ -4,15 +4,12 @@ from math import exp
 
 
 def redemption_rate(pid_params: ControllerParams,
-                    pid_state: ControllerState,
-                    cumulative_time: Seconds) -> Percentage:
+                    pid_state: ControllerState) -> Percentage:
     """
     Compute new redemption rate given the current controller params and state
     """
     # Compute new redemption rate
     if pid_params.enabled:
-        # Update the Redemption Rate if the current cumulative time
-        # is on par with the control period.
         proportional_rate = pid_params.kp * pid_state.proportional_error
         integral_rate = pid_params.ki * pid_state.integral_error
         integral_rate /= pid_params.period
@@ -75,7 +72,6 @@ def s_pid_redemption(_1, _2, _3, state, _5):
     pid_state: ControllerState = state['pid_state']
     pid_params: ControllerParams = state['pid_params']
     timedelta = state['timedelta']
-    cumulative_time = state['cumulative_time']
 
     # Compute new redemption price
 
@@ -85,8 +81,7 @@ def s_pid_redemption(_1, _2, _3, state, _5):
 
         # Compute new redemption rate
         new_redemption_rate = redemption_rate(pid_params,
-                                            pid_state,
-                                            cumulative_time)
+                                              pid_state)
 
         # Return output
         new_pid_state = ControllerState(new_redemption_price,

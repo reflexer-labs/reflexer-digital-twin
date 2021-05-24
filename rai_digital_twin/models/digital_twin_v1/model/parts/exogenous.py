@@ -3,8 +3,8 @@ from cadCAD_tools.types import Signal, VariableUpdate
 
 def p_exogenous(params, _2, _3, state) -> Signal:
     exogenous_data = params['exogenous_data']
-    if exogenous_data is not None:
-        t = state['timestep']
+    t = state['timestep']
+    if t in exogenous_data:
         return exogenous_data[t]
     else:
         return {'eth_price': state['eth_price'],

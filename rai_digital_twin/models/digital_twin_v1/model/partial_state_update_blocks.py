@@ -27,7 +27,6 @@ partial_state_update_blocks: List[dict] = [
         },
         'variables': {
             'timedelta': generic_suf('timedelta', 'seconds_passed'),
-            'cumulative_time': s_update_cumulative_time,
             'height': generic_suf('height')
         }
     },

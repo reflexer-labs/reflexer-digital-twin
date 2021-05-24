@@ -1,7 +1,7 @@
-from statsmodels.tsa.api import VARMAX
+from statsmodels.tsa.api import VARMAX, VAR
 import pandas as pd
 
-from rai_digital_twin.types import TokenState, UserActionParams
+from rai_digital_twin.types import TokenState, TransformedTokenState, UserActionParams
 
 
 def get_aggregated_arbitrageur_decision(params,
@@ -203,7 +203,7 @@ def create_transformed_errors(transformed_states, transformed_arbitrageur):
 
 def VARMAX_fit(e_u,
                RedemptionPriceError,
-               lag=1):
+               lag=1) -> TransformedTokenState:
     '''
     Description:
     Function to train and forecast a VARMAX model one step into the future
@@ -264,8 +264,30 @@ def inverse_transformation_and_state_update(Y_pred: TokenState,
     return TokenState(r_star, z_star, q_star, d_star)
 
 
+def VAR_prediction(e_u,lag=1):
+    '''
+    Description:
+    Function to train and forecast a VAR model one step into the future
+    Parameters:
+    e_u: errors pandas dataframe
+    lag: number of autoregressive lags. Default is 1
+    Returns:
+    Numpy array of transformed state changes
+    Example
+    VAR_prediction(e_u,6)    
+    '''
+    # instantiate the VAR model object from statsmodels 
+    model = VAR(e_u.values)
+    # fit model with determined lag values
+    results = model.fit(lag)
+    lag_order = results.k_ar
+    Y_pred = results.forecast(e_u.values[-lag_order:],1)
+    return Y_pred[0]
+
+
 def prepare_model():
 
+    return None
     states = pd.read_csv('data/states.csv')
     del states['Unnamed: 0']
     states.head()
@@ -291,12 +313,7 @@ def prepare_model():
     states['RedemptionPriceError'] = states['RedemptionPrice'] - \
         states['marketPriceUsd']
 
-    params = {
-        'liquidation_ratio': 1.45,
-        'debt_ceiling': 1e9,
-        'uniswap_fee': 0.003,
-        'arbitrageur_considers_liquidation_ratio': True,
-    }
+    params = UserActionParams(1.45, 1e9, 0.003, True)
     # create list of u^* vectors
     values = []
 
@@ -328,19 +345,13 @@ def prepare_model():
     # split data between train and test (in production deployment, can remove)
     split_point = int(len(e_u) * .8)
     train = e_u.iloc[0:split_point]
-    test = e_u.iloc[split_point:]
 
-    states_train = states.iloc[0:split_point]
-    states_test = states.iloc[split_point:]
-    results = VARMAX_fit(train, states_train['RedemptionPriceError'], lag=1)
-    newRedemptionPriceError = states_test['RedemptionPriceError'].values[0]
-    Y_pred = results.forecast(exog=newRedemptionPriceError).values[0]
+    Y_pred = VAR_prediction(e_u)
     previous_state = states.iloc[train.index[-1]]
     result = inverse_transformation_and_state_update(Y_pred,
                                                      previous_state,
                                                      params)
-    print(result)
-
+    return result
 
 def predict_real_action(state,
                         params) -> TokenState:

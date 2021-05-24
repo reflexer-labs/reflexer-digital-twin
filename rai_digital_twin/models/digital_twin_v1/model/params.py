@@ -7,9 +7,9 @@ from collections import defaultdict
 raw_params: dict[str, Union[Param, ParamSweep]] = {
     'expected_blocktime': Param(15, Seconds),
     'heights': Param(None, dict[Timestep, Height]),
-    'governance_events': Param(None, dict[Timestep, GovernanceEvent]),
-    'backtesting_data': Param(None, TimestepDict),
-    'exogenous_data': Param(None, TimestepDict)
+    'governance_events': Param({}, dict[Timestep, GovernanceEvent]),
+    'backtesting_data': Param({}, TimestepDict),
+    'exogenous_data': Param({}, TimestepDict)
 }
 
 params = prepare_params(raw_params)

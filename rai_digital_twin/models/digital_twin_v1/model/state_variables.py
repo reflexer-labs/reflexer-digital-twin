@@ -27,7 +27,6 @@ INITIAL_TOKEN_STATE = TokenState(rai_reserve=801.933727,
 raw_state_variables: dict[str, InitialValue] = {
     # Time states
     'timedelta': InitialValue(None, Seconds),
-    'cumulative_time': InitialValue(None, Seconds),
     'height': InitialValue(None, Height),
 
     # Exogenous states
