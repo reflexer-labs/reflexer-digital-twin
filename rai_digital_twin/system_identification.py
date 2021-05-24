@@ -17,6 +17,37 @@ def arbitrageur_action_options(RAI_balance: RAI,
     return OptimalAction(optimal_borrow, optimal_repay)
 
 
+def compute_arbitrageur_action(token_state: TokenState,
+                               fee_survival: Percentage,
+                               liquidation_price: ETH_per_RAI,
+                               expensive_threshold: Percentage,
+                               cheap_threshold: Percentage,
+                               relative_redemption_price: Percentage,
+                               optimal_actions) -> TokenState:
+    if relative_redemption_price <= expensive_threshold:
+        action = optimal_actions.borrow
+        d = (action - token_state.rai_reserve) / fee_survival
+        q = liquidation_price * (token_state.rai_debt + d)
+        q -= token_state.eth_locked
+        z = -1 * (token_state.eth_reserve * d * fee_survival)
+        z /= (token_state.rai_reserve + d * fee_survival)
+        r = d
+    elif relative_redemption_price >= cheap_threshold:
+        action = optimal_actions.repay
+        z = (action - token_state.eth_reserve) / fee_survival
+        r = -1 * (token_state.rai_reserve * z * fee_survival)
+        r /= (token_state.eth_reserve + z * fee_survival)
+        d = r
+        q = liquidation_price * (token_state.rai_debt + d)
+        q -= token_state.eth_locked
+    else:
+        r = 0
+        z = 0
+        d = 0
+        q = 0
+    return TokenState(r, z, d, q)
+
+
 def arbitrageur_action(token_state: TokenState,
                        controller_state: ControllerState,
                        market_price: USD_per_RAI,
@@ -43,33 +74,17 @@ def arbitrageur_action(token_state: TokenState,
                                                  liquidation_price,
                                                  params.uniswap_fee)
 
-    if relative_redemption_price <= expensive_threshold:
-        action = optimal_actions.borrow
-        d = (action - token_state.rai_reserve) / fee_survival
-        q = liquidation_price * (token_state.rai_debt + d)
-        q -= token_state.eth_locked
-        z = -1 * (token_state.eth_reserve * d * fee_survival)
-        z /= (token_state.rai_reserve + d * fee_survival)
-        r = d
-    elif relative_redemption_price >= cheap_threshold:
-        action = optimal_actions.repay
-        z = (action - token_state.eth_reserve) / fee_survival
-        r = -1 * (token_state.rai_reserve * z * fee_survival)
-        r /= (token_state.eth_reserve + z * fee_survival)
-        d = r
-        q = liquidation_price * (token_state.rai_debt + d)
-        q -= token_state.eth_locked
-    else:
-        r = 0
-        z = 0
-        d = 0
-        q = 0
-
-    return TokenState(r, z, d, q)
+    return compute_arbitrageur_action(token_state,
+                                      fee_survival,
+                                      liquidation_price,
+                                      expensive_threshold,
+                                      cheap_threshold,
+                                      relative_redemption_price,
+                                      optimal_actions)
 
 
-def VAR_prediction(errors,
-                   lag: int = 1):
+def VAR_prediction(errors: list[list[float]],
+                   lag: int = 1) -> list[float]:
     '''
     Description:
     Function to train and forecast a VAR model one step into the future
@@ -92,39 +107,46 @@ def VAR_prediction(errors,
 
 def action_errors(past_states: list[dict],
                   params: UserActionParams) -> Iterable[TransformedTokenState]:
-    last_token_state: TokenState = past_states[0]['token_state']
-    for state in past_states[1:]:
-        token_state = state['token_state']
 
-        # Compute real and optimal actions
-        real_action = token_state - last_token_state
-        optimal_action = arbitrageur_action(token_state,
-                                            state['pid_state'],
-                                            state['market_price'],
-                                            state['eth_price'],
-                                            params)
+    if len(past_states) > 1:
+        # First state
+        last_token_state: TokenState = past_states[0]['token_state']
 
-        # Transform the coordinates
-        transform_args = (token_state,
-                          state['pid_state'],
-                          params,
-                          state['eth_price'])
-        transformed_real_action = coordinate_transform(real_action,
-                                                       *transform_args)
-        transformed_optimal_action = coordinate_transform(optimal_action,
-                                                          *transform_args)
+        # Iterate
+        for state in past_states[1:]:
+            token_state = state['token_state']
 
-        # Compute error
-        error = transformed_optimal_action - transformed_real_action
-        last_token_state = token_state
+            # Compute real and optimal actions
+            real_action = token_state - last_token_state
+            optimal_action = arbitrageur_action(token_state,
+                                                state['pid_state'],
+                                                state['market_price'],
+                                                state['eth_price'],
+                                                params)
 
-        # Yield
-        yield error
+            # Transform the coordinates
+            transform_args = (token_state,
+                              state['pid_state'],
+                              params,
+                              state['eth_price'])
+            transformed_real_action = coordinate_transform(real_action,
+                                                           *transform_args)
+            transformed_optimal_action = coordinate_transform(optimal_action,
+                                                              *transform_args)
+
+            # Compute error
+            error = transformed_optimal_action - transformed_real_action
+            last_token_state = token_state
+
+            # Yield
+            yield error
+    else:
+        raise Exception("Insufficient data points")
 
 
-def fit_predict(state: dict,
-                past_states: list[dict],
-                params: UserActionParams) -> TokenState:
+def fit_predict_action(state: dict,
+                       past_states: list[dict],
+                       params: UserActionParams) -> TokenState:
     """
     Steps:
     1. Retrieve historical arbitrageur actions
@@ -134,8 +156,10 @@ def fit_predict(state: dict,
     5. Predict next action
     6. Apply next action to state
     """
-    errors = pd.DataFrame(action_errors(past_states, params)).values
-    transformed_new_action = VAR_prediction(errors)
+    errors = list(action_errors(past_states, params))
+    errors = pd.DataFrame(errors).values
+    raw_prediction = VAR_prediction(errors)
+    transformed_new_action = TransformedTokenState(*raw_prediction)
     transform_args = (state['token_state'],
                       state['pid_state'],
                       params,
@@ -143,6 +167,3 @@ def fit_predict(state: dict,
     new_action = reverse_coordinate_transform(transformed_new_action,
                                               *transform_args)
     return new_action
-
-
-

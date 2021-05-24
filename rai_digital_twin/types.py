@@ -74,6 +74,15 @@ class TokenState():
     rai_debt: RAI
     eth_locked: ETH
 
+    def __sub__(self, x):
+        if type(x) == TokenState:
+            return TokenState(self.rai_reserve - x.rai_reserve,
+                              self.eth_reserve - x.eth_reserve,
+                              self.rai_debt - x.rai_debt,
+                              self.eth_locked - x.eth_locked)
+        else:
+            raise TypeError()
+
 
 @dataclass(frozen=True)
 class TransformedTokenState():
@@ -87,7 +96,7 @@ class TransformedTokenState():
     eth_reserve_scaled: Percentage
 
     def __sub__(self, x):
-        if type(x) == self:
+        if type(x) == TransformedTokenState:
             return TransformedTokenState(self.rai_debt_scaled - x.rai_debt_scaled,
                                          self.liquidation_surplus - x.liquidation_surplus,
                                          self.rai_reserve_scaled - x.rai_reserve_scaled,
@@ -150,11 +159,10 @@ def reverse_coordinate_transform(transformed_state: TransformedTokenState,
     beta = transformed_state.liquidation_surplus
     q = l_p * (d - beta * global_state.rai_debt)
     q += beta * global_state.eth_locked
-        
+
     r = transformed_state.rai_reserve_scaled * global_state.rai_reserve
     z = transformed_state.eth_reserve_scaled * global_state.eth_reserve
     return TokenState(r, z, d, q)
-
 
 
 def transformed_token_states_to_numpy(token_states: list[TransformedTokenState]):
