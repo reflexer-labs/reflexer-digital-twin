@@ -6,3 +6,4 @@ cadCAD-tools
 matplotlib
 plotly
 pandas
+statsmodels

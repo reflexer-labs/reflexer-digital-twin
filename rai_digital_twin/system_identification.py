@@ -1,160 +1,73 @@
-from statsmodels.tsa.api import VARMAX, VAR
+from statsmodels.tsa.api import VAR
 import pandas as pd
 
-from rai_digital_twin.types import TokenState, TransformedTokenState, UserActionParams
+from rai_digital_twin.types import ControllerState, ETH, ETH_per_RAI, OptimalAction, Percentage, RAI, TokenState, TransformedTokenState, USD_per_ETH, USD_per_RAI, UserActionParams
+from rai_digital_twin.types import coordinate_transform, reverse_coordinate_transform
 
 
-def get_aggregated_arbitrageur_decision(params,
-                                        state) -> TokenState:
+def arbitrageur_action_options(RAI_balance: RAI,
+                               ETH_balance: ETH,
+                               uniswap_fee: Percentage,
+                               liquidation_price: ETH_per_RAI) -> OptimalAction:
+    K = (RAI_balance * ETH_balance * (1 - uniswap_fee))
+    optimal_borrow = (K / liquidation_price) ** 0.5
+    optimal_repay = (K * liquidation_price) ** 0.5
+    return OptimalAction(optimal_borrow, optimal_repay)
 
-    # This Boolean indicates whether or not the arbitrageur is rationally considering
-    # borrowing to the liquidation ratio limit. If TRUE, arbitrage opportunities are less
-    # frequent when RAI is expensive and more frequent when RAI is cheap. If FALSE, only
-    # the difference in market and redemption prices (net of Uniswap fee) matters for trading,
-    # which may conform more to individual trader expectations and behavior.
-    consider_liquidation_ratio = params['arbitrageur_considers_liquidation_ratio']
 
-    # These are the states of the SAFE balances in aggregate & its fixed parameters
-    total_borrowed = state['SAFE_Debt']  # D
-    total_collateral = state['SAFE_Collateral']  # Q
-    liquidation_ratio = params['liquidation_ratio']
-    debt_ceiling = params['debt_ceiling']
+def arbitrageur_action(params: UserActionParams,
+                       token_state: TokenState,
+                       controller_state: ControllerState,
+                       market_price: USD_per_RAI,
+                       eth_price: USD_per_ETH) -> TokenState:
 
-    # These are the states of the Uniswap secondary market balances and its fee
-    RAI_balance = state['RAI_balance']  # R_Rai
-    ETH_balance = state['ETH_balance']  # R_Eth
-    uniswap_fee = params['uniswap_fee']
+    fee_survival = (1 - params.uniswap_fee)
+    liquidation_price: ETH_per_RAI = params.liquidation_ratio
+    liquidation_price *= controller_state.redemption_price
+    liquidation_price /= eth_price
 
-    # These are the prices of RAI in USD/RAI for SAFE redemption and the market price oracle, resp.
-    redemption_price = state['target_price']  # $p^r_{U/R}
-    market_price = state['market_price']  # p_{U/R} > 0
+    if params.consider_liquidation_ratio is True:
+        expensive_threshold = fee_survival / params.liquidation_ratio
+        cheap_threshold = fee_survival * params.liquidation_ratio
 
-    # This is the price of ETH in USD/ETH
-    eth_price = state['eth_price']  # p_{U/E}
-
-    # These functions define the optimal borrowing/repayment decisions of the aggregated arbitrageur
-
-    def g1(RAI_balance, ETH_balance, uniswap_fee, liquidation_ratio, redemption_price):
-        return ((eth_price * RAI_balance * ETH_balance * (1 - uniswap_fee)) / (liquidation_ratio * redemption_price)) ** 0.5
-
-    def g2(RAI_balance, ETH_balance, uniswap_fee, liquidation_ratio, redemption_price):
-        return (RAI_balance * ETH_balance * (1 - uniswap_fee) * liquidation_ratio * (redemption_price / eth_price)) ** 0.5
-
-    # This Boolean resolves to TRUE if the agg. arb. acts this timestep when RAI is expensive
-    # on the secondary market
-    expensive_RAI_on_secondary_market = \
-        redemption_price < ((1 - uniswap_fee) / liquidation_ratio) * market_price  \
-        if consider_liquidation_ratio \
-        else redemption_price < (1 - uniswap_fee) * market_price
-
-    # This Boolean resolves to TRUE if the agg. arb. acts this timestep when RAI is cheap
-    # on the secondary market
-    cheap_RAI_on_secondary_market = \
-        redemption_price > (1 / ((1 - uniswap_fee) * liquidation_ratio)) * market_price  \
-        if consider_liquidation_ratio \
-        else redemption_price > (1 / (1 - uniswap_fee)) * market_price
-
-    if expensive_RAI_on_secondary_market:
-        '''
-        Expensive RAI on Uni:
-        (put ETH from pocket into additional collateral in SAFE)
-        draw RAI from SAFE -> Uni
-        ETH from Uni -> into pocket
-        '''
-
-        _g1 = g1(RAI_balance, ETH_balance, uniswap_fee,
-                 liquidation_ratio, redemption_price)
-        d = (_g1 - RAI_balance) / (1 - uniswap_fee)  # should be \geq 0
-        q = ((liquidation_ratio * redemption_price) /
-             eth_price) * (total_borrowed + d) - total_collateral  # should be \geq 0
-        z = -(ETH_balance * d * (1 - uniswap_fee)) / \
-            (RAI_balance + d * (1 - uniswap_fee))  # should be leq 0
-        r = d  # should be \geq 0
-
-    elif cheap_RAI_on_secondary_market:
-        '''
-        Cheap RAI on Uni:
-        ETH out of pocket -> Uni
-        RAI from UNI -> SAFE to wipe debt
-        (and collect collateral ETH from SAFE into pocket)
-        '''
-
-        _g2 = g2(RAI_balance, ETH_balance, uniswap_fee,
-                 liquidation_ratio, redemption_price)
-        z = (_g2 - ETH_balance) / (1 - uniswap_fee)  # should be \geq 0
-        r = -(RAI_balance * z * (1 - uniswap_fee)) / \
-            (ETH_balance + z * (1 - uniswap_fee))  # should be \leq 0
-        d = r  # should be \leq 0
-        q = ((liquidation_ratio * redemption_price /
-             eth_price) * (total_borrowed + d) - total_collateral)  # should be \leq 0
     else:
-        pass
+        expensive_threshold = fee_survival
+        cheap_threshold = 1 / fee_survival
+
+    relative_redemption_price = controller_state.redemption_price / market_price
+
+    optimal_actions = arbitrageur_action_options(token_state.rai_reserve,
+                                                 token_state.eth_reserve,
+                                                 params.uniswap_fee,
+                                                 liquidation_price)
+
+    if relative_redemption_price <= expensive_threshold:
+        action = optimal_actions.borrow
+        d = (action - token_state.rai_reserve) / fee_survival
+        q = liquidation_price * (token_state.rai_debt + d)
+        q -= token_state.eth_locked
+        z = -1 * (token_state.eth_reserve * d * fee_survival)
+        z /= (token_state.rai_reserve + d * fee_survival)
+        r = d
+    elif relative_redemption_price >= cheap_threshold:
+        action = optimal_actions.repay
+        z = (action - token_state.eth_reserve) / fee_survival
+        r = -1 * (token_state.rai_reserve * z * fee_survival)
+        r /= (token_state.eth_reserve + z * fee_survival)
+        d = r
+        q = liquidation_price * (token_state.rai_debt + d)
+        q -= token_state.eth_locked
+    else:
+        r = 0
+        z = 0
+        d = 0
+        q = 0
 
     return TokenState(r, z, d, q)
 
-# function to create coordinate transformations
 
-
-def create_transformed_errors(transformed_states, transformed_arbitrageur):
-    '''
-    Description:
-    Function for taking two pandas dataframes of transformed states and taking the difference
-    to produce an error dataframe
-
-    Parameters:
-    transformed_states: pandas dataframe with alpha, beta, gamma, and delta features
-    transformed_arbitrageur: pandas dataframe with alpha, beta, gamma, and delta features
-
-    Returns:
-    error pandas dataframe
-
-    '''
-    alpha_diff = transformed_states['alpha'] - transformed_arbitrageur['alpha']
-    beta_diff = transformed_states['beta'] - transformed_arbitrageur['beta']
-    gamma_diff = transformed_states['gamma'] - transformed_arbitrageur['gamma']
-    delta_diff = transformed_states['delta'] - transformed_arbitrageur['delta']
-
-    e_u = pd.DataFrame(alpha_diff)
-    e_u['beta'] = beta_diff
-    e_u['gamma'] = gamma_diff
-    e_u['delta'] = delta_diff
-
-    e_u = e_u.astype(float)
-
-    return e_u
-
-
-def inverse_transformation_and_state_update(Y_pred: TransformedTokenState,
-                                            state: dict[str, float],
-                                            params: UserActionParams) -> TokenState:
-    '''
-    Description:
-    Function to take system identification model prediction and invert transfrom and create new state
-
-    Parameters:
-    y_pred: numpy array of transformed state changes
-    previous_state: pandas dataframe of previous state or 'current' state
-    params: dictionary of system parameters
-
-    Returns:
-    pandas dataframe of new states
-
-    Example:
-    inverse_transformation_and_state_update(Y_pred,previous_state,params)
-    '''
-    d_star = Y_pred.delta_rai_debt_scaled * params.debt_ceiling
-
-    q_star = state['C_o'] * params['debt_ceiling']
-    q_star *= Y_pred[0] + state['C_1'] * Y_pred[1]
-
-    r_star = Y_pred[2] * state['gamma'] * state['RaiInUniswap']
-
-    z_star = Y_pred[3] * state['delta'] * state['EthInUniswap']
-
-    return TokenState(r_star, z_star, q_star, d_star)
-
-
-def VAR_prediction(e_u,lag=1):
+def VAR_prediction(errors,
+                   lag: int = 1):
     '''
     Description:
     Function to train and forecast a VAR model one step into the future
@@ -166,46 +79,24 @@ def VAR_prediction(e_u,lag=1):
     Example
     VAR_prediction(e_u,6)    
     '''
-    # instantiate the VAR model object from statsmodels 
-    model = VAR(e_u.values)
+    # instantiate the VAR model object from statsmodels
+    model = VAR(errors)
     # fit model with determined lag values
     results = model.fit(lag)
     lag_order = results.k_ar
-    Y_pred = results.forecast(e_u.values[-lag_order:],1)
+    Y_pred = results.forecast(errors[-lag_order:], 1)
     return Y_pred[0]
 
 
 def prepare_model():
     states = pd.read_csv('data/states.csv')
-    del states['Unnamed: 0']
-    states.head()
-    # subset state variables for arbitrageur vector
-    state_subset = states[['marketPriceUsd',
-                           'RedemptionPrice',
-                          'ETH Price (OSM)',
-                           'collateral',
-                           'EthInUniswap',
-                           'RaiInUniswap',
-                           'RaiDrawnFromSAFEs']]
-    # map state data to arbitrageur vector fields
-    state_subset.columns = ['market_price',
-                            'target_price',
-                            'eth_price',
-                            'SAFE_Collateral',
-                            'ETH_balance',
-                            'RAI_balance',
-                            'SAFE_Debt']
-    # add additional state variables
-    states['RedemptionPriceinEth'] = states['RedemptionPrice'] / \
-        states['ETH Price (OSM)']
-    states['RedemptionPriceError'] = states['RedemptionPrice'] - \
-        states['marketPriceUsd']
 
     params = UserActionParams(1.45, 1e9, 0.003, True)
     # create list of u^* vectors
     values = []
 
     # iterate through real data to create u^* and save to values
+
     for i in range(0, len(state_subset)):
         values.append(get_aggregated_arbitrageur_decision(
             params, state_subset.loc[i]))
@@ -214,36 +105,26 @@ def prepare_model():
     local = pd.DataFrame(values)
     local.columns = ['Q', 'D', 'Rrai', 'Reth']
     local.head()
-    transformed = coordinate_transformations(params,
-                                             states,
-                                             'collateral',
-                                             'EthInUniswap',
-                                             'RaiInUniswap',
-                                             'RaiDrawnFromSAFEs',
-                                             'RedemptionPrice',
-                                             'ETH Price (OSM)')
+
+    transformed = coordinate_transform(delta_state,
+                                       global_state,
+                                       controller_state,
+                                       params,
+                                       eth_price)
+
     transformed = transformed[['alpha', 'beta', 'gamma', 'delta']]
     local['RedemptionPrice'] = states['RedemptionPrice']
     local['ETH Price (OSM)'] = states['ETH Price (OSM)']
 
-    transformed_arbitrageur = coordinate_transformations(params, local, 'Q', 'Reth', 'Rrai',
-                                                         'D', 'RedemptionPrice', 'ETH Price (OSM)')[['alpha', 'beta', 'gamma', 'delta']]
-
-    e_u = create_transformed_errors(transformed, transformed_arbitrageur)
-    # split data between train and test (in production deployment, can remove)
-    split_point = int(len(e_u) * .8)
-    train = e_u.iloc[0:split_point]
+    e_u = transformed - transformed_arbitrageur
 
     Y_pred = VAR_prediction(e_u)
-    previous_state = states.iloc[train.index[-1]]
     result = inverse_transformation_and_state_update(Y_pred,
                                                      previous_state,
                                                      params)
     return result
 
+
 def predict_real_action(state,
                         params) -> TokenState:
     pass
-
-
-prepare_model()

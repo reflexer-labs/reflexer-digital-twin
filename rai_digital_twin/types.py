@@ -15,6 +15,7 @@ UNI = float
 ETH_per_USD = float
 RAI_per_USD = float
 USD_per_RAI = float
+ETH_per_RAI = float
 USD_Seconds_per_RAI = float
 USD_per_Seconds = float
 USD_per_ETH = float
@@ -84,6 +85,15 @@ class TransformedTokenState():
     # 'delta'
     eth_reserve_scaled: Percentage
 
+    def __sub__(self, x):
+        if type(x) == self:
+            return TransformedTokenState(self.rai_debt_scaled - x.rai_debt_scaled,
+                                         self.liquidation_surplus - x.liquidation_surplus,
+                                         self.rai_reserve_scaled - x.rai_reserve_scaled,
+                                         self.eth_reserve_scaled - x.eth_reserve_scaled)
+        else:
+            raise TypeError()
+
 
 @dataclass(frozen=True)
 class BacktestingData():
@@ -91,6 +101,12 @@ class BacktestingData():
     exogenous_data: dict[Timestep, dict[str, float]]
     heights: dict[Timestep, Height]
     pid_states: dict[Timestep, ControllerState]
+
+
+@dataclass(frozen=True)
+class OptimalAction():
+    borrow: RAI
+    repay: ETH
 
 
 def coordinate_transform(delta_state: TokenState,
@@ -127,8 +143,13 @@ def reverse_coordinate_transform(transformed_state: TransformedTokenState,
                                  eth_price: float) -> TokenState:
     d = transformed_state.rai_debt_scaled * params.debt_ceiling
 
-    q = transformed_state.liquidation_surplus * global_surplus
-    
+    # Liquidation Price
+    l_p = params.liquidation_ratio
+    l_p *= (controller_state.redemption_price / eth_price)
+    beta = transformed_state.liquidation_surplus
+    q = l_p * (d - beta * global_state.rai_debt)
+    q += beta * global_state.eth_locked
+        
     r = transformed_state.rai_reserve_scaled * global_state.rai_reserve
-    z  = transformed_state.eth_reserve_scaled * global_state.eth_reserve
+    z = transformed_state.eth_reserve_scaled * global_state.eth_reserve
     return TokenState(r, z, d, q)

@@ -2,7 +2,6 @@ from typing import Union
 from cadCAD_tools.types import Param, ParamSweep
 from cadCAD_tools.preparation import prepare_params
 from rai_digital_twin.types import GovernanceEvent, Height, Seconds, Timestep, TimestepDict
-from collections import defaultdict
 
 raw_params: dict[str, Union[Param, ParamSweep]] = {
     'expected_blocktime': Param(15, Seconds),
