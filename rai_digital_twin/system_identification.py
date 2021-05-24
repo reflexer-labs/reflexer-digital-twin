@@ -95,83 +95,6 @@ def get_aggregated_arbitrageur_decision(params,
 # function to create coordinate transformations
 
 
-def coordinate_transformations(params,
-                               df,
-                               Q,
-                               R_eth,
-                               R_rai,
-                               D,
-                               RedemptionPrice,
-                               EthPrice):
-    '''
-    Description:
-    Function that takes in pandas dataframe and the names of columns
-
-    Parameters:
-    df: pandas dataframe containing states information
-    Q: dataframe column name
-    R_eth: dataframe column name
-    R_rai: dataframe column name
-    D: dataframe column name
-    RedemptionPrice: dataframe column name
-    EthPrice: dataframe column name
-
-    Returns: Pandas dataframe with alpha, beta, gamma, delta transformed values
-
-    Example:
-
-    coordinate_transformations(params,states,'collateral','EthInUniswap','RaiInUniswap',
-                           'RaiDrawnFromSAFEs','RedemptionPrice','ETH Price (OSM)')[['alpha','beta','gamma','delta']]
-    '''
-
-    # Calculate alpha
-    # Delta Debt
-    d = df[D].diff()
-    d.fillna(0, inplace=True)
-    df['d'] = d
-
-    # delta_rai_debt_scaled
-    df['alpha'] = df['d'] / params['debt_ceiling']
-
-    # calculate beta
-    # LiqRatio * RedPrice / EthPrice -> LiqPrice in ETH/RAI
-    df['C_o'] = (df[RedemptionPrice]/df[EthPrice]) * \
-        params['liquidation_ratio']
-
-    # Delta ETH collateral
-    q = df[Q].diff()
-    q.fillna(0, inplace=True)
-
-    # Delta ETH collateral
-    df['q'] = q
-
-    # LiqPrice * TotalDebt - TotalCollateral -> GlobalLiqSurplus
-    df['C_1'] = (df['C_o'] * df[D]) - df[Q]
-
-    # [DeltaCollateral - (LiqPrice * DeltaDebt)] / GlobalLiqSurplus
-    # -> DeltaLiqSurplus / GlobalLiqSurplus
-    # ->
-    df['beta'] = (df['q'] - (df['C_o']*df['d'])) / df['C_1']
-
-    # calculate gamma
-    # Delta RAI reserve
-    r = df[R_rai].diff()
-    r.fillna(0, inplace=True)
-    df['r'] = r
-
-    #
-    df['gamma'] = df['r']/df[R_rai]
-
-    # calculate delta
-    z = df[R_eth].diff()
-    z.fillna(0, inplace=True)
-    df['z'] = z
-
-    df['delta'] = df['z']/df[R_eth]
-
-    return df
-
-
 def create_transformed_errors(transformed_states, transformed_arbitrageur):
     '''
     Description:
@@ -201,39 +124,7 @@ def create_transformed_errors(transformed_states, transformed_arbitrageur):
     return e_u
 
 
-def VARMAX_fit(e_u,
-               RedemptionPriceError,
-               lag=1) -> TransformedTokenState:
-    '''
-    Description:
-    Function to train and forecast a VARMAX model one step into the future
-
-    Parameters:
-    e_u: errors pandas dataframe
-    RedemptionPriceErrorPrevious: 1d Numpy array of RedemptionPriceError values
-    newRedemptionPriceError: exogenous latest redemption price error signal - float
-    lag: number of autoregressive lags. Default is 1
-
-    Returns:
-
-    Example
-
-    '''
-    # instantiate the VARMAX model object from statsmodels
-    model = VARMAX(endog=e_u.values,
-                   exog=RedemptionPriceError,
-                   initialization='approximate_diffuse',
-                   measurement_error=True)
-
-    # fit model with determined lag values
-    results = model.fit(order=(lag, 0),
-                        maxiter=1  # HACK
-                        )
-
-    return results
-
-
-def inverse_transformation_and_state_update(Y_pred: TokenState,
+def inverse_transformation_and_state_update(Y_pred: TransformedTokenState,
                                             state: dict[str, float],
                                             params: UserActionParams) -> TokenState:
     '''
@@ -251,8 +142,7 @@ def inverse_transformation_and_state_update(Y_pred: TokenState,
     Example:
     inverse_transformation_and_state_update(Y_pred,previous_state,params)
     '''
-
-    d_star = Y_pred[0] * params['debt_ceiling']
+    d_star = Y_pred.delta_rai_debt_scaled * params.debt_ceiling
 
     q_star = state['C_o'] * params['debt_ceiling']
     q_star *= Y_pred[0] + state['C_1'] * Y_pred[1]
@@ -286,8 +176,6 @@ def VAR_prediction(e_u,lag=1):
 
 
 def prepare_model():
-
-    return None
     states = pd.read_csv('data/states.csv')
     del states['Unnamed: 0']
     states.head()

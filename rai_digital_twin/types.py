@@ -28,13 +28,17 @@ Timestep = int
 Gwei = int
 
 TimestepDict = list[dict[str, object]]
+
+
 class GovernanceEventKind(Enum):
     change_pid_params = 1
+
 
 @dataclass(frozen=True)
 class GovernanceEvent():
     kind: GovernanceEventKind
     descriptor: dict
+
 
 @dataclass(frozen=True)
 class ControllerParams():
@@ -44,12 +48,22 @@ class ControllerParams():
     period: Seconds
     enabled: bool
 
+
 @dataclass(frozen=True)
 class ControllerState():
     redemption_price: USD_per_RAI
     redemption_rate: Percentage
     proportional_error: USD_per_RAI
     integral_error: USD_Seconds_per_RAI
+
+
+@dataclass(frozen=True)
+class UserActionParams():
+    liquidation_ratio: Percentage
+    debt_ceiling: RAI
+    uniswap_fee: Percentage
+    consider_liquidation_ratio: bool
+
 
 @dataclass(frozen=True)
 class TokenState():
@@ -62,21 +76,13 @@ class TokenState():
 @dataclass(frozen=True)
 class TransformedTokenState():
     # (delta_rai / debt_ceiling), or 'alpha'
-    delta_rai_debt_scaled: Percentage 
+    rai_debt_scaled: Percentage
     # (delta_liq_surplus / total_liq_surplus), or 'beta'
-    delta_liquidation_surplus: Percentage
+    liquidation_surplus: Percentage
     # 'gamma'
-    delta_rai_reserve_scaled: Percentage
+    rai_reserve_scaled: Percentage
     # 'delta'
-    delta_eth_reserve_scaled: Percentage
-
-
-@dataclass(frozen=True)
-class UserActionParams():
-    liquidation_ratio: Percentage
-    debt_ceiling: RAI
-    uniswap_fee: Percentage
-    consider_liquidation_ratio: bool
+    eth_reserve_scaled: Percentage
 
 
 @dataclass(frozen=True)
@@ -85,5 +91,44 @@ class BacktestingData():
     exogenous_data: dict[Timestep, dict[str, float]]
     heights: dict[Timestep, Height]
     pid_states: dict[Timestep, ControllerState]
-    
 
+
+def coordinate_transform(delta_state: TokenState,
+                         global_state: TokenState,
+                         controller_state: ControllerState,
+                         params: UserActionParams,
+                         eth_price: float) -> TransformedTokenState:
+    alpha = delta_state.rai_debt / params.debt_ceiling
+
+    liquidation_price = params.liquidation_ratio
+    liquidation_price *= (controller_state.redemption_price / eth_price)
+
+    global_liquidation_surplus = liquidation_price * global_state.rai_debt
+    global_liquidation_surplus -= global_state.eth_locked
+
+    delta_liquidation_surplus = liquidation_price * delta_state.rai_debt
+    delta_liquidation_surplus -= delta_state.eth_locked
+
+    beta = delta_liquidation_surplus / global_liquidation_surplus
+
+    gamma = delta_state.rai_reserve / global_state.rai_reserve
+    delta = delta_state.eth_reserve / global_state.eth_reserve
+
+    return TransformedTokenState(alpha,
+                                 beta,
+                                 gamma,
+                                 delta)
+
+
+def reverse_coordinate_transform(transformed_state: TransformedTokenState,
+                                 global_state: TokenState,
+                                 controller_state: ControllerState,
+                                 params: UserActionParams,
+                                 eth_price: float) -> TokenState:
+    d = transformed_state.rai_debt_scaled * params.debt_ceiling
+
+    q = transformed_state.liquidation_surplus * global_surplus
+    
+    r = transformed_state.rai_reserve_scaled * global_state.rai_reserve
+    z  = transformed_state.eth_reserve_scaled * global_state.eth_reserve
+    return TokenState(r, z, d, q)
