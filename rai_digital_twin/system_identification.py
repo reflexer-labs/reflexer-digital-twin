@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+from typing import Iterable
 from statsmodels.tsa.api import VAR
 import pandas as pd
 
@@ -7,19 +9,19 @@ from rai_digital_twin.types import coordinate_transform, reverse_coordinate_tran
 
 def arbitrageur_action_options(RAI_balance: RAI,
                                ETH_balance: ETH,
-                               uniswap_fee: Percentage,
-                               liquidation_price: ETH_per_RAI) -> OptimalAction:
+                               liquidation_price: ETH_per_RAI,
+                               uniswap_fee: Percentage) -> OptimalAction:
     K = (RAI_balance * ETH_balance * (1 - uniswap_fee))
     optimal_borrow = (K / liquidation_price) ** 0.5
     optimal_repay = (K * liquidation_price) ** 0.5
     return OptimalAction(optimal_borrow, optimal_repay)
 
 
-def arbitrageur_action(params: UserActionParams,
-                       token_state: TokenState,
+def arbitrageur_action(token_state: TokenState,
                        controller_state: ControllerState,
                        market_price: USD_per_RAI,
-                       eth_price: USD_per_ETH) -> TokenState:
+                       eth_price: USD_per_ETH,
+                       params: UserActionParams) -> TokenState:
 
     fee_survival = (1 - params.uniswap_fee)
     liquidation_price: ETH_per_RAI = params.liquidation_ratio
@@ -38,8 +40,8 @@ def arbitrageur_action(params: UserActionParams,
 
     optimal_actions = arbitrageur_action_options(token_state.rai_reserve,
                                                  token_state.eth_reserve,
-                                                 params.uniswap_fee,
-                                                 liquidation_price)
+                                                 liquidation_price,
+                                                 params.uniswap_fee)
 
     if relative_redemption_price <= expensive_threshold:
         action = optimal_actions.borrow
@@ -88,43 +90,59 @@ def VAR_prediction(errors,
     return Y_pred[0]
 
 
-def prepare_model():
-    states = pd.read_csv('data/states.csv')
+def action_errors(past_states: list[dict],
+                  params: UserActionParams) -> Iterable[TransformedTokenState]:
+    last_token_state: TokenState = past_states[0]['token_state']
+    for state in past_states[1:]:
+        token_state = state['token_state']
 
-    params = UserActionParams(1.45, 1e9, 0.003, True)
-    # create list of u^* vectors
-    values = []
+        # Compute real and optimal actions
+        real_action = token_state - last_token_state
+        optimal_action = arbitrageur_action(token_state,
+                                            state['pid_state'],
+                                            state['market_price'],
+                                            state['eth_price'],
+                                            params)
 
-    # iterate through real data to create u^* and save to values
+        # Transform the coordinates
+        transform_args = (token_state,
+                          state['pid_state'],
+                          params,
+                          state['eth_price'])
+        transformed_real_action = coordinate_transform(real_action,
+                                                       *transform_args)
+        transformed_optimal_action = coordinate_transform(optimal_action,
+                                                          *transform_args)
 
-    for i in range(0, len(state_subset)):
-        values.append(get_aggregated_arbitrageur_decision(
-            params, state_subset.loc[i]))
+        # Compute error
+        error = transformed_optimal_action - transformed_real_action
+        last_token_state = token_state
 
-    # create historic u^* dataframe
-    local = pd.DataFrame(values)
-    local.columns = ['Q', 'D', 'Rrai', 'Reth']
-    local.head()
-
-    transformed = coordinate_transform(delta_state,
-                                       global_state,
-                                       controller_state,
-                                       params,
-                                       eth_price)
-
-    transformed = transformed[['alpha', 'beta', 'gamma', 'delta']]
-    local['RedemptionPrice'] = states['RedemptionPrice']
-    local['ETH Price (OSM)'] = states['ETH Price (OSM)']
-
-    e_u = transformed - transformed_arbitrageur
-
-    Y_pred = VAR_prediction(e_u)
-    result = inverse_transformation_and_state_update(Y_pred,
-                                                     previous_state,
-                                                     params)
-    return result
+        # Yield
+        yield error
 
 
-def predict_real_action(state,
-                        params) -> TokenState:
-    pass
+def fit_predict(state: dict,
+                past_states: list[dict],
+                params: UserActionParams) -> TokenState:
+    """
+    Steps:
+    1. Retrieve historical arbitrageur actions
+    2. Transform historical arbitrageur actions
+    3. Transform historical real actions
+    4. Fit VAR model to the historical error
+    5. Predict next action
+    6. Apply next action to state
+    """
+    errors = pd.DataFrame(action_errors(past_states, params)).values
+    transformed_new_action = VAR_prediction(errors)
+    transform_args = (state['token_state'],
+                      state['pid_state'],
+                      params,
+                      state['eth_price'])
+    new_action = reverse_coordinate_transform(transformed_new_action,
+                                              *transform_args)
+    return new_action
+
+
+

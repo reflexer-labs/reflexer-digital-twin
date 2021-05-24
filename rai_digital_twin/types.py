@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
+import pandas as pd
 
 # Units
 
@@ -153,3 +154,8 @@ def reverse_coordinate_transform(transformed_state: TransformedTokenState,
     r = transformed_state.rai_reserve_scaled * global_state.rai_reserve
     z = transformed_state.eth_reserve_scaled * global_state.eth_reserve
     return TokenState(r, z, d, q)
+
+
+
+def transformed_token_states_to_numpy(token_states: list[TransformedTokenState]):
+    return pd.DataFrame(token_states).values
