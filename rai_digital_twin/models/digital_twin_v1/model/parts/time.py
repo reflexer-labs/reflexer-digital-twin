@@ -2,33 +2,18 @@ import datetime as dt
 
 def p_resolve_time_passed(params, _2, _3, state):
     # Params & variables
-    heights = params['heights']
-    expected_blocktime = params['expected_blocktime']
+    current_time = state['seconds_passed']
     t = state['timestep']
-    height = state['height']
-
-    # Compute how much time it went
-    if heights is not None:
-        new_height = heights[t]
-        if height is not None:
-            height_difference = new_height - height
-            seconds_passed = height_difference * expected_blocktime
-        else:
-            seconds_passed = None
-
-        # Output
-        return {'seconds_passed': seconds_passed,
-                'height': new_height}
+    heights = params.get('heights', None)
+    if heights is None:
+        return {'timedelta': state['pid_params'].period}
     else:
-        return {'seconds_passed': 0.0,
-                'height': state['height']}
+        delta = heights.get(t, current_time) - heights.get(t - 1, 0)
+        return {'timedelta': delta}
 
 
-def s_update_cumulative_time(_1, _2, _3, state, policy_input):
-    seconds = policy_input['seconds_passed']
-    value = state['cumulative_time']
-    if value is None:
-        value = seconds
-    else:
-        value += seconds
-    return ('cumulative_time', value)
+def s_seconds_passed(_1, _2, _3, state, signal):
+    return ('seconds_passed', state['seconds_passed'] + signal['timedelta'])
+
+def s_timedelta_in_hours(_1, _2, _3, state, signal):
+    return ('timedelta_in_hours', signal['timedelta'] / (60 * 60))

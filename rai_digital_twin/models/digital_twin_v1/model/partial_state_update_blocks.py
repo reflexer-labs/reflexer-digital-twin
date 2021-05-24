@@ -2,8 +2,7 @@ from typing import List
 from cadCAD_tools import generic_suf
 
 # Meta stuff
-from .parts.time import p_resolve_time_passed
-from .parts.time import s_update_cumulative_time
+from .parts.time import p_resolve_time_passed, s_seconds_passed, s_timedelta_in_hours
 
 # Token State (Backtesting & Extrapolation)
 from .parts.token_state import s_token_state
@@ -26,8 +25,8 @@ partial_state_update_blocks: List[dict] = [
             'time_process': p_resolve_time_passed
         },
         'variables': {
-            'timedelta': generic_suf('timedelta', 'seconds_passed'),
-            'height': generic_suf('height')
+            'seconds_passed': s_seconds_passed,
+            'timedelta_in_hours': s_timedelta_in_hours
         }
     },
         {

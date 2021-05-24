@@ -6,7 +6,7 @@ def test_redemption_rate():
     state = {'pid_state': ControllerState(1, 0.01, 5.0, 5.0),
              'pid_params': ControllerParams(-1.0, 1.0, 1.0, 10, False),
              'redemption_rate': 0.01,
-             'timedelta': 1}
+             'timedelta_in_hours': 1}
 
     args = (None, None, None, state, None)
     new_redemption_rate = s_pid_redemption(*args)[-1].redemption_rate
@@ -22,11 +22,11 @@ def test_redemption_price():
     state = {'pid_state': ControllerState(5, 0.01, None, None),
              'pid_params': ControllerParams(0.0, 0.0, 0.0, 1, False),
              'cumulative_time': 15,
-             'timedelta': 10}
+             'timedelta_in_hours': 10}
 
     args = (None, None, None, state, None)
     approx_price = (1 + state['pid_state'].redemption_rate)
-    approx_price **= state['timedelta']
+    approx_price **= state['timedelta_in_hours']
     approx_price *= state['pid_state'].redemption_price
     new_price = s_pid_redemption(*args)[-1].redemption_price
     assert new_price == approx(approx_price, rel=0.01)
@@ -34,7 +34,7 @@ def test_redemption_price():
     state.update(timedelta=10)
     args = (None, None, None, state, None)
     approx_price = (1 + state['pid_state'].redemption_rate)
-    approx_price **= state['timedelta']
+    approx_price **= state['timedelta_in_hours']
     approx_price *= state['pid_state'].redemption_price
     new_price = s_pid_redemption(*args)[-1].redemption_price
     assert new_price == approx(approx_price, rel=0.01)
@@ -42,7 +42,7 @@ def test_redemption_price():
     state.update(redemption_rate=0.1)
     args = (None, None, None, state, None)
     approx_price = (1 + state['pid_state'].redemption_rate)
-    approx_price **= state['timedelta']
+    approx_price **= state['timedelta_in_hours']
     approx_price *= state['pid_state'].redemption_price
     new_price = s_pid_redemption(*args)[-1].redemption_price
     assert new_price == approx(approx_price, rel=0.05)
@@ -50,7 +50,7 @@ def test_redemption_price():
     state.update(redemption_price=0.001)
     args = (None, None, None, state, None)
     approx_price = (1 + state['pid_state'].redemption_rate)
-    approx_price **= state['timedelta']
+    approx_price **= state['timedelta_in_hours']
     approx_price *= state['pid_state'].redemption_price
     new_price = s_pid_redemption(*args)[-1].redemption_price
     assert new_price == approx(approx_price, rel=0.05)

@@ -35,7 +35,7 @@ def s_pid_error(_1, _2, _3, state, signal):
     # Parameters, state variables & policy inputs
     pid_params: ControllerParams = state['pid_params']
     pid_state: ControllerState = state['pid_state']
-    timedelta = state["timedelta"]
+    timedelta = state["timedelta_in_hours"]
     new_error = signal["error_star"]
 
     if timedelta is not None:
@@ -71,7 +71,7 @@ def s_pid_redemption(_1, _2, _3, state, _5):
     # State variables
     pid_state: ControllerState = state['pid_state']
     pid_params: ControllerParams = state['pid_params']
-    timedelta = state['timedelta']
+    timedelta = state['timedelta_in_hours']
 
     # Compute new redemption price
 

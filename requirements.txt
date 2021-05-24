@@ -7,3 +7,4 @@ matplotlib
 plotly
 pandas
 statsmodels
+pymc3

@@ -81,14 +81,6 @@ def stochastic_fit(input_data: object,
     return params
 
 
-def estimate_parameters(input_data: object,
-                        report_path: str = None) -> dict:
-    """
-    Acquire parameters for the model simulation/
-    """
-    pass
-
-
 def extrapolate_signals(signal_params: FitParams,
                         timesteps: int,
                         report_path: str = None) -> object:
@@ -104,7 +96,6 @@ def extrapolate_signals(signal_params: FitParams,
 
 
 def extrapolate_data(signals: object,
-                     params: object,
                      backtesting_data,
                      governance_events,
                      N_t: int,
@@ -127,9 +118,10 @@ def extrapolate_data(signals: object,
     initial_state.update(pid_state=initial_pid_state,
                          token_state=backtesting_data.token_states[last_t])
 
+    heights = [i * initial_pid_params.period for i in range(N_t)]
     params = default_model.parameters
     params.update(heights=[heights])
-    params.update(governance_events=[governance_events])
+    params.update(governance_events=[None])
     params.update(exogenous_data=[signals])
 
     timesteps = len(backtesting_data.heights) - 1
@@ -155,16 +147,11 @@ def extrapolation_cycle() -> object:
     backtest_model(backtesting_df, governance_events)
     print("2. Fitting Stochastic Processes\n---")
     stochastic_params = stochastic_fit(backtesting_df.exogenous_data)
-    print("3. Performing System Identification\n---")
-    identified_params = estimate_parameters(backtesting_df)
-
-    N_t = len(backtesting_df.heights) * 2
-
-    print("4. Extrapolating Exogenous Signals\n---")
+    print("3. Extrapolating Exogenous Signals\n---")
+    N_t = 100
     extrapolated_signals = extrapolate_signals(stochastic_params, N_t)
-    print("5. Extrapolating Future Data\n---")
+    print("4. Extrapolating Future Data\n---")
     future_data = extrapolate_data(extrapolated_signals,
-                                   identified_params,
                                    backtesting_df,
                                    governance_events,
                                    N_t)

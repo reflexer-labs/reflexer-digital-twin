@@ -1,8 +1,5 @@
 # %%
-from rai_digital_twin import prepare_data
 import sys
-
-import rai_digital_twin 
 sys.path.append('..')
 
 # %%
@@ -12,9 +9,14 @@ from cadCAD_tools import easy_run
 from rai_digital_twin.execution_logic import *
 
 
-backtest_model(*prepare())
+df = extrapolation_cycle()
 # %%
-BACKTESTING_DATA_PATH = '../data/states.csv'
-GOVERNANCE_EVENTS_PATH = '../data/controller_params.csv'
 
+!ls
+# %%
+!cd ..
+# %%
+!ls
+# %%
+!cwd
 # %%

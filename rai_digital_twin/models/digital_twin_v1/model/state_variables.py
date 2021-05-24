@@ -26,8 +26,8 @@ INITIAL_TOKEN_STATE = TokenState(rai_reserve=801.933727,
 # NB: These initial states may be overriden in the relevant notebook or experiment process
 raw_state_variables: dict[str, InitialValue] = {
     # Time states
-    'timedelta': InitialValue(None, Seconds),
-    'height': InitialValue(None, Height),
+    'seconds_passed': InitialValue(0.0, Seconds),
+    'timedelta_in_hours': InitialValue(0.0, float),
 
     # Exogenous states
     'eth_price': InitialValue(INITIAL_ETH_PRICE, USD_per_ETH),
