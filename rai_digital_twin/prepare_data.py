@@ -71,12 +71,7 @@ def interpolate_timestep(heights_per_timesteps: dict[Timestep, Height],
     """
     Note: heights per timestep must be ordered
     """
-    print(height_to_interpolate)
-    print("---")
     for (timestep, height) in heights_per_timesteps.items():
-        print(timestep)
-        print(height)
-        print("-")
         if height_to_interpolate < height:
             return timestep
         else:

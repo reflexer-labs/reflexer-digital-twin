@@ -8,14 +8,38 @@ def redemption_rate(pid_params: ControllerParams,
     """
     Compute new redemption rate given the current controller params and state
     """
-    # Compute new redemption rate
+    # Compute PI Output
     if pid_params.enabled:
         proportional_rate = pid_params.kp * pid_state.proportional_error
         integral_rate = pid_params.ki * pid_state.integral_error
         integral_rate /= pid_params.period
-        new_redemption_rate = proportional_rate + integral_rate
+        pi_output = proportional_rate + integral_rate
     else:
-        new_redemption_rate = 1.0
+        pi_output = 0.0
+
+    # Redemption price & controller PI boundaries
+    LOWER_BOUND = -10
+    UPPER_BOUND = 10
+    DEFAULT_REDEMPTION_RATE = 1.0
+    NEGATIVE_RATE_LIMIT = 0.1
+
+    if pi_output < LOWER_BOUND:
+        adj_pi_output = LOWER_BOUND
+    elif pi_output > UPPER_BOUND:
+        adj_pi_output = UPPER_BOUND
+    else:
+        adj_pi_output = pi_output
+
+    if adj_pi_output < 0:
+        if -1 * adj_pi_output >= DEFAULT_REDEMPTION_RATE:
+            new_redemption_rate = NEGATIVE_RATE_LIMIT
+        elif adj_pi_output <= -1 * NEGATIVE_RATE_LIMIT:
+            new_redemption_rate = DEFAULT_REDEMPTION_RATE - NEGATIVE_RATE_LIMIT
+        else:
+            new_redemption_rate = DEFAULT_REDEMPTION_RATE + adj_pi_output
+    else:
+        new_redemption_rate = DEFAULT_REDEMPTION_RATE + adj_pi_output
+
     return new_redemption_rate
 
 
@@ -76,7 +100,7 @@ def s_pid_redemption(_1, _2, _3, state, _5):
     # Compute new redemption price
 
     if timedelta is not None:
-        interest = (1 + pid_state.redemption_rate) ** timedelta
+        interest = pid_state.redemption_rate ** timedelta
         new_redemption_price = pid_state.redemption_price * interest
 
         # Compute new redemption rate
