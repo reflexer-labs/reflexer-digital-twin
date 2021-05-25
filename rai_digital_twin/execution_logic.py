@@ -9,8 +9,8 @@ from .prepare_data import load_backtesting_data, load_governance_events
 from .stochastic import FitParams, fit_eth_price, fit_predict_eth_price, generate_eth_samples
 from rai_digital_twin import default_model
 
-BACKTESTING_DATA_PATH = 'data/states.csv'
-GOVERNANCE_EVENTS_PATH = 'data/controller_params.csv'
+BACKTESTING_DATA_PATH = '~/repos/bsci/reflexer-digital-twin/data/states.csv'
+GOVERNANCE_EVENTS_PATH = '~/repos/bsci/reflexer-digital-twin/data/controller_params.csv'
 
 
 def save_artifact():
