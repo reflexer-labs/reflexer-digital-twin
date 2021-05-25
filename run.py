@@ -21,3 +21,10 @@ fig = px.line(fig_df,
 fig.show()
 
 # %%
+fig_df = df.query('timestep > 0')
+fig = px.line(fig_df,
+              x='timestep',
+              y=['redemption_price', 'redemption_rate'],
+              log_y=True)
+fig.show()
+# %%

@@ -156,9 +156,9 @@ def fit_predict_action(state: dict,
     5. Predict next action
     6. Apply next action to state
     """
-    if len(past_states) > 1:
-        errors = list(action_errors(past_states, params))
-        errors = pd.DataFrame(errors).values
+    if len(past_states) > 10: # HACK
+        errors = list(action_errors(past_states, params))[3:] # HACK
+        errors = pd.DataFrame(errors).dropna().values # HACK
         raw_prediction = VAR_prediction(errors)
         transformed_new_action = TransformedTokenState(*raw_prediction)
         transform_args = (state['token_state'],

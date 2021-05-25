@@ -24,9 +24,12 @@ def p_user_action(params, _1, history, state) -> Signal:
 
 def p_backtesting(params, _2, _3, state) -> Signal:
     t = state['timestep']
-    backtesting_data = params['backtesting_data']
-    current_data = backtesting_data.get(t, state['token_state'])
-    return {'token_state': current_data}
+    backtesting_data = params.get('backtesting_data', None)
+    if backtesting_data is not None:
+        current_data = backtesting_data.get(t, state['token_state'])
+        return {'token_state': current_data}
+    else:
+        return {}
 
 
 def s_token_state(_1, _2, _3, state, signal) -> VariableUpdate:

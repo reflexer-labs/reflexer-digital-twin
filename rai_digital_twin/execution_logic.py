@@ -1,5 +1,5 @@
 
-from rai_digital_twin.types import BacktestingData, ControllerState
+from rai_digital_twin.types import BacktestingData, ControllerParams, ControllerState
 import pandas as pd
 from typing import Dict, List
 
@@ -97,6 +97,7 @@ def extrapolate_signals(signal_params: FitParams,
 
 def extrapolate_data(signals: object,
                      backtesting_data,
+                     backtest_results,
                      governance_events,
                      N_t: int,
                      report_path: str = None) -> object:
@@ -106,6 +107,7 @@ def extrapolate_data(signals: object,
 
     # Index for the last available data points
     last_t = len(backtesting_data.heights) - 1
+    last_row = backtest_results[0].iloc[-1]
 
     seconds_per_timesteps = (60 * 60)
     heights = {i: i * seconds_per_timesteps for i in range(N_t)}
@@ -115,13 +117,19 @@ def extrapolate_data(signals: object,
                                         backtesting_data.pid_states[last_t].redemption_rate,
                                         0.0,
                                         0.0)
+    initial_pid_params = ControllerParams(last_row.kp,
+                                          last_row.ki,
+                                          last_row.leaky_factor,
+                                          last_row.period,
+                                          last_row.enabled)
     initial_state.update(pid_state=initial_pid_state,
+                         pid_params=initial_pid_params,
                          token_state=backtesting_data.token_states[last_t])
 
-    heights = [i * initial_pid_params.period for i in range(N_t)]
     params = default_model.parameters
-    params.update(heights=[heights])
-    params.update(governance_events=[None])
+    params.update(heights=[None])
+    params.update(backtesting_data=[None])
+    params.update(governance_events=[{}])
     params.update(exogenous_data=[signals])
 
     timesteps = len(backtesting_data.heights) - 1
@@ -144,7 +152,7 @@ def extrapolation_cycle() -> object:
     print("0. Preparing Data\n---")
     backtesting_df, governance_events = prepare()
     print("1. Backtesting Model\n---")
-    backtest_model(backtesting_df, governance_events)
+    backtest_results = backtest_model(backtesting_df, governance_events)
     print("2. Fitting Stochastic Processes\n---")
     stochastic_params = stochastic_fit(backtesting_df.exogenous_data)
     print("3. Extrapolating Exogenous Signals\n---")
@@ -153,6 +161,7 @@ def extrapolation_cycle() -> object:
     print("4. Extrapolating Future Data\n---")
     future_data = extrapolate_data(extrapolated_signals,
                                    backtesting_df,
+                                   backtest_results,
                                    governance_events,
                                    N_t)
     print("6. Done!\n---")
