@@ -71,9 +71,16 @@ def interpolate_timestep(heights_per_timesteps: dict[Timestep, Height],
     """
     Note: heights per timestep must be ordered
     """
+    print(height_to_interpolate)
+    print("---")
     for (timestep, height) in heights_per_timesteps.items():
-        if height >= height_to_interpolate:
+        print(timestep)
+        print(height)
+        print("-")
+        if height_to_interpolate < height:
             return timestep
+        else:
+            continue
     return -1
             
 
@@ -84,7 +91,6 @@ def parse_raw_events(raw_events: list[dict],
     for raw_event in raw_events:
         event = GovernanceEvent(GovernanceEventKind.change_pid_params,
                                 raw_event)
-
         timestep = interpolate_timestep(heights, raw_event['eth_block'])
         if timestep >= 0:
             timestep = int(timestep)
