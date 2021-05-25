@@ -1,19 +1,27 @@
 from rai_digital_twin.models.digital_twin_v1.model.parts.controllers import *
 from pytest import approx
 
+PI_BOUND_PARAMS = {
+    'lower_bound': -10,
+    'upper_bound': 10,
+    'default_redemption_rate': 1.0,
+    'negative_rate_limit': 0.1
+}
 
 def test_redemption_rate():
+    params = {'pi_bound_params': PI_BOUND_PARAMS}
     state = {'pid_state': ControllerState(1, 1.00, 5.0, 5.0),
              'pid_params': ControllerParams(-0.01, 0.01, 1.0, 10, False),
              'redemption_rate': 1.01,
-             'timedelta_in_hours': 1}
+             'timestep': 3,
+             'timedelta_in_hours': 1 / (60 * 60)}
 
-    args = (None, None, None, state, None)
+    args = (params, None, None, state, None)
     new_redemption_rate = s_pid_redemption(*args)[-1].redemption_rate
     assert new_redemption_rate == 1.0
     
     state.update(pid_params=ControllerParams(-0.01, 0.0001, 1.0, 10, True))
-    args = (None, None, None, state, None)
+    args = (params, None, None, state, None)
     expected = state['pid_state'].proportional_error
     expected *= state['pid_params'].kp
     expected += state['pid_state'].integral_error * state['pid_params'].ki / state['pid_params'].period
@@ -23,12 +31,14 @@ def test_redemption_rate():
 
 
 def test_redemption_price():
+    params = {'pi_bound_params': PI_BOUND_PARAMS}
     state = {'pid_state': ControllerState(5, 1.01, None, None),
              'pid_params': ControllerParams(0.0, 0.0, 0.0, 1, False),
              'cumulative_time': 15,
+             'timestep': 2,
              'timedelta_in_hours': 10}
 
-    args = (None, None, None, state, None)
+    args = (params, None, None, state, None)
     approx_price = state['pid_state'].redemption_rate
     approx_price **= state['timedelta_in_hours']
     approx_price *= state['pid_state'].redemption_price
@@ -36,7 +46,7 @@ def test_redemption_price():
     assert new_price == approx(approx_price, rel=0.01)
 
     state.update(timedelta=10)
-    args = (None, None, None, state, None)
+    args = (params, None, None, state, None)
     approx_price = state['pid_state'].redemption_rate
     approx_price **= state['timedelta_in_hours']
     approx_price *= state['pid_state'].redemption_price
@@ -44,7 +54,7 @@ def test_redemption_price():
     assert new_price == approx(approx_price, rel=0.01)
 
     state.update(redemption_rate=0.1)
-    args = (None, None, None, state, None)
+    args = (params, None, None, state, None)
     approx_price = state['pid_state'].redemption_rate
     approx_price **= state['timedelta_in_hours']
     approx_price *= state['pid_state'].redemption_price
@@ -52,7 +62,7 @@ def test_redemption_price():
     assert new_price == approx(approx_price, rel=0.05)
 
     state.update(redemption_price=0.001)
-    args = (None, None, None, state, None)
+    args = (params, None, None, state, None)
     approx_price = state['pid_state'].redemption_rate
     approx_price **= state['timedelta_in_hours']
     approx_price *= state['pid_state'].redemption_price

@@ -4,7 +4,8 @@ from math import exp
 
 
 def redemption_rate(pid_params: ControllerParams,
-                    pid_state: ControllerState) -> Percentage:
+                    pid_state: ControllerState,
+                    bound_params: dict) -> Percentage:
     """
     Compute new redemption rate given the current controller params and state
     """
@@ -18,10 +19,10 @@ def redemption_rate(pid_params: ControllerParams,
         pi_output = 0.0
 
     # Redemption price & controller PI boundaries
-    LOWER_BOUND = -10
-    UPPER_BOUND = 10
-    DEFAULT_REDEMPTION_RATE = 1.0
-    NEGATIVE_RATE_LIMIT = 0.1
+    LOWER_BOUND = bound_params['lower_bound']
+    UPPER_BOUND = bound_params['upper_bound']
+    DEFAULT_REDEMPTION_RATE = bound_params['default_redemption_rate']
+    NEGATIVE_RATE_LIMIT = bound_params['negative_rate_limit']
 
     if pi_output < LOWER_BOUND:
         adj_pi_output = LOWER_BOUND
@@ -88,7 +89,7 @@ def s_pid_error(_1, _2, _3, state, signal):
     return ('pid_state', new_pid_state)
 
 
-def s_pid_redemption(_1, _2, _3, state, _5):
+def s_pid_redemption(params, _2, _3, state, _5):
     """
     Update the controller redemption price according to the redemption rate"
     """
@@ -99,17 +100,19 @@ def s_pid_redemption(_1, _2, _3, state, _5):
 
     # Compute new redemption price
 
-    if timedelta is not None:
+    if timedelta is not None and state['timestep'] > 1:
         interest = pid_state.redemption_rate ** timedelta
         new_redemption_price = pid_state.redemption_price * interest
 
         # Compute new redemption rate
         new_redemption_rate = redemption_rate(pid_params,
-                                              pid_state)
+                                              pid_state,
+                                              params['pi_bound_params'])
 
+        timedelta_in_seconds = timedelta * 60 * 60
         # Return output
         new_pid_state = ControllerState(new_redemption_price,
-                                        new_redemption_rate,
+                                        new_redemption_rate ** timedelta_in_seconds,
                                         pid_state.proportional_error,
                                         pid_state.integral_error)
     else:

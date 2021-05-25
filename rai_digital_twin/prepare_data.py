@@ -38,10 +38,10 @@ def load_backtesting_data(path: str) -> BacktestingData:
     # Load CSV file
     df = (pd.read_csv(path)
             .sort_values('block_number', ascending=True)
-         #   .head(1000) # HACK
+            .iloc[100:] # HACK
             .reset_index(drop=True)
             .assign(marketPriceEth=lambda df: 1 / df.marketPriceEth)
-            .assign(RedemptionRateHourlyRate= lambda df: df.RedemptionRateHourlyRate - 1))
+            .assign(RedemptionRateHourlyRate= lambda df: df.RedemptionRateHourlyRate))
     # Retrieve historical info
     token_states = df.apply(row_to_token_state, axis=1).to_dict()
     exogenous_data = extract_exogenous_data(df)

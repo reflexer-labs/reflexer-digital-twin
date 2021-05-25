@@ -28,8 +28,7 @@ fig = px.line(fig_df,
               log_y=True)
 fig.show()
 # %%
-fig_df = backtest_df.assign(redemption_rate=lambda df: df.redemption_rate + 1)
-
+fig_df = backtest_df
 fig = px.line(fig_df,
               x='index',
               y='redemption_rate',
