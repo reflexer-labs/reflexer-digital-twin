@@ -1,4 +1,4 @@
-import datetime as dt
+
 
 def p_resolve_time_passed(params, _2, _3, state):
     # Params & variables
@@ -8,7 +8,11 @@ def p_resolve_time_passed(params, _2, _3, state):
     if heights is None:
         return {'timedelta': state['pid_params'].period}
     else:
-        delta = heights.get(t, current_time) - heights.get(t - 1, 0)
+        # Get delta time in blocks
+        delta_height = (heights.get(t, current_time) - heights.get(t - 1, 0))
+
+        # Convert to seconds
+        delta = delta_height * params['block_time']
         return {'timedelta': delta}
 
 

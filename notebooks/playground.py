@@ -50,3 +50,18 @@ fig.update_yaxes(matches=None)
 
 fig.show()
 # %%
+id_cols = {'hours_passed'}
+value_cols = {'proportional_error', 'integral_error'}
+fig_df = (backtest_df.melt(id_cols, value_cols).query('hours_passed > 0'))
+
+fig = px.scatter(fig_df,
+                 x='hours_passed',
+                 y='value',
+                 facet_row='variable',
+                 height=800)
+fig.update_yaxes(matches=None)
+
+fig.show()
+
+# %%
+

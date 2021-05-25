@@ -38,7 +38,7 @@ def load_backtesting_data(path: str) -> BacktestingData:
     # Load CSV file
     df = (pd.read_csv(path)
             .sort_values('block_number', ascending=True)
-            .head(100) # HACK
+         #   .head(1000) # HACK
             .reset_index(drop=True)
             .assign(marketPriceEth=lambda df: 1 / df.marketPriceEth)
             .assign(RedemptionRateHourlyRate= lambda df: df.RedemptionRateHourlyRate - 1))
@@ -66,27 +66,35 @@ def retrieve_raw_events(params_df: pd.DataFrame,
     return raw_events
 
 
-def interpolate_timestep(heights_per_timesteps: dict[Timestep, Height],
+def interpolate_timestep(heights_per_timesteps: list[Height],
                          height_to_interpolate: Height) -> Timestep:
     """
     Note: heights per timestep must be ordered
     """
+<<<<<<< HEAD
     for (timestep, height) in heights_per_timesteps.items():
         if height_to_interpolate < height:
             return timestep
+=======
+    last_timestep = 0
+    for (_, height) in enumerate(heights_per_timesteps):
+        if height_to_interpolate >= height:
+            last_timestep += 1
+>>>>>>> 55c3455ef477d32e7113a37e1816f80f19434444
         else:
             continue
-    return -1
+    return last_timestep
             
 
 def parse_raw_events(raw_events: list[dict],
                      heights: dict[Timestep, Height]) -> dict[Timestep, GovernanceEvent]:
     # Map the raw events into (Timestep, GovernanceEvent) relations
+    height_list = list(heights.values())
     events = {}
     for raw_event in raw_events:
         event = GovernanceEvent(GovernanceEventKind.change_pid_params,
                                 raw_event)
-        timestep = interpolate_timestep(heights, raw_event['eth_block'])
+        timestep = interpolate_timestep(height_list, int(raw_event['eth_block']))
         if timestep >= 0:
             timestep = int(timestep)
             events[timestep] = event

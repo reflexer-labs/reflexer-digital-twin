@@ -12,12 +12,12 @@ USER_ACTION_PARAMS = UserActionParams(
 )
 
 raw_params: dict[str, Union[Param, ParamSweep]] = {
-    'expected_blocktime': Param(15, Seconds),
     'heights': Param(None, dict[Timestep, Height]),
     'governance_events': Param({}, dict[Timestep, GovernanceEvent]),
     'backtesting_data': Param({}, TimestepDict),
     'exogenous_data': Param({}, TimestepDict),
-    'user_action_params': Param(USER_ACTION_PARAMS, UserActionParams)
+    'user_action_params': Param(USER_ACTION_PARAMS, UserActionParams),
+    'block_time': Param(13.13, Seconds)
 }
 
 params = prepare_params(raw_params)
