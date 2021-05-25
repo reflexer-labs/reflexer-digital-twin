@@ -71,16 +71,10 @@ def interpolate_timestep(heights_per_timesteps: list[Height],
     """
     Note: heights per timestep must be ordered
     """
-<<<<<<< HEAD
-    for (timestep, height) in heights_per_timesteps.items():
-        if height_to_interpolate < height:
-            return timestep
-=======
     last_timestep = 0
     for (_, height) in enumerate(heights_per_timesteps):
         if height_to_interpolate >= height:
             last_timestep += 1
->>>>>>> 55c3455ef477d32e7113a37e1816f80f19434444
         else:
             continue
     return last_timestep
