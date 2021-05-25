@@ -59,7 +59,5 @@ def test_fit_predict():
 
     args = (state, past_states, params)
 
-    new_action = fit_predict_action(state,
-                                    past_states,
-                                    params)
+    new_action = fit_predict_action(*args)
     assert type(new_action) == TokenState

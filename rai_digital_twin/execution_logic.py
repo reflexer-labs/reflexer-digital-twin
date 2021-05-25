@@ -67,6 +67,9 @@ def backtest_model(backtesting_data: BacktestingData,
     loss = simulation_loss(sim_df, test_df)
     print(f"Backtesting loss: {loss :.2%}")
 
+
+    # TODO call template notebook using jupytext or papermill
+
     return (sim_df, test_df)
 
 
@@ -78,6 +81,9 @@ def stochastic_fit(input_data: object,
 
     X = pd.DataFrame(input_data).T.eth_price
     params = fit_eth_price(X)
+
+    # TODO run notebook template
+
     return params
 
 
@@ -151,19 +157,24 @@ def extrapolation_cycle() -> object:
 
     print("0. Preparing Data\n---")
     backtesting_df, governance_events = prepare()
+
     print("1. Backtesting Model\n---")
     backtest_results = backtest_model(backtesting_df, governance_events)
+
     print("2. Fitting Stochastic Processes\n---")
     stochastic_params = stochastic_fit(backtesting_df.exogenous_data)
+
     print("3. Extrapolating Exogenous Signals\n---")
     N_t = 100
     extrapolated_signals = extrapolate_signals(stochastic_params, N_t)
+
     print("4. Extrapolating Future Data\n---")
     future_data = extrapolate_data(extrapolated_signals,
                                    backtesting_df,
                                    backtest_results,
                                    governance_events,
                                    N_t)
+
     print("6. Done!\n---")
     return future_data
 

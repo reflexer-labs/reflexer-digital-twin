@@ -84,6 +84,9 @@ class TokenState():
             raise TypeError()
 
 
+DeltaTokenState = TokenState    
+
+
 @dataclass(frozen=True)
 class TransformedTokenState():
     # (delta_rai / debt_ceiling), or 'alpha'
