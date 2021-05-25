@@ -16,7 +16,7 @@ def redemption_rate(pid_params: ControllerParams,
         new_redemption_rate = proportional_rate + integral_rate
     else:
         new_redemption_rate = 1.0
-    return new_redemption_rate
+    return new_redemption_rate * pid_params.period / 5 # HACK
 
 
 def p_observe_errors(_1, _2, _3, state):
@@ -76,7 +76,7 @@ def s_pid_redemption(_1, _2, _3, state, _5):
     # Compute new redemption price
 
     if timedelta is not None:
-        interest = (1 + pid_state.redemption_rate) ** timedelta
+        interest = (1 + pid_state.redemption_rate) ** (timedelta * 10) # HACK
         new_redemption_price = pid_state.redemption_price * interest
 
         # Compute new redemption rate

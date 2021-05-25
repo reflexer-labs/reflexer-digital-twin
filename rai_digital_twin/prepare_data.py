@@ -38,7 +38,7 @@ def load_backtesting_data(path: str) -> BacktestingData:
     # Load CSV file
     df = (pd.read_csv(path)
             .sort_values('block_number', ascending=True)
-            .head(100) # HACK
+         #   .head(1000) # HACK
             .reset_index(drop=True)
             .assign(marketPriceEth=lambda df: 1 / df.marketPriceEth)
             .assign(RedemptionRateHourlyRate= lambda df: df.RedemptionRateHourlyRate - 1))
@@ -88,7 +88,7 @@ def parse_raw_events(raw_events: list[dict],
     for raw_event in raw_events:
         event = GovernanceEvent(GovernanceEventKind.change_pid_params,
                                 raw_event)
-        timestep = interpolate_timestep(height_list, raw_event['eth_block'])
+        timestep = interpolate_timestep(height_list, int(raw_event['eth_block']))
         if timestep >= 0:
             timestep = int(timestep)
             events[timestep] = event

@@ -42,8 +42,17 @@ def backtest_model(backtesting_data: BacktestingData,
                                         backtesting_data.pid_states[0].redemption_rate,
                                         0.0,
                                         0.0)
+
     initial_state.update(pid_state=initial_pid_state,
                          token_state=backtesting_data.token_states[0])
+    if 0 in governance_events:
+        first_event = governance_events[0].descriptor
+        initial_pid_params = ControllerParams(first_event['kp'],
+                                              first_event['ki'],
+                                              first_event['leaky_factor'],
+                                              first_event['period'],
+                                              first_event['enabled'])
+        initial_state.update(pid_params=initial_pid_params)
 
     params = default_model.parameters
     params.update(heights=[backtesting_data.heights])
@@ -66,7 +75,6 @@ def backtest_model(backtesting_data: BacktestingData,
         backtesting_data.pid_states, orient='index')
     loss = simulation_loss(sim_df, test_df)
     print(f"Backtesting loss: {loss :.2%}")
-
 
     # TODO call template notebook using jupytext or papermill
 
