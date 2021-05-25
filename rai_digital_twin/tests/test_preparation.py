@@ -4,18 +4,12 @@ from rai_digital_twin.prepare_data import *
 
 
 def test_interpolate():
-    heights_per_timesteps = {
-        0: 10,
-        1: 19,
-        2: 31,
-        4: 42,
-        5: 50
-    }
-
-    for timestep, height in heights_per_timesteps.items():
+    heights_per_timesteps =[10, 19, 31, 42, 50]
+    
+    for timestep, height in enumerate(heights_per_timesteps):
         interp_timestep = interpolate_timestep(heights_per_timesteps,
                                                height)
-        assert interp_timestep == timestep
+        assert interp_timestep == timestep + 1
 
         interp_timestep = interpolate_timestep(heights_per_timesteps,
                                                height - 3)
@@ -23,4 +17,5 @@ def test_interpolate():
 
         interp_timestep = interpolate_timestep(heights_per_timesteps,
                                                height + 3)
-        assert interp_timestep == (timestep + 1)
+        assert interp_timestep == timestep + 1
+

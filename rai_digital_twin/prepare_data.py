@@ -66,32 +66,29 @@ def retrieve_raw_events(params_df: pd.DataFrame,
     return raw_events
 
 
-def interpolate_timestep(heights_per_timesteps: dict[Timestep, Height],
+def interpolate_timestep(heights_per_timesteps: list[Height],
                          height_to_interpolate: Height) -> Timestep:
     """
     Note: heights per timestep must be ordered
     """
-    print(height_to_interpolate)
-    print("---")
-    for (timestep, height) in heights_per_timesteps.items():
-        print(timestep)
-        print(height)
-        print("-")
-        if height_to_interpolate < height:
-            return timestep
+    last_timestep = 0
+    for (_, height) in enumerate(heights_per_timesteps):
+        if height_to_interpolate >= height:
+            last_timestep += 1
         else:
             continue
-    return -1
+    return last_timestep
             
 
 def parse_raw_events(raw_events: list[dict],
                      heights: dict[Timestep, Height]) -> dict[Timestep, GovernanceEvent]:
     # Map the raw events into (Timestep, GovernanceEvent) relations
+    height_list = list(heights.values())
     events = {}
     for raw_event in raw_events:
         event = GovernanceEvent(GovernanceEventKind.change_pid_params,
                                 raw_event)
-        timestep = interpolate_timestep(heights, raw_event['eth_block'])
+        timestep = interpolate_timestep(height_list, raw_event['eth_block'])
         if timestep >= 0:
             timestep = int(timestep)
             events[timestep] = event
