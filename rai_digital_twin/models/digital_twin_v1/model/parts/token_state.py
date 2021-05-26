@@ -3,7 +3,7 @@
 from rai_digital_twin.system_identification import fit_predict_action
 from rai_digital_twin.types import ActionState, TokenState
 from cadCAD_tools.types import History, Params, Signal, State, VariableUpdate
-
+from random import random
 
 def state_to_action_state(state: State) -> ActionState:
     return ActionState(state['token_state'],
@@ -42,7 +42,7 @@ def p_user_action(params, _1, history, state) -> Signal:
         new_action = fit_predict_action(states,
                                         params['user_action_params'])
 
-        new_state = state['token_state'] + new_action
+        new_state = state['token_state'] + new_action * (random() - 0.5) * 0.001 # HACK
         return {'token_state': new_state}
     else:
         return {}

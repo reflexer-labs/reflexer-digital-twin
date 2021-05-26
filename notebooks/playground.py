@@ -11,7 +11,7 @@ backtesting_df, governance_events = prepare()
 # %%
 backtest_results = backtest_model(backtesting_df, governance_events)
 # %%
-(sim_df, test_df) = backtest_results
+(sim_df, test_df, _) = backtest_results
 test_df = test_df.assign(seconds_passed=sim_df.seconds_passed)
 sim_df = sim_df.assign(origin='backtest').iloc[1:]
 test_df = test_df.assign(origin='data').iloc[1:]

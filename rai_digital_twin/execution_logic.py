@@ -198,7 +198,7 @@ def extrapolation_cycle() -> object:
 
     print("6. Done!\n---")
 
-    return future_data
+    return backtest_results, future_data
 
 
 if __name__ == '__main__':
