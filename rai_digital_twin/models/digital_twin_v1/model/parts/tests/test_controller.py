@@ -7,6 +7,7 @@ PI_BOUND_PARAMS = {
     'default_redemption_rate': 1.0,
     'negative_rate_limit': 0.1
 }
+PI_BOUND_PARAMS = PIBoundParams(**PI_BOUND_PARAMS)
 
 def test_redemption_rate():
     params = {'pi_bound_params': PI_BOUND_PARAMS}

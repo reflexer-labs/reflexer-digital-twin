@@ -1,5 +1,5 @@
 from pytest import approx
-from rai_digital_twin.types import ControllerState, TokenState, TransformedTokenState, UserActionParams
+from rai_digital_twin.types import ActionState, ControllerState, TokenState, TransformedTokenState, UserActionParams
 from rai_digital_twin.system_identification import VAR_prediction, fit_predict_action
 import numpy as np
 
@@ -17,12 +17,6 @@ def test_VAR():
 
 
 def test_fit_predict():
-
-    state = {'token_state': TokenState(12, 8, 4, 3),
-             'pid_state': ControllerState(0.8, 0.99, 0.5, 0.5),
-             'market_price': 2.0,
-             'eth_price': 0.4
-             }
 
     state_1 = {'token_state': TokenState(10, 10, 5, 5),
                'pid_state': ControllerState(1.2, 1.01, 0.5, 0.5),
@@ -48,16 +42,21 @@ def test_fit_predict():
                'eth_price': 1.2
                }
 
-    past_states = [
-        state_1,
-        state_2,
-        state_3,
-        state_4
+    state_5 = {'token_state': TokenState(12, 8, 4, 3),
+               'pid_state': ControllerState(0.8, 0.99, 0.5, 0.5),
+               'market_price': 2.0,
+               'eth_price': 0.4
+               }
+               
+    states = [
+        ActionState(**state_1),
+        ActionState(**state_2),
+        ActionState(**state_3),
+        ActionState(**state_4),
+        ActionState(**state_5)
     ]
 
     params = UserActionParams(1.0, 100, 0.003, True)
 
-    args = (state, past_states, params)
-
-    new_action = fit_predict_action(*args)
+    new_action = fit_predict_action(states, params)
     assert type(new_action) == TokenState

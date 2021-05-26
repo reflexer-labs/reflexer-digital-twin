@@ -1,11 +1,11 @@
-from rai_digital_twin.types import ControllerParams, ControllerState
+from rai_digital_twin.types import ControllerParams, ControllerState, PIBoundParams
 from rai_digital_twin.types import Percentage, Seconds
 from math import exp
 
 
 def redemption_rate(pid_params: ControllerParams,
                     pid_state: ControllerState,
-                    bound_params: dict) -> Percentage:
+                    bound_params: PIBoundParams) -> Percentage:
     """
     Compute new redemption rate given the current controller params and state
     """
@@ -19,10 +19,10 @@ def redemption_rate(pid_params: ControllerParams,
         pi_output = 0.0
 
     # Redemption price & controller PI boundaries
-    LOWER_BOUND = bound_params['lower_bound']
-    UPPER_BOUND = bound_params['upper_bound']
-    DEFAULT_REDEMPTION_RATE = bound_params['default_redemption_rate']
-    NEGATIVE_RATE_LIMIT = bound_params['negative_rate_limit']
+    LOWER_BOUND = bound_params.lower_bound
+    UPPER_BOUND = bound_params.upper_bound
+    DEFAULT_REDEMPTION_RATE = bound_params.default_redemption_rate
+    NEGATIVE_RATE_LIMIT = bound_params.negative_rate_limit
 
     if pi_output < LOWER_BOUND:
         adj_pi_output = LOWER_BOUND

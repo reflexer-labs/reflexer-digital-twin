@@ -155,18 +155,21 @@ def fit_predict_action(past_states: list[ActionState],
     5. Predict next action
     6. Apply next action to state
     """
-    state = past_states[-1]
-    if len(past_states) > 2:  # HACK
-        errors = list(action_errors(past_states, params))
-        errors = pd.DataFrame(errors).dropna().values  # HACK
-        raw_prediction = VAR_prediction(errors)
-        transformed_new_action = TransformedTokenState(*raw_prediction)
-        transform_args = (state.token_state,
-                          state.pid_state,
-                          params,
-                          state.eth_price)
-        new_action = reverse_coordinate_transform(transformed_new_action,
-                                                  *transform_args)
-        return new_action
+    if type(past_states) == list:
+        if len(past_states) > 0:
+            state = past_states[-1]
+            errors = list(action_errors(past_states, params))
+            errors = pd.DataFrame(errors).dropna().values  # HACK
+            raw_prediction = VAR_prediction(errors)
+            transformed_new_action = TransformedTokenState(*raw_prediction)
+            transform_args = (state.token_state,
+                            state.pid_state,
+                            params,
+                            state.eth_price)
+            new_action = reverse_coordinate_transform(transformed_new_action,
+                                                    *transform_args)
+            return new_action
+        else:
+            return None
     else:
         return None

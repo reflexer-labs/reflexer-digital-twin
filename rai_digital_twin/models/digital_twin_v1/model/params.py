@@ -28,7 +28,7 @@ raw_params: dict[str, Union[Param, ParamSweep]] = {
     'exogenous_data': Param({}, TimestepDict),
     'user_action_params': Param(USER_ACTION_PARAMS, UserActionParams),
     'block_time': Param(13.13, Seconds),
-    'pi_bound_params': Param(PI_BOUND_PARAMS, dict)
+    'pi_bound_params': Param(PI_BOUND_PARAMS, PIBoundParams)
 }
 
 params = prepare_params(raw_params)
