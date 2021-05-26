@@ -1,9 +1,8 @@
 from dataclasses import dataclass
-import random
 from typing import Iterable
 from statsmodels.tsa.api import VAR
 import pandas as pd
-from random import random
+from sklearn.preprocessing import PowerTransformer
 
 from rai_digital_twin.types import ActionState, ControllerState, ETH, ETH_per_RAI, OptimalAction, Percentage, RAI, TokenState, TransformedTokenState, USD_per_ETH, USD_per_RAI, UserActionParams
 from rai_digital_twin.types import coordinate_transform, reverse_coordinate_transform
@@ -84,11 +83,12 @@ def arbitrageur_action(token_state: TokenState,
                                         relative_redemption_price,
                                         optimal_actions)
 
-    return action #* (token_state.eth_reserve / action.eth_reserve * params.intensity)
+    # * (token_state.eth_reserve / action.eth_reserve * params.intensity)
+    return action
 
 
 def VAR_prediction(errors: list[list[float]],
-                   lag: int = 1) -> list[float]:
+                   lag: int = 15) -> list[float]:
     '''
     Description:
     Function to train and forecast a VAR model one step into the future
@@ -98,7 +98,7 @@ def VAR_prediction(errors: list[list[float]],
     Returns:
     Numpy array of transformed state changes
     Example
-    VAR_prediction(e_u,6)    
+    VAR_prediction(e_u,6)
     '''
     # instantiate the VAR model object from statsmodels
     model = VAR(errors)
@@ -110,32 +110,41 @@ def VAR_prediction(errors: list[list[float]],
 
 
 def action_errors(past_states: list[ActionState],
-                  params: UserActionParams) -> Iterable[TransformedTokenState]:
+                  params: UserActionParams,
+                  ewm_alpha=0.8) -> Iterable[TransformedTokenState]:
 
     if len(past_states) > 1:
         # First state
         last_token_state: TokenState = past_states[0].token_state
 
+        # Retrieve a dataframe of all past token states
+        token_state_list = [state.token_state
+                            for state in past_states]
+        token_state_df = pd.DataFrame(token_state_list)
+
+        # Compute the EWM difference between states
+        optimal_actions_df = (token_state_df
+                              .ewm(alpha=ewm_alpha)
+                              .mean()
+                              .diff()
+                              .to_dict(orient='records')
+                              [1:])
+        optimal_actions = [TokenState(**row) for row in optimal_actions_df]
+
         # Iterate
-        for state in past_states[1:]:
+        for i, state in enumerate(past_states[1:]):
             token_state = state.token_state
 
             # Compute real and optimal actions
             real_action = token_state - last_token_state
-            # NOTE: possibly going to drop that
-            optimal_action = arbitrageur_action(token_state,
-                                                state.pid_state,
-                                                state.market_price,
-                                                state.eth_price,
-                                                params)
-            # scale = (2 * random() - 1.0) * 0.0
-            # real_action = TokenState(0, 0, 0, 0)
-            # optimal_action = TokenState(0, 0, 0, 0)
-            # Transform the coordinates
+            optimal_action = optimal_actions[i]
+
             transform_args = (token_state,
                               state.pid_state,
                               params,
                               state.eth_price)
+
+            # Transform real and optimal actions
             transformed_real_action = coordinate_transform(real_action,
                                                            *transform_args)
             transformed_optimal_action = coordinate_transform(optimal_action,
@@ -152,7 +161,9 @@ def action_errors(past_states: list[ActionState],
 
 
 def fit_predict_action(past_states: list[ActionState],
-                       params: UserActionParams) -> TokenState:
+                       action_params: UserActionParams,
+                       ewm_alpha: float = 0.8,
+                       var_lag: int = 15) -> TokenState:
     """
     Steps:
     1. Retrieve historical arbitrageur actions
@@ -165,13 +176,31 @@ def fit_predict_action(past_states: list[ActionState],
     if type(past_states) == list:
         if len(past_states) > 0:
             state = past_states[-1]
-            errors = list(action_errors(past_states, params))
+
+            # Retrieve errors on the transformed coordinates
+            errors = list(action_errors(past_states,
+                                        action_params,
+                                        ewm_alpha=ewm_alpha))
             errors = pd.DataFrame(errors).dropna().values  # HACK
-            raw_prediction = VAR_prediction(errors)
-            transformed_new_action = TransformedTokenState(*raw_prediction)
+
+            # Perform a Power Transformation
+            transformer = PowerTransformer()
+            transformed_errors = transformer.fit_transform(errors)
+
+            # Train VAR model and generate prediction
+            transformed_prediction = VAR_prediction(transformed_errors,
+                                                    var_lag)
+            
+            transformed_prediction = transformed_prediction.reshape(1, -1)
+            # Go back to the transformed coordinates
+            prediction = transformer.inverse_transform(transformed_prediction)
+            prediction = prediction.tolist()[0] # HACK for making sense of numpy
+            transformed_new_action = TransformedTokenState(*prediction)
+
+            # Go Back to the original coordinates
             transform_args = (state.token_state,
                               state.pid_state,
-                              params,
+                              action_params,
                               state.eth_price)
             new_action = reverse_coordinate_transform(transformed_new_action,
                                                       *transform_args)

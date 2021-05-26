@@ -21,16 +21,25 @@ PI_BOUND_PARAMS = PIBoundParams(
 
 
 raw_params: dict[str, Union[Param, ParamSweep]] = {
-    'heights': Param(None, dict[Timestep, Height]),
+    # System wide parameters
     'governance_events': Param({}, dict[Timestep, GovernanceEvent]),
-    'backtesting_data': Param({}, TimestepDict),
-    'backtesting_action_states': Param(None, tuple[ActionState]),
-    'perform_backtesting': Param(True, bool),
-    'exogenous_data': Param({}, TimestepDict),
-    'user_action_params': Param(USER_ACTION_PARAMS, UserActionParams),
-    'block_time': Param(13.13, Seconds),
     'pi_bound_params': Param(PI_BOUND_PARAMS, PIBoundParams),
-    'extrapolation_timedelta': Param(60 * 60, Seconds)
+    'exogenous_data': Param({}, TimestepDict),
+    
+    # Backtesting specific parameters
+    'heights': Param(None, dict[Timestep, Height]),
+    'backtesting_data': Param({}, TimestepDict),
+    'block_time': Param(13.13, Seconds),
+
+    # Extrapolation specific parameters
+    'backtesting_action_states': Param(None, tuple[ActionState]),
+    'user_action_params': Param(USER_ACTION_PARAMS, UserActionParams),
+    'extrapolation_timedelta': Param(60 * 60, Seconds),
+    'ewm_alpha': Param(0.8, float),
+    'var_lag': Param(15, int),
+
+    # Misc
+    'perform_backtesting': Param(True, bool)
 }
 
 params = prepare_params(raw_params)

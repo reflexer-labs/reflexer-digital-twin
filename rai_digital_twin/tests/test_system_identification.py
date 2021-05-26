@@ -42,10 +42,16 @@ def test_fit_predict():
                'eth_price': 1.2
                }
 
-    state_5 = {'token_state': TokenState(12, 8, 4, 3),
+    state_5 = {'token_state': TokenState(12, 8, 4, 8),
                'pid_state': ControllerState(0.8, 0.99, 0.5, 0.5),
-               'market_price': 2.0,
-               'eth_price': 0.4
+               'market_price': 0.5,
+               'eth_price': 1.5
+               }
+
+    state_6 = {'token_state': TokenState(7, 10, 1, 6),
+               'pid_state': ControllerState(0.8, 1.01, 0.5, 0.5),
+               'market_price': 1.2,
+               'eth_price': 1.0
                }
                
     states = [
@@ -53,10 +59,11 @@ def test_fit_predict():
         ActionState(**state_2),
         ActionState(**state_3),
         ActionState(**state_4),
-        ActionState(**state_5)
+        ActionState(**state_5),
+        ActionState(**state_6)
     ]
 
     params = UserActionParams(1.0, 100, 0.003, True, 1.0)
 
-    new_action = fit_predict_action(states, params)
+    new_action = fit_predict_action(states, params, 0.8, 1)
     assert type(new_action) == TokenState

@@ -68,6 +68,7 @@ class UserActionParams():
     intensity: Percentage
 
 
+
 @dataclass(frozen=True)
 class TokenState():
     rai_reserve: RAI

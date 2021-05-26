@@ -40,7 +40,9 @@ def p_user_action(params, _1, history, state) -> Signal:
                                               history,
                                               state)
         new_action = fit_predict_action(states,
-                                        params['user_action_params'])
+                                        params['user_action_params'],
+                                        params['ewm_alpha'],
+                                        params['var_lag'])
 
         new_state = state['token_state'] + new_action * (random() - 0.5) * 0.001 # HACK
         return {'token_state': new_state}
