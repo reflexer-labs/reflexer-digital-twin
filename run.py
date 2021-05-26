@@ -1,30 +1,29 @@
 # %%
 
+import plotly.express as px
+import pandas as pd
 from rai_digital_twin.execution_logic import extrapolation_cycle
 
 df = extrapolation_cycle()
 # %%
-import plotly.express as px
 # %%
-fig_df = df.query('timestep > 0')
-fig = px.line(fig_df,
-              x='timestep',
-              y=['eth_price', 'market_price'],
-              log_y=True)
-fig.show()
-# %%
-fig_df = df.query('timestep > 0')
-fig = px.line(fig_df,
-              x='timestep',
-              y=['rai_reserve', 'eth_reserve', 'rai_debt', 'eth_locked'],
-              log_y=True)
-fig.show()
+df = df.assign(hours_passed=lambda df: df.seconds_passed / 3600)
 
 # %%
-fig_df = df.query('timestep > 0')
+cols = {'eth_price',
+        'market_price',
+        'redemption_price',
+        'redemption_rate',
+        'rai_reserve', 'eth_reserve',
+        'rai_debt',
+        'eth_locked'}
+fig_df = (df
+          .melt(id_vars=['hours_passed'], value_vars=cols)
+          )
 fig = px.line(fig_df,
-              x='timestep',
-              y=['redemption_price', 'redemption_rate'],
-              log_y=True)
+              x='hours_passed',
+              y='value',
+              facet_row='variable',
+              height=2000)
+fig.update_yaxes(matches=None)
 fig.show()
-# %%

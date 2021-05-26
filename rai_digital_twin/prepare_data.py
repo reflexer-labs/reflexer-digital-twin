@@ -13,7 +13,7 @@ def row_to_controller_state(row: pd.Series) -> ControllerState:
 
 def row_to_token_state(row: pd.Series) -> TokenState:
     return TokenState(row.RaiInUniswap,
-                      row.RaiInUniswap,
+                      row.EthInUniswap,
                       row.debt,
                       row.collateral)
 

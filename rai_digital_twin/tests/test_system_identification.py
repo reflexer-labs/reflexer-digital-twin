@@ -56,7 +56,7 @@ def test_fit_predict():
         ActionState(**state_5)
     ]
 
-    params = UserActionParams(1.0, 100, 0.003, True)
+    params = UserActionParams(1.0, 100, 0.003, True, 1.0)
 
     new_action = fit_predict_action(states, params)
     assert type(new_action) == TokenState

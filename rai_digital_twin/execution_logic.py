@@ -1,19 +1,20 @@
 
-from rai_digital_twin.types import ActionState, BacktestingData, ControllerParams, ControllerState, TimestepDict
+from pandas.core.frame import DataFrame
+from rai_digital_twin.types import ActionState, BacktestingData, ControllerParams, ControllerState, GovernanceEvent, Timestep, TimestepDict
 import pandas as pd
-from typing import Dict, List
 
 from cadCAD_tools import easy_run
 from .backtesting import simulation_loss
 from .prepare_data import load_backtesting_data, load_governance_events
-from .stochastic import FitParams, fit_eth_price, fit_predict_eth_price, generate_eth_samples
+from .stochastic import FitParams, fit_eth_price, generate_eth_samples
 from rai_digital_twin import default_model
 
 BACKTESTING_DATA_PATH = '~/repos/bsci/reflexer-digital-twin/data/states.csv'
 GOVERNANCE_EVENTS_PATH = '~/repos/bsci/reflexer-digital-twin/data/controller_params.csv'
 
 
-def prepare(report_path: str = None):
+def prepare(report_path: str = None) -> tuple[BacktestingData,
+                                              dict[Timestep, GovernanceEvent]]:
     """
     Retrieves all required historical and prior data.
     """
@@ -26,7 +27,7 @@ def prepare(report_path: str = None):
 
 
 def backtest_model(backtesting_data: BacktestingData,
-                   governance_events) -> None:
+                   governance_events) -> tuple[DataFrame, DataFrame, DataFrame]:
 
     initial_state = default_model.initial_state
 
@@ -54,15 +55,15 @@ def backtest_model(backtesting_data: BacktestingData,
 
     timesteps = len(backtesting_data.heights) - 1
 
-    sim_df = easy_run(initial_state,
-                      params,
-                      default_model.timestep_block,
-                      timesteps,
-                      1,
-                      drop_substeps=True,
-                      assign_params=False)
+    raw_sim_df = easy_run(initial_state,
+                          params,
+                          default_model.timestep_block,
+                          timesteps,
+                          1,
+                          drop_substeps=True,
+                          assign_params=False)
 
-    sim_df = default_model.post_processing(sim_df)
+    sim_df = default_model.post_processing(raw_sim_df)
     test_df = pd.DataFrame.from_dict(
         backtesting_data.pid_states, orient='index')
     loss = simulation_loss(sim_df, test_df)
@@ -70,7 +71,7 @@ def backtest_model(backtesting_data: BacktestingData,
 
     # TODO run notebook template
 
-    return (sim_df, test_df)
+    return (sim_df, test_df, raw_sim_df)
 
 
 def stochastic_fit(input_data: object,
@@ -106,34 +107,39 @@ def extrapolate_signals(signal_params: FitParams,
 
 def extrapolate_data(signals: object,
                      backtesting_data: BacktestingData,
-                     backtest_results,
+                     backtest_results: DataFrame,
                      governance_events,
-                     N_t: int=30,
+                     N_t: int = 10,
                      report_path: str = None) -> object:
     """
     Generate a extrapolation dataset.
     """
+    (sim_df, test_df, raw_sim_df) = backtest_results
 
     # Index for the last available data points
-    last_t = len(backtesting_data.heights) - 1
-    last_row = backtest_results[0].iloc[-1]
+    last_row = raw_sim_df.iloc[-1]
 
     initial_state = default_model.initial_state
-    initial_pid_state = ControllerState(backtesting_data.pid_states[last_t].redemption_price,
-                                        backtesting_data.pid_states[last_t].redemption_rate,
+    # TODO use test_df pid state
+    initial_pid_state = ControllerState(last_row.pid_state.redemption_price,
+                                        last_row.pid_state.redemption_rate,
                                         0.0,
                                         0.0)
-                                        
-    initial_pid_params = ControllerParams(last_row.kp,
-                                          last_row.ki,
-                                          last_row.leaky_factor,
-                                          last_row.period,
-                                          last_row.enabled)
 
+    initial_pid_params = last_row['pid_params']
 
+    # Append all past action states for usage on the fit-predict process
+    cols = {'token_state',
+            'pid_state',
+            'market_price',
+            'eth_price'}
+    # TODO use pid_state from test_df rather than sim_df
+    records = (raw_sim_df.reset_index()
+               .loc[:, cols]
+               .to_dict(orient='records'))
+    past_action_states = [ActionState(**record) for record in records]
 
-
-
+    # Update system parameters for extrapolation
     params = default_model.parameters
     params.update(perform_backtesting=[False])
     params.update(heights=[None])
@@ -142,13 +148,16 @@ def extrapolate_data(signals: object,
     params.update(exogenous_data=[signals])
     params.update(backtesting_action_states=[past_action_states])
 
-
+    # Update initial state for extrapolation
     initial_state.update(pid_state=initial_pid_state,
                          pid_params=initial_pid_params,
-                         token_state=backtesting_data.token_states[last_t])
+                         token_state=last_row.token_state,
+                         eth_price=last_row.eth_price,
+                         market_price=last_row.market_price) # TODO use test df state
 
     timesteps = N_t
 
+    # Run extrapolation simulation
     sim_df = easy_run(initial_state,
                       params,
                       default_model.timestep_block,
@@ -157,6 +166,7 @@ def extrapolate_data(signals: object,
                       drop_substeps=True,
                       assign_params=False)
 
+    # Clean-up
     sim_df = default_model.post_processing(sim_df)
 
     # TODO run notebook template
@@ -176,7 +186,7 @@ def extrapolation_cycle() -> object:
     stochastic_params = stochastic_fit(backtesting_df.exogenous_data)
 
     print("3. Extrapolating Exogenous Signals\n---")
-    N_t = 100
+    N_t = 240
     extrapolated_signals = extrapolate_signals(stochastic_params, N_t)
 
     print("4. Extrapolating Future Data\n---")

@@ -1,7 +1,9 @@
 from dataclasses import dataclass
+import random
 from typing import Iterable
 from statsmodels.tsa.api import VAR
 import pandas as pd
+from random import random
 
 from rai_digital_twin.types import ActionState, ControllerState, ETH, ETH_per_RAI, OptimalAction, Percentage, RAI, TokenState, TransformedTokenState, USD_per_ETH, USD_per_RAI, UserActionParams
 from rai_digital_twin.types import coordinate_transform, reverse_coordinate_transform
@@ -74,13 +76,15 @@ def arbitrageur_action(token_state: TokenState,
                                                  liquidation_price,
                                                  params.uniswap_fee)
 
-    return compute_arbitrageur_action(token_state,
-                                      fee_survival,
-                                      liquidation_price,
-                                      expensive_threshold,
-                                      cheap_threshold,
-                                      relative_redemption_price,
-                                      optimal_actions)
+    action = compute_arbitrageur_action(token_state,
+                                        fee_survival,
+                                        liquidation_price,
+                                        expensive_threshold,
+                                        cheap_threshold,
+                                        relative_redemption_price,
+                                        optimal_actions)
+
+    return action #* (token_state.eth_reserve / action.eth_reserve * params.intensity)
 
 
 def VAR_prediction(errors: list[list[float]],
@@ -118,12 +122,15 @@ def action_errors(past_states: list[ActionState],
 
             # Compute real and optimal actions
             real_action = token_state - last_token_state
+            # NOTE: possibly going to drop that
             optimal_action = arbitrageur_action(token_state,
                                                 state.pid_state,
                                                 state.market_price,
                                                 state.eth_price,
                                                 params)
-
+            # scale = (2 * random() - 1.0) * 0.0
+            # real_action = TokenState(0, 0, 0, 0)
+            # optimal_action = TokenState(0, 0, 0, 0)
             # Transform the coordinates
             transform_args = (token_state,
                               state.pid_state,
@@ -163,11 +170,11 @@ def fit_predict_action(past_states: list[ActionState],
             raw_prediction = VAR_prediction(errors)
             transformed_new_action = TransformedTokenState(*raw_prediction)
             transform_args = (state.token_state,
-                            state.pid_state,
-                            params,
-                            state.eth_price)
+                              state.pid_state,
+                              params,
+                              state.eth_price)
             new_action = reverse_coordinate_transform(transformed_new_action,
-                                                    *transform_args)
+                                                      *transform_args)
             return new_action
         else:
             return None

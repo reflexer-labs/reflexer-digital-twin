@@ -16,6 +16,7 @@ def s_market_price(params, _2, _3, state, signal) -> VariableUpdate:
         return (key, signal[key])
     else:
         token_state: TokenState = state['token_state']
-        rai_per_eth: float = token_state.rai_reserve / token_state.eth_reserve
-        value: RAI_per_USD = state['eth_price'] * rai_per_eth
+        eth_per_rai: float = token_state.eth_reserve / token_state.rai_reserve
+        value: RAI_per_USD = state['eth_price'] * eth_per_rai
         return (key, value)
+

@@ -65,6 +65,7 @@ class UserActionParams():
     debt_ceiling: RAI
     uniswap_fee: Percentage
     consider_liquidation_ratio: bool
+    intensity: Percentage
 
 
 @dataclass(frozen=True)
@@ -75,13 +76,25 @@ class TokenState():
     eth_locked: ETH
 
     def __sub__(self, x):
-        if type(x) == TokenState:
-            return TokenState(self.rai_reserve - x.rai_reserve,
-                              self.eth_reserve - x.eth_reserve,
-                              self.rai_debt - x.rai_debt,
-                              self.eth_locked - x.eth_locked)
-        else:
-            raise TypeError()
+        return TokenState(self.rai_reserve - x.rai_reserve,
+                            self.eth_reserve - x.eth_reserve,
+                            self.rai_debt - x.rai_debt,
+                            self.eth_locked - x.eth_locked)
+   
+
+    def __add__(self, x):
+        return TokenState(self.rai_reserve + x.rai_reserve,
+                            self.eth_reserve + x.eth_reserve,
+                            self.rai_debt + x.rai_debt,
+                            self.eth_locked + x.eth_locked)
+
+
+    def __mul__(self, x):
+        return TokenState(self.rai_reserve * x,
+                            self.eth_reserve * x,
+                            self.rai_debt * x,
+                            self.eth_locked * x)
+
 
 
 DeltaTokenState = TokenState    
@@ -99,13 +112,11 @@ class TransformedTokenState():
     eth_reserve_scaled: Percentage
 
     def __sub__(self, x):
-        if type(x) == TransformedTokenState:
-            return TransformedTokenState(self.rai_debt_scaled - x.rai_debt_scaled,
-                                         self.liquidation_surplus - x.liquidation_surplus,
-                                         self.rai_reserve_scaled - x.rai_reserve_scaled,
-                                         self.eth_reserve_scaled - x.eth_reserve_scaled)
-        else:
-            raise TypeError()
+        return TransformedTokenState(self.rai_debt_scaled - x.rai_debt_scaled,
+                                        self.liquidation_surplus - x.liquidation_surplus,
+                                        self.rai_reserve_scaled - x.rai_reserve_scaled,
+                                        self.eth_reserve_scaled - x.eth_reserve_scaled)
+
 
 
 @dataclass(frozen=True)
@@ -114,7 +125,6 @@ class BacktestingData():
     exogenous_data: dict[Timestep, dict[str, float]]
     heights: dict[Timestep, Height]
     pid_states: dict[Timestep, ControllerState]
-
 
 @dataclass(frozen=True)
 class OptimalAction():

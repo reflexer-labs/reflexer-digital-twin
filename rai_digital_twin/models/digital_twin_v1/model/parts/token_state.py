@@ -5,16 +5,29 @@ from rai_digital_twin.types import ActionState, TokenState
 from cadCAD_tools.types import History, Params, Signal, State, VariableUpdate
 
 
+def state_to_action_state(state: State) -> ActionState:
+    return ActionState(state['token_state'],
+                       state['pid_state'],
+                       state['market_price'],
+                       state['eth_price']
+                       )
+
+
 def prepare_action_state_history(params: Params,
                                  history: History,
                                  state: State) -> list[ActionState]:
 
     # Backtesting action states
+    states_1 = params['backtesting_action_states'].copy()
 
     # History action states
+    states_2 = [state_to_action_state(substep_states[-1])
+                for substep_states in history]
 
     # Last action state
-    pass
+    states_3 = [state_to_action_state(state)]
+
+    return states_1 + states_2 + states_3
 
 
 def p_user_action(params, _1, history, state) -> Signal:
@@ -29,7 +42,8 @@ def p_user_action(params, _1, history, state) -> Signal:
         new_action = fit_predict_action(states,
                                         params['user_action_params'])
 
-        return {'token_state': new_action}
+        new_state = state['token_state'] + new_action
+        return {'token_state': new_state}
     else:
         return {}
 

@@ -6,7 +6,7 @@ def p_resolve_time_passed(params, _2, _3, state):
     t = state['timestep']
     heights = params.get('heights', None)
     if heights is None:
-        return {'timedelta': state['pid_params'].period}
+        return {'timedelta': params['extrapolation_timedelta']}
     else:
         # Get delta time in blocks
         delta_height = (heights.get(t, current_time) - heights.get(t - 1, 0))
