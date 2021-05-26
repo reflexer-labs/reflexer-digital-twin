@@ -8,6 +8,7 @@ from .backtesting import simulation_loss
 from .prepare_data import load_backtesting_data, load_governance_events
 from .stochastic import FitParams, fit_eth_price, generate_eth_samples
 from rai_digital_twin import default_model
+from time import time
 
 BACKTESTING_DATA_PATH = '~/repos/bsci/reflexer-digital-twin/data/states.csv'
 GOVERNANCE_EVENTS_PATH = '~/repos/bsci/reflexer-digital-twin/data/controller_params.csv'
@@ -176,6 +177,8 @@ def extrapolate_data(signals: object,
 
 def extrapolation_cycle() -> object:
 
+    t1 = time()
+
     print("0. Preparing Data\n---")
     backtesting_df, governance_events = prepare()
 
@@ -195,8 +198,8 @@ def extrapolation_cycle() -> object:
                                    backtest_results,
                                    governance_events,
                                    N_t)
-
-    print("6. Done!\n---")
+    t2 = time()
+    print(f"6. Done! {t2 - t1 :.2f}s\n---")
 
     return backtest_results, future_data
 
