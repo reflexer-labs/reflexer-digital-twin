@@ -1,5 +1,5 @@
 
-from rai_digital_twin.types import BacktestingData, ControllerParams, ControllerState
+from rai_digital_twin.types import ActionState, BacktestingData, ControllerParams, ControllerState, TimestepDict
 import pandas as pd
 from typing import Dict, List
 
@@ -11,14 +11,6 @@ from rai_digital_twin import default_model
 
 BACKTESTING_DATA_PATH = '~/repos/bsci/reflexer-digital-twin/data/states.csv'
 GOVERNANCE_EVENTS_PATH = '~/repos/bsci/reflexer-digital-twin/data/controller_params.csv'
-
-
-def save_artifact():
-    return None
-
-
-def retrieve_historical_data() -> pd.DataFrame:
-    pass
 
 
 def prepare(report_path: str = None):
@@ -76,7 +68,7 @@ def backtest_model(backtesting_data: BacktestingData,
     loss = simulation_loss(sim_df, test_df)
     print(f"Backtesting loss: {loss :.2%}")
 
-    # TODO call template notebook using jupytext or papermill
+    # TODO run notebook template
 
     return (sim_df, test_df)
 
@@ -106,14 +98,17 @@ def extrapolate_signals(signal_params: FitParams,
     eth_price_list: list = eth_series[0]
     exogenous_data = {t: {'eth_price': el}
                       for t, el in enumerate(eth_price_list)}
+
+    # TODO run notebook template
+
     return exogenous_data
 
 
 def extrapolate_data(signals: object,
-                     backtesting_data,
+                     backtesting_data: BacktestingData,
                      backtest_results,
                      governance_events,
-                     N_t: int,
+                     N_t: int=30,
                      report_path: str = None) -> object:
     """
     Generate a extrapolation dataset.
@@ -123,30 +118,36 @@ def extrapolate_data(signals: object,
     last_t = len(backtesting_data.heights) - 1
     last_row = backtest_results[0].iloc[-1]
 
-    seconds_per_timesteps = (60 * 60)
-    heights = {i: i * seconds_per_timesteps for i in range(N_t)}
-
     initial_state = default_model.initial_state
     initial_pid_state = ControllerState(backtesting_data.pid_states[last_t].redemption_price,
                                         backtesting_data.pid_states[last_t].redemption_rate,
                                         0.0,
                                         0.0)
+                                        
     initial_pid_params = ControllerParams(last_row.kp,
                                           last_row.ki,
                                           last_row.leaky_factor,
                                           last_row.period,
                                           last_row.enabled)
-    initial_state.update(pid_state=initial_pid_state,
-                         pid_params=initial_pid_params,
-                         token_state=backtesting_data.token_states[last_t])
+
+
+
+
 
     params = default_model.parameters
+    params.update(perform_backtesting=[False])
     params.update(heights=[None])
     params.update(backtesting_data=[None])
     params.update(governance_events=[{}])
     params.update(exogenous_data=[signals])
+    params.update(backtesting_action_states=[past_action_states])
 
-    timesteps = len(backtesting_data.heights) - 1
+
+    initial_state.update(pid_state=initial_pid_state,
+                         pid_params=initial_pid_params,
+                         token_state=backtesting_data.token_states[last_t])
+
+    timesteps = N_t
 
     sim_df = easy_run(initial_state,
                       params,
@@ -157,6 +158,8 @@ def extrapolate_data(signals: object,
                       assign_params=False)
 
     sim_df = default_model.post_processing(sim_df)
+
+    # TODO run notebook template
 
     return sim_df
 
@@ -184,6 +187,7 @@ def extrapolation_cycle() -> object:
                                    N_t)
 
     print("6. Done!\n---")
+
     return future_data
 
 

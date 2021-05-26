@@ -1,20 +1,32 @@
 
 
 from rai_digital_twin.system_identification import fit_predict_action
-from rai_digital_twin.types import TokenState
-from cadCAD_tools.types import Params, Signal, State, VariableUpdate
+from rai_digital_twin.types import ActionState, TokenState
+from cadCAD_tools.types import History, Params, Signal, State, VariableUpdate
+
+
+def prepare_action_state_history(params: Params,
+                                 history: History,
+                                 state: State) -> list[ActionState]:
+
+    # Backtesting action states
+
+    # History action states
+
+    # Last action state
+    pass
 
 
 def p_user_action(params, _1, history, state) -> Signal:
     # Only run if the model is running on extrapolation mode
-    if params['backtesting_data'] is None:
+    if params['perform_backtesting'] is False:
         # Retrieve data on the last substep and on each point of history,
         # except for the last one.
-        past_states = [timestep_state[-1]
-                    for timestep_state in history[:-1]]
 
-        new_action = fit_predict_action(state,
-                                        past_states,
+        states = prepare_action_state_history(params,
+                                              history,
+                                              state)
+        new_action = fit_predict_action(states,
                                         params['user_action_params'])
 
         return {'token_state': new_action}
@@ -23,9 +35,9 @@ def p_user_action(params, _1, history, state) -> Signal:
 
 
 def p_backtesting(params, _2, _3, state) -> Signal:
-    t = state['timestep']
-    backtesting_data = params.get('backtesting_data', None)
-    if backtesting_data is not None:
+    if params['perform_backtesting'] is True:
+        t = state['timestep']
+        backtesting_data = params.get('backtesting_data', None)
         current_data = backtesting_data.get(t, state['token_state'])
         return {'token_state': current_data}
     else:

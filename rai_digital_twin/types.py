@@ -122,6 +122,21 @@ class OptimalAction():
     repay: ETH
 
 
+@dataclass(frozen=True)
+class ActionState():
+    token_state: TokenState
+    pid_state: ControllerState
+    market_price: USD_per_RAI
+    eth_price: USD_per_ETH
+
+
+@dataclass(frozen=True)
+class PIBoundParams():
+    lower_bound: float
+    upper_bound: float
+    default_redemption_rate: Percentage
+    negative_rate_limit: Percentage
+
 def coordinate_transform(delta_state: TokenState,
                          global_state: TokenState,
                          controller_state: ControllerState,

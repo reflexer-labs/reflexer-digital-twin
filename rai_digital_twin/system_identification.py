@@ -3,7 +3,7 @@ from typing import Iterable
 from statsmodels.tsa.api import VAR
 import pandas as pd
 
-from rai_digital_twin.types import ControllerState, ETH, ETH_per_RAI, OptimalAction, Percentage, RAI, TokenState, TransformedTokenState, USD_per_ETH, USD_per_RAI, UserActionParams
+from rai_digital_twin.types import ActionState, ControllerState, ETH, ETH_per_RAI, OptimalAction, Percentage, RAI, TokenState, TransformedTokenState, USD_per_ETH, USD_per_RAI, UserActionParams
 from rai_digital_twin.types import coordinate_transform, reverse_coordinate_transform
 
 
@@ -105,30 +105,30 @@ def VAR_prediction(errors: list[list[float]],
     return Y_pred[0]
 
 
-def action_errors(past_states: list[dict],
+def action_errors(past_states: list[ActionState],
                   params: UserActionParams) -> Iterable[TransformedTokenState]:
 
     if len(past_states) > 1:
         # First state
-        last_token_state: TokenState = past_states[0]['token_state']
+        last_token_state: TokenState = past_states[0].token_state
 
         # Iterate
         for state in past_states[1:]:
-            token_state = state['token_state']
+            token_state = state.token_state
 
             # Compute real and optimal actions
             real_action = token_state - last_token_state
             optimal_action = arbitrageur_action(token_state,
-                                                state['pid_state'],
-                                                state['market_price'],
-                                                state['eth_price'],
+                                                state.pid_state,
+                                                state.market_price,
+                                                state.eth_price,
                                                 params)
 
             # Transform the coordinates
             transform_args = (token_state,
-                              state['pid_state'],
+                              state.pid_state,
                               params,
-                              state['eth_price'])
+                              state.eth_price)
             transformed_real_action = coordinate_transform(real_action,
                                                            *transform_args)
             transformed_optimal_action = coordinate_transform(optimal_action,
@@ -144,8 +144,7 @@ def action_errors(past_states: list[dict],
         raise Exception("Insufficient data points")
 
 
-def fit_predict_action(state: dict,
-                       past_states: list[dict],
+def fit_predict_action(past_states: list[ActionState],
                        params: UserActionParams) -> TokenState:
     """
     Steps:
@@ -156,18 +155,18 @@ def fit_predict_action(state: dict,
     5. Predict next action
     6. Apply next action to state
     """
-    if len(past_states) > 2: # HACK
+    state = past_states[-1]
+    if len(past_states) > 2:  # HACK
         errors = list(action_errors(past_states, params))
-        errors = pd.DataFrame(errors).dropna().values # HACK
+        errors = pd.DataFrame(errors).dropna().values  # HACK
         raw_prediction = VAR_prediction(errors)
         transformed_new_action = TransformedTokenState(*raw_prediction)
-        transform_args = (state['token_state'],
-                        state['pid_state'],
-                        params,
-                        state['eth_price'])
+        transform_args = (state.token_state,
+                          state.pid_state,
+                          params,
+                          state.eth_price)
         new_action = reverse_coordinate_transform(transformed_new_action,
-                                                *transform_args)
+                                                  *transform_args)
         return new_action
     else:
         return None
-    
