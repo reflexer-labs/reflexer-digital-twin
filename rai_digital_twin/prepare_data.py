@@ -1,190 +1,9 @@
 import numpy as np
 import pandas as pd
-import json
-import requests
-from tqdm.auto import tqdm
 
-from pandas.core.frame import DataFrame
-from google.cloud import bigquery
-
-from rai_digital_twin.types import ControllerState, GovernanceEvent, GovernanceEventKind, Height, Timestep, TokenState, BacktestingData
-
-
-SUBGRAPH_URL = 'https://api.thegraph.com/subgraphs/name/reflexer-labs/rai-mainnet'
-
-
-def retrieve_hourly_stats(block_numbers: list[int]) -> DataFrame:
-    hourly = []
-    for i in tqdm(block_numbers, desc='Retrieving hourly stats'):
-        query = '''
-        {
-        hourlyStats(where: {blockNumber_gt: %s}) { 
-            marketPriceUsd # price of COIN in USD (uni pool price * ETH median price)
-            marketPriceEth # Price of COIN in ETH (uni pool price)
-        }
-        }
-        ''' % i
-        r = requests.post(SUBGRAPH_URL, json={'query': query})
-        s = json.loads(r.content)['data']['hourlyStats'][0]
-        hourly.append(s)
-    hourlyStats = (pd.DataFrame(hourly)
-                   .assign(block_number=block_numbers)
-                   .set_index('block_number'))
-    return hourlyStats
-
-
-def retrieve_system_states(block_numbers: list[int]) -> DataFrame:
-    state = []
-    for i in tqdm(block_numbers, desc='Retrieving system states'):
-        query = '''
-        {
-        systemState(block: {number:%s},id:"current") { 
-            coinUniswapPair {
-            label
-            reserve0
-            reserve1
-            token0Price
-            token1Price
-            totalSupply
-            }
-            currentCoinMedianizerUpdate{
-            value
-            }
-            currentRedemptionRate {
-            eightHourlyRate
-            annualizedRate
-            hourlyRate
-            createdAt
-            }
-            currentRedemptionPrice {
-            value
-            }
-            erc20CoinTotalSupply
-            globalDebt
-            globalDebtCeiling
-            safeCount,
-            totalActiveSafeCount
-            coinAddress
-            wethAddress
-            systemSurplus
-            debtAvailableToSettle
-            lastPeriodicUpdate
-            createdAt
-            createdAtBlock
-        }
-        }
-        ''' % i
-        r = requests.post(SUBGRAPH_URL, json={'query': query})
-        s = json.loads(r.content)['data']['systemState']
-        state.append(s)
-
-    systemState = pd.DataFrame(state)
-    systemState['block_number'] = block_numbers
-    systemState = systemState.set_index('block_number')
-
-    systemState['RedemptionRateAnnualizedRate'] = systemState.currentRedemptionRate.apply(
-        lambda x: x['annualizedRate'])
-    systemState['RedemptionRateHourlyRate'] = systemState.currentRedemptionRate.apply(
-        lambda x: x['hourlyRate'])
-    systemState['RedemptionRateEightHourlyRate'] = systemState.currentRedemptionRate.apply(
-        lambda x: x['eightHourlyRate'])
-    systemState['RedemptionPrice'] = systemState.currentRedemptionPrice.apply(
-        lambda x: x['value'])
-    systemState['EthInUniswap'] = systemState.coinUniswapPair.apply(
-        lambda x: x['reserve1'])
-    systemState['RaiInUniswap'] = systemState.coinUniswapPair.apply(
-        lambda x: x['reserve0'])
-    systemState['RaiDrawnFromSAFEs'] = systemState['erc20CoinTotalSupply']
-    #systemState['RAIInUniswapV2(RAI/ETH)'] = systemState.coinUniswapPair.apply(lambda x: x['reserve0'])
-    del systemState['currentRedemptionRate']
-    del systemState['currentRedemptionPrice']
-
-    systemState = systemState[['debtAvailableToSettle',
-                               'globalDebt',
-                               'globalDebtCeiling',
-                               'systemSurplus',
-                               'totalActiveSafeCount',
-                               'RedemptionRateAnnualizedRate',
-                               'RedemptionRateHourlyRate',
-                               'RedemptionRateEightHourlyRate',
-                               'RedemptionPrice',
-                               'EthInUniswap',
-                               'RaiInUniswap',
-                               'RaiDrawnFromSAFEs']]
-    return systemState
-
-
-def retrieve_safe_history(block_numbers: list[int]) -> DataFrame:
-    safehistories = []
-    for i in tqdm(block_numbers, desc='Retrieving SAFEs History'):
-        query = '''
-        {
-        safes(block: {number:%s}) {
-                collateral
-                debt
-        }
-        }
-        ''' % i
-        r = requests.post(SUBGRAPH_URL, json={'query': query})
-        s = json.loads(r.content)['data']['safes']
-        t = pd.DataFrame(s)
-        t['collateral'] = t['collateral'].astype(float)
-        t['debt'] = t['debt'].astype(float)
-        safehistories.append(pd.DataFrame(t.sum().to_dict(), index=[0]))
-
-    safe_history = (pd.concat(safehistories)
-                    .assign(block_number=block_numbers)
-                    .set_index('block_number')
-                    )
-    return safe_history
-
-
-def retrieve_eth_price(limit=None,
-                       date_range=None) -> DataFrame:
-
-    if limit is not None:
-        limit_subquery = f'LIMIT {limit}'
-    else:
-        limit_subquery = ''
-
-    if date_range is not None:
-        range_subquery = f"WHERE block_timestamp >= '{date_range[0]}' AND block_timestamp < '{date_range[1]}'"
-    else:
-        range_subquery = ''
-
-    # BUG It seems that the OSM_event_UpdateResult has no updates since 2021-05-07
-    sql = f"""
-    SELECT 
-    * 
-    FROM `blockchain-etl.ethereum_rai.OSM_event_UpdateResult`
-    {range_subquery}
-    ORDER By block_timestamp DESC
-    {limit_subquery}
-    """
-
-    constant = 1000000000000000000
-    client = bigquery.Client()
-    raw_df = client.query(sql).to_dataframe()
-    eth_price_OSM = raw_df
-    eth_price_OSM['eth_price'] = eth_price_OSM['newMedian'].astype(
-        float)/constant
-    eth_price_OSM = eth_price_OSM[[
-        'block_number', 'eth_price', 'block_timestamp']]
-    return eth_price_OSM.set_index("block_number")
-
-
-def download_data(limit=None,
-                  date_range=None) -> DataFrame:
-    eth_price_df = retrieve_eth_price(limit=limit,
-                                      date_range=date_range)                           
-    block_numbers = eth_price_df.index
-    dfs = (retrieve_system_states(block_numbers),
-           retrieve_hourly_stats(block_numbers),
-           retrieve_safe_history(block_numbers),
-           eth_price_df)
-    historical_df = pd.concat(dfs, join='inner', axis=1)
-    return historical_df
-
+from rai_digital_twin.types import GovernanceEvent, GovernanceEventKind
+from rai_digital_twin.types import Height, Timestep, TokenState, ControllerState
+from rai_digital_twin.types import BacktestingData
 
 def row_to_controller_state(row: pd.Series) -> ControllerState:
     return ControllerState(row.RedemptionPrice,
@@ -215,14 +34,11 @@ def extract_exogenous_data(df: pd.DataFrame) -> dict[Timestep, dict[str, float]]
 
 def load_backtesting_data(path: str) -> BacktestingData:
     """
-    Make the historical clean for backtesting.
+    Make the historical data clean for backtesting.
     """
     # Load CSV file
-    # TODO: Parametrize start and end dates
     df = (pd.read_csv(path, compression='gzip')
             .sort_values('block_number', ascending=True)
-            .iloc[100:]  # HACK
-            .iloc[-500:]  # HACK
             .reset_index(drop=True)
             .assign(RedemptionRateHourlyRate=lambda df: df.RedemptionRateHourlyRate))
     # Retrieve historical info
@@ -237,6 +53,9 @@ def load_backtesting_data(path: str) -> BacktestingData:
 
 def retrieve_raw_events(params_df: pd.DataFrame,
                         initial_height: Height) -> list[dict]:
+    """
+
+    """
     first_event = None
     raw_events = []
     for event in params_df:

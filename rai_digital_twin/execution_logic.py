@@ -1,17 +1,20 @@
-
+from time import time
 from pandas.core.frame import DataFrame
-from rai_digital_twin.types import ActionState, BacktestingData, ControllerParams, ControllerState, ExogenousData, GovernanceEvent, Timestep, TimestepDict, USD_per_ETH, USD_per_RAI
 import pandas as pd
 from datetime import datetime, timedelta
-
-
+from os import listdir
+from pathlib import Path
 from cadCAD_tools import easy_run
 from cadCAD_tools.preparation import prepare_params, Param, ParamSweep
+
+# Module dependencies
+from .retrieve_data import download_data
+from .prepare_data import load_backtesting_data, load_governance_events
 from .backtesting import simulation_loss
-from .prepare_data import download_data, load_backtesting_data, load_governance_events
 from .stochastic import FitParams, fit_eth_price, generate_eth_samples
 from rai_digital_twin import default_model
-from time import time
+from rai_digital_twin.types import ActionState, BacktestingData, ControllerParams, ControllerState, ExogenousData
+from rai_digital_twin.types import GovernanceEvent, Timestep, USD_per_ETH
 
 GOVERNANCE_EVENTS_PATH = '~/repos/bsci/reflexer-digital-twin/data/controller_params.csv'
 
@@ -196,21 +199,37 @@ def extrapolate_data(signals: object,
     return sim_df
 
 
-def extrapolation_cycle() -> object:
+def extrapolation_cycle(BASE_PATH: str = None,
+                        HISTORICAL_INTERVAL_IN_DAYS: int = 14,
+                        PRICE_SAMPLES: int = 3,
+                        EXTRAPOLATION_SAMPLES: int = 1,
+                        EXTRAPOLATION_INTERVAL_IN_TS: int = 240,
+                        use_last_data=True) -> object:
 
     t1 = time()
-    runtime = datetime.utcnow()
-    data_start = runtime - timedelta(days=14)
-    date_range = (data_start, runtime)
-    date_range = None
-    BACKTESTING_DATA_PATH = f'~/repos/bsci/reflexer-digital-twin/data/runs/{runtime}_historical-data.csv.gz'
-
     print("0. Retrieving Data\n---")
-    retrieve_data(BACKTESTING_DATA_PATH,
-                  date_range)
+    if BASE_PATH is None:
+        BASE_PATH = Path('~/repos/bsci/reflexer-digital-twin/data/runs')
+    else:
+        BASE_PATH = Path(BASE_PATH)
+    if use_last_data is False:
+        runtime = datetime.utcnow()
+        data_start = runtime - timedelta(days=HISTORICAL_INTERVAL_IN_DAYS)
+        date_range = (data_start, runtime)
+
+        data_path = BASE_PATH / f'{runtime}_historical-data.csv.gz'
+        retrieve_data(data_path,
+                      date_range)
+    else:
+        files = listdir(BASE_PATH.expanduser())
+        files = sorted(
+            file for file in files if 'historical-data.csv.gz' in file)
+        data_path = BASE_PATH / f'{files[-1]}'
+
+    print(f"Data located at {data_path}")
 
     print("1. Preparing Data\n---")
-    backtesting_df, governance_events = prepare(BACKTESTING_DATA_PATH)
+    backtesting_df, governance_events = prepare(data_path)
 
     print("2. Backtesting Model\n---")
     backtest_results = backtest_model(backtesting_df, governance_events)
@@ -219,8 +238,8 @@ def extrapolation_cycle() -> object:
     stochastic_params = stochastic_fit(backtesting_df.exogenous_data)
 
     print("4. Extrapolating Exogenous Signals\n---")
-    N_t = 240
-    N_price_samples = 3
+    N_t = EXTRAPOLATION_INTERVAL_IN_TS
+    N_price_samples = PRICE_SAMPLES
     initial_price = backtest_results[0].iloc[-1].eth_price
     extrapolated_signals = extrapolate_signals(stochastic_params,
                                                N_t + 10,
@@ -228,7 +247,7 @@ def extrapolation_cycle() -> object:
                                                N_price_samples)
 
     print("5. Extrapolating Future Data\n---")
-    N_extrapolation_samples = 1
+    N_extrapolation_samples = EXTRAPOLATION_SAMPLES
     future_data = extrapolate_data(extrapolated_signals,
                                    backtesting_df,
                                    backtest_results,
@@ -236,14 +255,8 @@ def extrapolation_cycle() -> object:
                                    N_t,
                                    N_extrapolation_samples)
     t2 = time()
-    print(f"7. Done! {t2 - t1 :.2f}s\n---")
+    print(f"6. Done! {t2 - t1 :.2f}s\n---")
 
     # TODO report template
 
     return backtest_results, future_data
-
-
-if __name__ == '__main__':
-    extrapolation_cycle()
-
-# %%
