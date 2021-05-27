@@ -22,7 +22,7 @@ def extract_exogenous_data(df: pd.DataFrame) -> dict[Timestep, dict[str, float]]
     """
     Extract exogenous variables from historical dataframe.
     """
-    EXOGENOUS_MAP = {'marketPriceEth': 'eth_price',
+    EXOGENOUS_MAP = {'ETH Price (OSM)': 'eth_price',
                      'marketPriceUsd': 'market_price'}
 
     exogenous_data = (df.loc[:, EXOGENOUS_MAP.keys()]
@@ -41,7 +41,6 @@ def load_backtesting_data(path: str) -> BacktestingData:
             .iloc[100:] # HACK
             .iloc[-500:]
             .reset_index(drop=True)
-            .assign(marketPriceEth=lambda df: 1 / df.marketPriceEth)
             .assign(RedemptionRateHourlyRate= lambda df: df.RedemptionRateHourlyRate))
     # Retrieve historical info
     token_states = df.apply(row_to_token_state, axis=1).to_dict()

@@ -1,9 +1,10 @@
 
 from pandas.core.frame import DataFrame
-from rai_digital_twin.types import ActionState, BacktestingData, ControllerParams, ControllerState, GovernanceEvent, Timestep, TimestepDict, USD_per_ETH, USD_per_RAI
+from rai_digital_twin.types import ActionState, BacktestingData, ControllerParams, ControllerState, ExogenousData, GovernanceEvent, Timestep, TimestepDict, USD_per_ETH, USD_per_RAI
 import pandas as pd
 
 from cadCAD_tools import easy_run
+from cadCAD_tools.preparation import prepare_params, Param, ParamSweep
 from .backtesting import simulation_loss
 from .prepare_data import load_backtesting_data, load_governance_events
 from .stochastic import FitParams, fit_eth_price, generate_eth_samples
@@ -49,13 +50,14 @@ def backtest_model(backtesting_data: BacktestingData,
         initial_state.update(pid_params=initial_pid_params)
 
     params = default_model.parameters
-    params.update(heights=[backtesting_data.heights])
-    params.update(governance_events=[governance_events])
-    params.update(backtesting_data=[backtesting_data.token_states])
-    params.update(exogenous_data=[backtesting_data.exogenous_data])
+    params.update(heights=Param(backtesting_data.heights, None))
+    params.update(governance_events=Param(governance_events, None))
+    params.update(backtesting_data=Param(backtesting_data.token_states, None))
+    params.update(exogenous_data=Param(backtesting_data.exogenous_data, None))
 
     timesteps = len(backtesting_data.heights) - 1
 
+    params = prepare_params(params)
     raw_sim_df = easy_run(initial_state,
                           params,
                           default_model.timestep_block,
@@ -92,23 +94,26 @@ def stochastic_fit(input_data: object,
 def extrapolate_signals(signal_params: FitParams,
                         timesteps: int,
                         initial_price: USD_per_ETH,
-                        report_path: str = None) -> object:
+                        N_samples=3,
+                        report_path: str = None) -> tuple[ExogenousData]:
     """
     Generate input signals from given parameters.
     """
-    samples = 1  # TODO
-    eth_series = generate_eth_samples(signal_params,
-                                      timesteps,
-                                      samples,
-                                      initial_price)
-    eth_series = list(eth_series)
-    eth_price_list: list = eth_series[0]
-    exogenous_data = {t: {'eth_price': el}
-                      for t, el in enumerate(eth_price_list)}
+    exogenous_data_sweep = []
+    eth_series_list = generate_eth_samples(signal_params,
+                                           timesteps,
+                                           N_samples,
+                                           initial_price)
+
+    exogenous_data_sweep = tuple(tuple({'eth_price': el}
+                                       for el
+                                       in eth_series)
+                                 for eth_series
+                                 in eth_series_list)
 
     # TODO run notebook template
 
-    return exogenous_data
+    return exogenous_data_sweep
 
 
 def extrapolate_data(signals: object,
@@ -116,6 +121,7 @@ def extrapolate_data(signals: object,
                      backtest_results: DataFrame,
                      governance_events,
                      N_t: int = 10,
+                     N_samples: int = 3,
                      report_path: str = None) -> object:
     """
     Generate a extrapolation dataset.
@@ -147,13 +153,14 @@ def extrapolate_data(signals: object,
 
     # Update system parameters for extrapolation
     params = default_model.parameters
-    params.update(perform_backtesting=[False])
-    params.update(heights=[None])
-    params.update(backtesting_data=[None])
-    params.update(governance_events=[{}])
-    params.update(exogenous_data=[signals])
+    params.update(perform_backtesting=Param(False, bool))
+    params.update(heights=Param(None, bool))
+    params.update(backtesting_data=Param(None, bool))
+    params.update(governance_events=Param({}, dict))
+    params.update(exogenous_data=ParamSweep(signals, None))
     # params.update(exogenous_data=[{}]) # HACK
-    params.update(backtesting_action_states=[past_action_states])
+    params.update(backtesting_action_states=Param(past_action_states, None))
+    prepared_params = prepare_params(params)
 
     # Update initial state for extrapolation
     initial_state.update(pid_state=initial_pid_state,
@@ -166,10 +173,10 @@ def extrapolate_data(signals: object,
 
     # Run extrapolation simulation
     sim_df = easy_run(initial_state,
-                      params,
+                      prepared_params,
                       default_model.timestep_block,
                       timesteps,
-                      1,
+                      N_samples,
                       drop_substeps=True,
                       assign_params=False)
 
@@ -196,17 +203,21 @@ def extrapolation_cycle() -> object:
 
     print("3. Extrapolating Exogenous Signals\n---")
     N_t = 240
+    N_price_samples = 1
     initial_price = backtest_results[0].iloc[-1].eth_price
     extrapolated_signals = extrapolate_signals(stochastic_params,
                                                N_t,
-                                               initial_price)
+                                               initial_price,
+                                               N_price_samples)
 
     print("4. Extrapolating Future Data\n---")
+    N_extrapolation_samples = 1
     future_data = extrapolate_data(extrapolated_signals,
                                    backtesting_df,
                                    backtest_results,
                                    governance_events,
-                                   N_t)
+                                   N_t,
+                                   N_extrapolation_samples)
     t2 = time()
     print(f"6. Done! {t2 - t1 :.2f}s\n---")
 

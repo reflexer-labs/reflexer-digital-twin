@@ -1,6 +1,5 @@
 from typing import Union
 from cadCAD_tools.types import Param, ParamSweep
-from cadCAD_tools.preparation import prepare_params
 from rai_digital_twin.types import ActionState, GovernanceEvent, Height, PIBoundParams, Percentage, Seconds, Timestep, TimestepDict, UserActionParams
 
 
@@ -20,7 +19,7 @@ PI_BOUND_PARAMS = PIBoundParams(
 )
 
 
-raw_params: dict[str, Union[Param, ParamSweep]] = {
+params: dict[str, Union[Param, ParamSweep]] = {
     # System wide parameters
     'governance_events': Param({}, dict[Timestep, GovernanceEvent]),
     'pi_bound_params': Param(PI_BOUND_PARAMS, PIBoundParams),
@@ -42,5 +41,3 @@ raw_params: dict[str, Union[Param, ParamSweep]] = {
     # Misc
     'perform_backtesting': Param(True, bool)
 }
-
-params = prepare_params(raw_params)

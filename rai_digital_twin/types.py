@@ -30,8 +30,8 @@ Run = int
 Timestep = int
 Gwei = int
 
-TimestepDict = list[dict[str, object]]
-
+TimestepDict = tuple[dict[str, object]]
+ExogenousData = tuple[dict[str, object]]
 
 class GovernanceEventKind(Enum):
     change_pid_params = 1

@@ -4,6 +4,7 @@ import numpy as np
 from pytest import approx
 
 from cadCAD_tools import easy_run
+from cadCAD_tools.preparation import prepare_params
 from rai_digital_twin import default_model
 from rai_digital_twin.backtesting import *
 
@@ -13,7 +14,7 @@ def test_identical_backtesting():
     """
     # Run the model on default arguments
     sim_df = easy_run(default_model.initial_state,
-                      default_model.parameters,
+                      prepare_params(default_model.parameters),
                       default_model.timestep_block,
                       30,
                       1,
@@ -47,7 +48,7 @@ def test_semi_identical_backtesting():
     """
     # Run the model on default arguments
     sim_df = easy_run(default_model.initial_state,
-                      default_model.parameters,
+                      prepare_params(default_model.parameters),
                       default_model.timestep_block,
                       30,
                       1,
