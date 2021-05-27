@@ -171,7 +171,6 @@ def extrapolate_data(signals: object,
     params.update(backtesting_data=Param(None, bool))
     params.update(governance_events=Param({}, dict))
     params.update(exogenous_data=ParamSweep(signals, None))
-    # params.update(exogenous_data=[{}]) # HACK
     params.update(backtesting_action_states=Param(past_action_states, None))
     prepared_params = prepare_params(params)
 
@@ -203,8 +202,8 @@ def extrapolation_cycle(BASE_PATH: str = None,
                         HISTORICAL_INTERVAL_IN_DAYS: int = 14,
                         PRICE_SAMPLES: int = 3,
                         EXTRAPOLATION_SAMPLES: int = 1,
-                        EXTRAPOLATION_INTERVAL_IN_TS: int = 240,
-                        use_last_data=True) -> object:
+                        EXTRAPOLATION_INTERVAL_IN_TS: int = 14 * 24,
+                        use_last_data=False) -> object:
 
     t1 = time()
     print("0. Retrieving Data\n---")

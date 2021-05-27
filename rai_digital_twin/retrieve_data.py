@@ -57,41 +57,41 @@ def retrieve_system_states(block_numbers: list[int]) -> DataFrame:
     for i in tqdm(block_numbers, desc='Retrieving System States'):
         query = '''
         {
-        systemState(createdAtBlock: {number:%s},id:"current") { 
-            coinUniswapPair {
-            label
-            reserve0
-            reserve1
-            token0Price
-            token1Price
-            totalSupply
-            }
-            currentCoinMedianizerUpdate{
-            value
-            }
-            currentRedemptionRate {
-            eightHourlyRate
-            annualizedRate
-            hourlyRate
-            createdAt
-            }
-            currentRedemptionPrice {
-            value
-            }
-            erc20CoinTotalSupply
-            globalDebt
-            globalDebtCeiling
-            safeCount,
-            totalActiveSafeCount
-            coinAddress
-            wethAddress
-            systemSurplus
-            debtAvailableToSettle
-            lastPeriodicUpdate
-            createdAt
-            createdAtBlock
+      systemState(block: {number:%s},id:"current") { 
+        coinUniswapPair {
+          label
+          reserve0
+          reserve1
+          token0Price
+          token1Price
+          totalSupply
         }
+        currentCoinMedianizerUpdate{
+          value
         }
+        currentRedemptionRate {
+          eightHourlyRate
+          annualizedRate
+          hourlyRate
+          createdAt
+        }
+        currentRedemptionPrice {
+          value
+        }
+        erc20CoinTotalSupply
+        globalDebt
+        globalDebtCeiling
+        safeCount,
+        totalActiveSafeCount
+        coinAddress
+        wethAddress
+        systemSurplus
+        debtAvailableToSettle
+        lastPeriodicUpdate
+        createdAt
+        createdAtBlock
+      }
+    }
     ''' % i
         r = requests.post(SUBGRAPH_URL, json={'query': query})
         s = json.loads(r.content)['data']['systemState']

@@ -20,6 +20,8 @@ Specifically, it accomplishes the following functions:
 
 ## Usage 
 
+`python -m rai_digital_twin`
+
 ### Execution
 
 ### Result Analysis
