@@ -169,13 +169,11 @@ def extrapolate_data(signals: object,
                          eth_price=last_row.eth_price,
                          market_price=last_row.market_price)  # TODO use test df state
 
-    timesteps = N_t
-
     # Run extrapolation simulation
     sim_df = easy_run(initial_state,
                       prepared_params,
                       default_model.timestep_block,
-                      timesteps,
+                      N_t,
                       N_samples,
                       drop_substeps=True,
                       assign_params=False)
@@ -203,10 +201,10 @@ def extrapolation_cycle() -> object:
 
     print("3. Extrapolating Exogenous Signals\n---")
     N_t = 240
-    N_price_samples = 1
+    N_price_samples = 3
     initial_price = backtest_results[0].iloc[-1].eth_price
     extrapolated_signals = extrapolate_signals(stochastic_params,
-                                               N_t,
+                                               N_t + 10,
                                                initial_price,
                                                N_price_samples)
 

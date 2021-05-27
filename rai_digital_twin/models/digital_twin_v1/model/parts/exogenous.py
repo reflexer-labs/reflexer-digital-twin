@@ -7,7 +7,7 @@ def p_exogenous(params, _2, _3, state) -> Signal:
     t = state['timestep']
 
     output = {}
-    if t in exogenous_data:
+    if exogenous_data is not None:
         output.update(**exogenous_data[t])
     else:
         output.update(**{'eth_price': state['eth_price'],
@@ -21,7 +21,6 @@ def s_market_price(params, _2, _3, state, signal) -> VariableUpdate:
         return (key, signal[key])
     else:
         token_state: TokenState = state['token_state']
-        k = params['market_price_scale']  # HACK
-        eth_per_rai: float = k * token_state.eth_reserve / token_state.rai_reserve
+        eth_per_rai: float = token_state.eth_reserve / token_state.rai_reserve
         value: RAI_per_USD = state['eth_price'] * eth_per_rai
         return (key, value)

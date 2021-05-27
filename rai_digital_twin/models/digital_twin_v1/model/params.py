@@ -24,7 +24,6 @@ params: dict[str, Union[Param, ParamSweep]] = {
     'governance_events': Param({}, dict[Timestep, GovernanceEvent]),
     'pi_bound_params': Param(PI_BOUND_PARAMS, PIBoundParams),
     'exogenous_data': Param({}, TimestepDict),
-    'market_price_scale': Param(3, Percentage),
     
     # Backtesting specific parameters
     'heights': Param(None, dict[Timestep, Height]),

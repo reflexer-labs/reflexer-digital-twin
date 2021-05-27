@@ -43,7 +43,7 @@ def main(viz):
         fig_df = (df
                 .melt(id_vars=['days_passed', 'origin'], value_vars=cols)
                 )
-        fig = px.line(fig_df,
+        fig = px.scatter(fig_df,
                     x='days_passed',
                     y='value',
                     facet_row='variable',
