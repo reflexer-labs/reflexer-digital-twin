@@ -1,6 +1,6 @@
 
 from pandas.core.frame import DataFrame
-from rai_digital_twin.types import ActionState, BacktestingData, ControllerParams, ControllerState, GovernanceEvent, Timestep, TimestepDict
+from rai_digital_twin.types import ActionState, BacktestingData, ControllerParams, ControllerState, GovernanceEvent, Timestep, TimestepDict, USD_per_ETH, USD_per_RAI
 import pandas as pd
 
 from cadCAD_tools import easy_run
@@ -91,12 +91,17 @@ def stochastic_fit(input_data: object,
 
 def extrapolate_signals(signal_params: FitParams,
                         timesteps: int,
+                        initial_price: USD_per_ETH,
                         report_path: str = None) -> object:
     """
     Generate input signals from given parameters.
     """
     samples = 1  # TODO
-    eth_series = list(generate_eth_samples(signal_params, timesteps, samples))
+    eth_series = generate_eth_samples(signal_params,
+                                      timesteps,
+                                      samples,
+                                      initial_price)
+    eth_series = list(eth_series)
     eth_price_list: list = eth_series[0]
     exogenous_data = {t: {'eth_price': el}
                       for t, el in enumerate(eth_price_list)}
@@ -154,7 +159,7 @@ def extrapolate_data(signals: object,
                          pid_params=initial_pid_params,
                          token_state=last_row.token_state,
                          eth_price=last_row.eth_price,
-                         market_price=last_row.market_price) # TODO use test df state
+                         market_price=last_row.market_price)  # TODO use test df state
 
     timesteps = N_t
 
@@ -190,7 +195,10 @@ def extrapolation_cycle() -> object:
 
     print("3. Extrapolating Exogenous Signals\n---")
     N_t = 240
-    extrapolated_signals = extrapolate_signals(stochastic_params, N_t)
+    initial_price = backtest_results[0].iloc[-1].eth_price
+    extrapolated_signals = extrapolate_signals(stochastic_params,
+                                               N_t,
+                                               initial_price)
 
     print("4. Extrapolating Future Data\n---")
     future_data = extrapolate_data(extrapolated_signals,

@@ -1,5 +1,6 @@
 # %%
 
+from rai_digital_twin.types import USD_per_ETH
 from typing import Iterable
 import pandas as pd
 import numpy as np
@@ -158,7 +159,8 @@ def generate_eth_timeseries(filter_values: FilterState,
 
 def generate_eth_samples(fit_params: FitParams,
                          timesteps: int,
-                         samples: int) -> Iterable[list[float]]:
+                         samples: int,
+                         initial_value: USD_per_ETH = None) -> Iterable[list[float]]:
     for run in range(0, samples):
         np.random.seed(seed=run)
 
@@ -166,13 +168,18 @@ def generate_eth_samples(fit_params: FitParams,
         X = np.random.gamma(fit_params.shape,
                             fit_params.scale,
                             timesteps + buffer_for_transcients)
+
+        if initial_value is None:
+            initial_value = X[-1]
+        else:
+            pass
         # train kalman
         xhat = kalman_filter(observations=X[0:-1],
-                             initialValue=X[-1],
+                             initialValue=initial_value,
                              paramExport=False,
                              plot=False)
-
-        yield xhat[buffer_for_transcients:]
+        yield xhat # HACK check with andrew
+        # yield xhat[buffer_for_transcients:]
 
 
 def fit_eth_price(X: list[float]) -> FitParams:
@@ -192,8 +199,12 @@ def fit_eth_price(X: list[float]) -> FitParams:
 
 def fit_predict_eth_price(X: np.array,
                           timesteps: int,
-                          samples: int) -> np.array:
+                          samples: int,
+                          initial_value: USD_per_ETH) -> np.array:
 
     fit_params = fit_eth_price(X)
-    results = list(generate_eth_samples(fit_params, timesteps, samples))
+    results = list(generate_eth_samples(fit_params,
+                                        timesteps,
+                                        samples,
+                                        initial_value))
     return results

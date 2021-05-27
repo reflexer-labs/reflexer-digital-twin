@@ -9,10 +9,10 @@ def test_VAR():
     for _ in range(N_samples):
         N_rows = np.random.randint(3, 10)
         N_values = np.random.randint(3, 10)
-        errors = np.random.randn(N_rows, N_values) + 5
+        errors = np.random.randn(N_rows, N_values) + 2
         errors = np.array(errors)
 
-        result = VAR_prediction(errors)
+        result = VAR_prediction(errors, 1)
         assert result.shape[0] == N_values
 
 
