@@ -10,3 +10,4 @@ statsmodels
 pymc3
 pyarrow
 requests
+google-cloud-bigquery-storage

@@ -139,35 +139,50 @@ def retrieve_safe_history(block_numbers: list[int]) -> DataFrame:
     return safe_history
 
 
-def retrieve_eth_price() -> DataFrame:
-    # SQL query
-    sql = """
+def retrieve_eth_price(limit=None,
+                       date_range=None) -> DataFrame:
+
+    if limit is not None:
+        limit_subquery = f'LIMIT {limit}'
+    else:
+        limit_subquery = ''
+
+    if date_range is not None:
+        range_subquery = f"WHERE block_timestamp >= '{date_range[0]}' AND block_timestamp < '{date_range[1]}'"
+    else:
+        range_subquery = ''
+
+    # BUG It seems that the OSM_event_UpdateResult has no updates since 2021-05-07
+    sql = f"""
     SELECT 
     * 
     FROM `blockchain-etl.ethereum_rai.OSM_event_UpdateResult`
+    {range_subquery}
     ORDER By block_timestamp DESC
-
+    {limit_subquery}
     """
+
     constant = 1000000000000000000
     client = bigquery.Client()
     raw_df = client.query(sql).to_dataframe()
     eth_price_OSM = raw_df
-    eth_price_OSM['ETH Price (OSM)'] = eth_price_OSM['newMedian'].astype(
+    eth_price_OSM['eth_price'] = eth_price_OSM['newMedian'].astype(
         float)/constant
     eth_price_OSM = eth_price_OSM[[
         'block_number', 'eth_price', 'block_timestamp']]
     return eth_price_OSM.set_index("block_number")
 
 
-def download_data() -> DataFrame:
-    eth_price_df = retrieve_eth_price()
+def download_data(limit=None,
+                  date_range=None) -> DataFrame:
+    eth_price_df = retrieve_eth_price(limit=limit,
+                                      date_range=date_range)                           
     block_numbers = eth_price_df.index
     dfs = (retrieve_system_states(block_numbers),
            retrieve_hourly_stats(block_numbers),
            retrieve_safe_history(block_numbers),
            eth_price_df)
-    historical_df = pd.concat(dfs, join='inner')
-
+    historical_df = pd.concat(dfs, join='inner', axis=1)
     return historical_df
 
 
@@ -189,7 +204,7 @@ def extract_exogenous_data(df: pd.DataFrame) -> dict[Timestep, dict[str, float]]
     """
     Extract exogenous variables from historical dataframe.
     """
-    EXOGENOUS_MAP = {'ETH Price (OSM)': 'eth_price',
+    EXOGENOUS_MAP = {'eth_price': 'eth_price',
                      'marketPriceUsd': 'market_price'}
 
     exogenous_data = (df.loc[:, EXOGENOUS_MAP.keys()]
@@ -204,7 +219,7 @@ def load_backtesting_data(path: str) -> BacktestingData:
     """
     # Load CSV file
     # TODO: Parametrize start and end dates
-    df = (pd.read_csv(path)
+    df = (pd.read_csv(path, compression='gzip')
             .sort_values('block_number', ascending=True)
             .iloc[100:]  # HACK
             .iloc[-500:]  # HACK
@@ -269,13 +284,12 @@ def parse_raw_events(raw_events: list[dict],
 def load_governance_events(path: str,
                            heights: dict[Timestep, Height]) -> dict[Timestep, GovernanceEvent]:
 
-    params_df = pd.read_csv(path).sort_values(
-        'eth_block').to_dict(orient='records')
-    initial_height = list(heights.values())[0]
-    raw_events = retrieve_raw_events(params_df, initial_height)
-    events = parse_raw_events(raw_events, heights)
-    return events
-
-
-def download_past_data():
-    pass
+    if len(heights) > 0:
+        params_df = pd.read_csv(path).sort_values(
+            'eth_block').to_dict(orient='records')
+        initial_height = list(heights.values())[0]
+        raw_events = retrieve_raw_events(params_df, initial_height)
+        events = parse_raw_events(raw_events, heights)
+        return events
+    else:
+        return {}

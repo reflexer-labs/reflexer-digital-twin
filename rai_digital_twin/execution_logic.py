@@ -2,32 +2,33 @@
 from pandas.core.frame import DataFrame
 from rai_digital_twin.types import ActionState, BacktestingData, ControllerParams, ControllerState, ExogenousData, GovernanceEvent, Timestep, TimestepDict, USD_per_ETH, USD_per_RAI
 import pandas as pd
+from datetime import datetime, timedelta
+
 
 from cadCAD_tools import easy_run
 from cadCAD_tools.preparation import prepare_params, Param, ParamSweep
 from .backtesting import simulation_loss
-from .prepare_data import load_backtesting_data, load_governance_events
+from .prepare_data import download_data, load_backtesting_data, load_governance_events
 from .stochastic import FitParams, fit_eth_price, generate_eth_samples
 from rai_digital_twin import default_model
 from time import time
 
-BACKTESTING_DATA_PATH = '~/repos/bsci/reflexer-digital-twin/data/states.csv'
 GOVERNANCE_EVENTS_PATH = '~/repos/bsci/reflexer-digital-twin/data/controller_params.csv'
 
 
+def retrieve_data(output_path, date_range):
+    df = download_data(date_range=date_range)
+    df.to_csv(output_path, compression='gzip')
+    return df
 
-def retrieve_data():
-    # TODO: write function based on Andrew's notebook
-    # Write script for downloading things
-    pass
 
-
-def prepare(report_path: str = None) -> tuple[BacktestingData,
+def prepare(input_path,
+            report_path: str = None) -> tuple[BacktestingData,
                                               dict[Timestep, GovernanceEvent]]:
     """
     Retrieves all required historical and prior data.
     """
-    backtesting_data = load_backtesting_data(BACKTESTING_DATA_PATH)
+    backtesting_data = load_backtesting_data(input_path)
 
     governance_events = load_governance_events(GOVERNANCE_EVENTS_PATH,
                                                backtesting_data.heights)
@@ -198,17 +199,26 @@ def extrapolate_data(signals: object,
 def extrapolation_cycle() -> object:
 
     t1 = time()
+    runtime = datetime.utcnow()
+    data_start = runtime - timedelta(days=14)
+    date_range = (data_start, runtime)
+    date_range = None
+    BACKTESTING_DATA_PATH = f'~/repos/bsci/reflexer-digital-twin/data/runs/{runtime}_historical-data.csv.gz'
 
-    print("0. Preparing Data\n---")
-    backtesting_df, governance_events = prepare()
+    print("0. Retrieving Data\n---")
+    retrieve_data(BACKTESTING_DATA_PATH,
+                  date_range)
 
-    print("1. Backtesting Model\n---")
+    print("1. Preparing Data\n---")
+    backtesting_df, governance_events = prepare(BACKTESTING_DATA_PATH)
+
+    print("2. Backtesting Model\n---")
     backtest_results = backtest_model(backtesting_df, governance_events)
 
-    print("2. Fitting Stochastic Processes\n---")
+    print("3. Fitting Stochastic Processes\n---")
     stochastic_params = stochastic_fit(backtesting_df.exogenous_data)
 
-    print("3. Extrapolating Exogenous Signals\n---")
+    print("4. Extrapolating Exogenous Signals\n---")
     N_t = 240
     N_price_samples = 3
     initial_price = backtest_results[0].iloc[-1].eth_price
@@ -217,7 +227,7 @@ def extrapolation_cycle() -> object:
                                                initial_price,
                                                N_price_samples)
 
-    print("4. Extrapolating Future Data\n---")
+    print("5. Extrapolating Future Data\n---")
     N_extrapolation_samples = 1
     future_data = extrapolate_data(extrapolated_signals,
                                    backtesting_df,
@@ -226,7 +236,7 @@ def extrapolation_cycle() -> object:
                                    N_t,
                                    N_extrapolation_samples)
     t2 = time()
-    print(f"6. Done! {t2 - t1 :.2f}s\n---")
+    print(f"7. Done! {t2 - t1 :.2f}s\n---")
 
     # TODO report template
 
