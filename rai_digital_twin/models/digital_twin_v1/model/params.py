@@ -1,7 +1,7 @@
 from typing import Union
 from cadCAD_tools.types import Param, ParamSweep
 from cadCAD_tools.preparation import prepare_params
-from rai_digital_twin.types import ActionState, GovernanceEvent, Height, PIBoundParams, Seconds, Timestep, TimestepDict, UserActionParams
+from rai_digital_twin.types import ActionState, GovernanceEvent, Height, PIBoundParams, Percentage, Seconds, Timestep, TimestepDict, UserActionParams
 
 
 USER_ACTION_PARAMS = UserActionParams(
@@ -25,6 +25,7 @@ raw_params: dict[str, Union[Param, ParamSweep]] = {
     'governance_events': Param({}, dict[Timestep, GovernanceEvent]),
     'pi_bound_params': Param(PI_BOUND_PARAMS, PIBoundParams),
     'exogenous_data': Param({}, TimestepDict),
+    'market_price_scale': Param(3, Percentage),
     
     # Backtesting specific parameters
     'heights': Param(None, dict[Timestep, Height]),

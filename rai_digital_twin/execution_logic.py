@@ -152,6 +152,7 @@ def extrapolate_data(signals: object,
     params.update(backtesting_data=[None])
     params.update(governance_events=[{}])
     params.update(exogenous_data=[signals])
+    # params.update(exogenous_data=[{}]) # HACK
     params.update(backtesting_action_states=[past_action_states])
 
     # Update initial state for extrapolation

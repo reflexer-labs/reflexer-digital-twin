@@ -9,7 +9,11 @@ from scipy.stats import gamma
 import pymc3 as pm
 
 
-def kalman_filter(observations, initialValue, truthValues=None, plot=False, paramExport=False):
+def kalman_filter(observations: list[float],
+                  initialValue: float,
+                  truthValues: np.ndarray = None,
+                  plot: bool = False,
+                  paramExport: bool = False) -> list[float]:
     '''
     Description:
     Function to create a Kalman Filter for smoothing currency timestamps in order to search for the
@@ -169,17 +173,21 @@ def generate_eth_samples(fit_params: FitParams,
                             fit_params.scale,
                             timesteps + buffer_for_transcients)
 
-        if initial_value is None:
-            initial_value = X[-1]
-        else:
-            pass
         # train kalman
         xhat = kalman_filter(observations=X[0:-1],
-                             initialValue=initial_value,
+                             initialValue=X[-1],
                              paramExport=False,
                              plot=False)
-        yield xhat # HACK check with andrew
-        # yield xhat[buffer_for_transcients:]
+
+        xhat = xhat[buffer_for_transcients:]
+        # Align predictions with the initial value
+        # Possible HACK, check with andrew
+        if initial_value is None:
+            pass
+        else:
+            xhat += (initial_value - xhat[0])
+
+        yield xhat
 
 
 def fit_eth_price(X: list[float]) -> FitParams:

@@ -109,10 +109,13 @@ def s_pid_redemption(params, _2, _3, state, _5):
                                               pid_state,
                                               params['pi_bound_params'])
 
+        # Convert redemption rate per second to redemption rate per hour
         timedelta_in_seconds = timedelta * 60 * 60
+        hourly_redemption_rate = new_redemption_rate ** timedelta_in_seconds
+        
         # Return output
         new_pid_state = ControllerState(new_redemption_price,
-                                        new_redemption_rate ** timedelta_in_seconds,
+                                        hourly_redemption_rate,
                                         pid_state.proportional_error,
                                         pid_state.integral_error)
     else:

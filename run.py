@@ -24,14 +24,15 @@ df = (df
       .assign(hours_passed=lambda df: df.seconds_passed / (60 * 60))
       .assign(days_passed=lambda df: df.seconds_passed / (24 * 60 * 60)))
 # %%
-cols = ['redemption_rate',
-        'eth_locked',
-        'eth_price',
+cols = ['eth_price',
         'market_price',
+        'spot_price',
+        'redemption_rate',
         'redemption_price',
+        'rai_debt',
+        'eth_locked',
         'rai_reserve',
         'eth_reserve',
-        'rai_debt',
         ]
 fig_df = (df
           .melt(id_vars=['days_passed', 'origin'], value_vars=cols)

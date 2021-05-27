@@ -13,6 +13,7 @@ from .parts.governance import p_governance_events, s_pid_params
 
 # Exogenous Info
 from .parts.exogenous import p_exogenous, s_market_price
+from .parts.markets import s_spot_price
 
 # Controller
 from .parts.controllers import p_observe_errors, s_pid_error, s_pid_redemption
@@ -41,7 +42,7 @@ partial_state_update_blocks: List[dict] = [
             'pid_params': s_pid_params,
             'token_state': s_token_state, # Only used on backtesting
             'eth_price': generic_suf('eth_price'),
-            'market_price': s_market_price
+            'market_price': s_market_price,
         }
     },
     {
@@ -50,7 +51,8 @@ partial_state_update_blocks: List[dict] = [
             'observe': p_observe_errors
         },
         'variables': {
-            'pid_state': s_pid_error
+            'pid_state': s_pid_error,
+            'spot_price': s_spot_price
         }
     },
     {

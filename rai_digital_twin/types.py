@@ -21,6 +21,7 @@ USD_Seconds_per_RAI = float
 USD_per_Seconds = float
 USD_per_ETH = float
 Percentage_Per_Second = float
+Percentage_Per_Hour = float
 Percentage = float
 Per_USD = float
 Per_USD_Seconds = float
@@ -54,7 +55,7 @@ class ControllerParams():
 @dataclass(frozen=True)
 class ControllerState():
     redemption_price: USD_per_RAI
-    redemption_rate: Percentage
+    redemption_rate: Percentage_Per_Hour
     proportional_error: USD_per_RAI
     integral_error: USD_Seconds_per_RAI
 

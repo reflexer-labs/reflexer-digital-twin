@@ -73,9 +73,15 @@ def redemption_rate_loss(sim_df, test_df) -> float:
     return agg_loss
 
 
+def market_price_loss(sim_df, test_df) -> float:
+    y_error = np.abs(sim_df.market_price - sim_df.spot_price)
+    agg_loss = aggregate_loss(y_error)
+    return agg_loss
+
 VALIDATION_METRICS = {
     'redemption_price': ValidationMetricDefinition(float, generic_metric_loss('redemption_price')),
-    'redemption_rate': ValidationMetricDefinition(float, redemption_rate_loss)
+    'redemption_rate': ValidationMetricDefinition(float, redemption_rate_loss),
+    # 'market_price': ValidationMetricDefinition(float, market_price_loss)
 }
 
 

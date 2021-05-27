@@ -23,6 +23,10 @@ INITIAL_TOKEN_STATE = TokenState(rai_reserve=801.933727,
                                  rai_debt=3048.35849,
                                  eth_locked=16.89236)
 
+INITIAL_SPOT_PRICE = INITIAL_TOKEN_STATE.eth_reserve
+INITIAL_SPOT_PRICE /= INITIAL_TOKEN_STATE.rai_reserve
+INITIAL_SPOT_PRICE *= INITIAL_ETH_PRICE
+
 # NB: These initial states may be overriden in the relevant notebook or experiment process
 raw_state_variables: dict[str, InitialValue] = {
     # Time states
@@ -32,6 +36,7 @@ raw_state_variables: dict[str, InitialValue] = {
     # Exogenous states
     'eth_price': InitialValue(INITIAL_ETH_PRICE, USD_per_ETH),
     'market_price': InitialValue(INITIAL_MARKET_PRICE, USD_per_RAI),
+    'spot_price': InitialValue(INITIAL_SPOT_PRICE, USD_per_RAI),
 
     # Controller state
     'pid_params': InitialValue(INITIAL_CONTROLLER_PARAMS, ControllerParams),
