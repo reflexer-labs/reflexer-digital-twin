@@ -8,3 +8,5 @@ plotly
 pandas
 statsmodels
 pymc3
+pyarrow
+requests

@@ -23,7 +23,7 @@ params: dict[str, Union[Param, ParamSweep]] = {
     # System wide parameters
     'governance_events': Param({}, dict[Timestep, GovernanceEvent]),
     'pi_bound_params': Param(PI_BOUND_PARAMS, PIBoundParams),
-    'exogenous_data': Param({}, TimestepDict),
+    'exogenous_data': Param(None, TimestepDict),
     
     # Backtesting specific parameters
     'heights': Param(None, dict[Timestep, Height]),
