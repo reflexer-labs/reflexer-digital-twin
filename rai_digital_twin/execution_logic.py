@@ -15,6 +15,13 @@ BACKTESTING_DATA_PATH = '~/repos/bsci/reflexer-digital-twin/data/states.csv'
 GOVERNANCE_EVENTS_PATH = '~/repos/bsci/reflexer-digital-twin/data/controller_params.csv'
 
 
+
+def retrieve_data():
+    # TODO: write function based on Andrew's notebook
+    # Write script for downloading things
+    pass
+
+
 def prepare(report_path: str = None) -> tuple[BacktestingData,
                                               dict[Timestep, GovernanceEvent]]:
     """
@@ -24,6 +31,8 @@ def prepare(report_path: str = None) -> tuple[BacktestingData,
 
     governance_events = load_governance_events(GOVERNANCE_EVENTS_PATH,
                                                backtesting_data.heights)
+
+    # TODO run notebook template
 
     return (backtesting_data, governance_events)
 
@@ -218,6 +227,8 @@ def extrapolation_cycle() -> object:
                                    N_extrapolation_samples)
     t2 = time()
     print(f"6. Done! {t2 - t1 :.2f}s\n---")
+
+    # TODO report template
 
     return backtest_results, future_data
 

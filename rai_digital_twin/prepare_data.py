@@ -36,10 +36,11 @@ def load_backtesting_data(path: str) -> BacktestingData:
     Make the historical clean for backtesting.
     """
     # Load CSV file
+    # TODO: Parametrize start and end dates
     df = (pd.read_csv(path)
             .sort_values('block_number', ascending=True)
             .iloc[100:] # HACK
-            .iloc[-500:]
+            .iloc[-500:] # HACK
             .reset_index(drop=True)
             .assign(RedemptionRateHourlyRate= lambda df: df.RedemptionRateHourlyRate))
     # Retrieve historical info

@@ -44,7 +44,6 @@ def p_user_action(params, _1, history, state) -> Signal:
                                         params['ewm_alpha'],
                                         params['var_lag'])
 
-        # new_action *= (random() - 0.5) * 0.001 # HACK
         new_state = state['token_state'] + new_action
 
         return {'token_state': new_state}
