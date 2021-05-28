@@ -158,8 +158,8 @@ def generate_eth_samples(fit_params: FitParams,
                              initialValue=X[-1])
 
         xhat = xhat[buffer_for_transcients:]
+        
         # Align predictions with the initial value
-        # Possible HACK, check with andrew
         if initial_value is None:
             pass
         else:

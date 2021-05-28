@@ -136,6 +136,7 @@ def extrapolate_data(signals: object,
                      report_path: str = None) -> object:
     """
     Generate a extrapolation dataset.
+    # TODO: use governance events on the extrapolation itself
     """
     (sim_df, test_df, raw_sim_df) = backtest_results
 
@@ -202,7 +203,9 @@ def extrapolation_cycle(base_path: str = None,
                         extrapolation_samples: int = 1,
                         extrapolation_timesteps: int = 14 * 24,
                         use_last_data=False) -> object:
-
+    """
+    Perform a entire extrapolation cycle.
+    """
     t1 = time()
     print("0. Retrieving Data\n---")
     if base_path is None:

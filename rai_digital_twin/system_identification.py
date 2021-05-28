@@ -182,7 +182,7 @@ def fit_predict_action(past_states: list[ActionState],
             errors = list(action_errors(past_states,
                                         action_params,
                                         ewm_alpha=ewm_alpha))
-            errors = pd.DataFrame(errors).dropna().values  # HACK
+            errors = pd.DataFrame(errors).values
 
             # Perform a Power Transformation
             transformer = PowerTransformer()
@@ -193,12 +193,13 @@ def fit_predict_action(past_states: list[ActionState],
                                                     var_lag)
             
             transformed_prediction = transformed_prediction.reshape(1, -1)
+            
             # Go back to the transformed coordinates
             prediction = transformer.inverse_transform(transformed_prediction)
             prediction = prediction.tolist()[0] # HACK for making sense of numpy
             transformed_new_action = TransformedTokenState(*prediction)
 
-            # Go Back to the original coordinates
+            # Go back to the original coordinates
             transform_args = (state.token_state,
                               state.pid_state,
                               action_params,
