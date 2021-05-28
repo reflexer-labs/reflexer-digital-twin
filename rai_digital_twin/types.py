@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any
 import pandas as pd
 
 # Units
@@ -7,6 +8,7 @@ import pandas as pd
 # Measurements Units
 
 Seconds = int
+Days = int
 Height = int
 ETH = float
 USD = float
@@ -30,8 +32,8 @@ Run = int
 Timestep = int
 Gwei = int
 
-TimestepDict = tuple[dict[str, object]]
-ExogenousData = tuple[dict[str, object]]
+TimestepDict = tuple[dict[str, Any], ...] # type: ignore
+ExogenousData = tuple[dict[str, Any], ...] # type: ignore
 
 class GovernanceEventKind(Enum):
     change_pid_params = 1

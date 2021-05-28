@@ -1,5 +1,6 @@
 from dataclasses import dataclass
-from typing import Iterable
+from typing import Iterable, Union
+from numpy import ndarray
 from statsmodels.tsa.api import VAR
 import pandas as pd
 from sklearn.preprocessing import PowerTransformer
@@ -88,7 +89,7 @@ def arbitrageur_action(token_state: TokenState,
 
 
 def VAR_prediction(errors: list[list[float]],
-                   lag: int = 15) -> list[float]:
+                   lag: int = 15) -> ndarray:
     '''
     Description:
     Function to train and forecast a VAR model one step into the future
@@ -163,7 +164,7 @@ def action_errors(past_states: list[ActionState],
 def fit_predict_action(past_states: list[ActionState],
                        action_params: UserActionParams,
                        ewm_alpha: float = 0.8,
-                       var_lag: int = 15) -> TokenState:
+                       var_lag: int = 15) -> Union[TokenState, None]:
     """
     Steps:
     1. Retrieve historical arbitrageur actions

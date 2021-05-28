@@ -9,11 +9,24 @@ from scipy.stats import gamma
 import pymc3 as pm
 
 
+@dataclass
+class FitParams():
+    shape: float
+    scale: float
+
+
+@dataclass
+class FilterState():
+    xhat: list[float]
+    P: list[float]
+    xhatminus: list[float]
+    Pminus: list[float]
+    K: list[float]
+
+
 def kalman_filter(observations: list[float],
                   initialValue: float,
-                  truthValues: np.ndarray = None,
-                  plot: bool = False,
-                  paramExport: bool = False) -> list[float]:
+                  truthValues: np.ndarray = None) -> np.ndarray:
     '''
     Description:
     Function to create a Kalman Filter for smoothing currency timestamps in order to search for the
@@ -62,26 +75,16 @@ def kalman_filter(observations: list[float],
         K[k] = Pminus[k]/(Pminus[k]+R)
         xhat[k] = xhatminus[k]+K[k]*(z[k]-xhatminus[k])
         P[k] = (1-K[k])*Pminus[k]
-
-    if plot == True:
-        plt.figure()
-        plt.plot(z, 'k+', label='Actual data')
-        plt.plot(xhat, 'b-', label='a posteri estimate')
-        if isinstance(truthValues, np.ndarray):
-            plt.plot(x, color='g', label='truth value')
-        plt.legend()
-        plt.title('Kalman Filter Estimates', fontweight='bold')
-        plt.xlabel('Iteration')
-        plt.ylabel('USD')
-        plt.show()
-
-    if paramExport == True:
-        return xhat, P, xhatminus, Pminus, K
-    else:
-        return xhat
+    return xhat
 
 
-def kalman_filter_predict(xhat, P, xhatminus, Pminus, K, observations, truthValues=None, paramExport=False):
+def kalman_filter_predict(xhat,
+                          P,
+                          xhatminus,
+                          Pminus,
+                          K,
+                          observations,
+                          truthValues=None) -> FilterState:
     '''
     Description:
     Function to predict a pre-trained Kalman Filter 1 step forward.
@@ -119,28 +122,7 @@ def kalman_filter_predict(xhat, P, xhatminus, Pminus, K, observations, truthValu
     K = np.append(K, Pminus[-1]/(Pminus[-1]+R))
     xhat = np.append(xhat, xhatminus[-1]+K[-1]*(z[-1]-xhatminus[-1]))
     P = np.append(P, (1-K[-1])*Pminus[-1])
-
-    if paramExport == True:
-        return xhat, P, xhatminus, Pminus, K
-
-    else:
-
-        return xhat
-
-
-@dataclass
-class FitParams():
-    shape: float
-    scale: float
-
-
-@dataclass
-class FilterState():
-    xhat: list[float]
-    P: list[float]
-    xhatminus: list[float]
-    Pminus: list[float]
-    K: list[float]
+    return FilterState(xhat, P, xhatminus, Pminus, K)
 
 
 def generate_eth_timeseries(filter_values: FilterState,
@@ -150,21 +132,19 @@ def generate_eth_timeseries(filter_values: FilterState,
     for _ in range(0, timesteps + 1):
         sample = np.random.gamma(fit_params.shape, fit_params.scale, 1)[0]
         eth_values.append(sample)
-        new_state = kalman_filter_predict(filter_values['xhat'],
-                                          filter_values['P'],
-                                          filter_values['xhatminus'],
-                                          filter_values['Pminus'],
-                                          filter_values['K'],
-                                          eth_values,
-                                          paramExport=True)
-        new_filter_state = FilterState(new_state)
-        yield (eth_values, new_filter_state)
+        new_state = kalman_filter_predict(filter_values.xhat,
+                                          filter_values.P,
+                                          filter_values.xhatminus,
+                                          filter_values.Pminus,
+                                          filter_values.K,
+                                          eth_values)
+        yield (eth_values, new_state)
 
 
 def generate_eth_samples(fit_params: FitParams,
                          timesteps: int,
                          samples: int,
-                         initial_value: USD_per_ETH = None) -> Iterable[list[float]]:
+                         initial_value: USD_per_ETH = None) -> Iterable[np.ndarray]:
     for run in range(0, samples):
         np.random.seed(seed=run)
 
@@ -175,9 +155,7 @@ def generate_eth_samples(fit_params: FitParams,
 
         # train kalman
         xhat = kalman_filter(observations=X[0:-1],
-                             initialValue=X[-1],
-                             paramExport=False,
-                             plot=False)
+                             initialValue=X[-1])
 
         xhat = xhat[buffer_for_transcients:]
         # Align predictions with the initial value
@@ -190,7 +168,7 @@ def generate_eth_samples(fit_params: FitParams,
         yield xhat
 
 
-def fit_eth_price(X: list[float]) -> FitParams:
+def fit_eth_price(X: np.ndarray) -> FitParams:
     model = pm.Model()
     with model:
         alpha = pm.Exponential('alpha', lam=2)
@@ -205,14 +183,14 @@ def fit_eth_price(X: list[float]) -> FitParams:
     return fit_params
 
 
-def fit_predict_eth_price(X: np.array,
+def fit_predict_eth_price(X: np.ndarray,
                           timesteps: int,
                           samples: int,
-                          initial_value: USD_per_ETH) -> np.array:
+                          initial_value: USD_per_ETH) -> tuple[np.ndarray, ...]:
 
     fit_params = fit_eth_price(X)
-    results = list(generate_eth_samples(fit_params,
-                                        timesteps,
-                                        samples,
-                                        initial_value))
+    results = tuple(generate_eth_samples(fit_params,
+                                         timesteps,
+                                         samples,
+                                         initial_value))
     return results

@@ -13,7 +13,7 @@ from .prepare_data import load_backtesting_data, load_governance_events
 from .backtesting import simulation_loss
 from .stochastic import FitParams, fit_eth_price, generate_eth_samples
 from rai_digital_twin import default_model
-from rai_digital_twin.types import ActionState, BacktestingData, ControllerParams, ControllerState, ExogenousData
+from rai_digital_twin.types import ActionState, BacktestingData, ControllerParams, ControllerState, Days, ExogenousData
 from rai_digital_twin.types import GovernanceEvent, Timestep, USD_per_ETH
 
 GOVERNANCE_EVENTS_PATH = '~/repos/bsci/reflexer-digital-twin/data/controller_params.csv'
@@ -91,7 +91,7 @@ def backtest_model(backtesting_data: BacktestingData,
 
 
 def stochastic_fit(input_data: object,
-                   report_path: str = None) -> dict:
+                   report_path: str = None) -> FitParams:
     """
     Acquire parameters for the stochastic input signals.
     """
@@ -108,21 +108,20 @@ def extrapolate_signals(signal_params: FitParams,
                         timesteps: int,
                         initial_price: USD_per_ETH,
                         N_samples=3,
-                        report_path: str = None) -> tuple[ExogenousData]:
+                        report_path: str = None) -> tuple[ExogenousData, ...]:
     """
     Generate input signals from given parameters.
     """
-    exogenous_data_sweep = []
     eth_series_list = generate_eth_samples(signal_params,
                                            timesteps,
                                            N_samples,
                                            initial_price)
 
     exogenous_data_sweep = tuple(tuple({'eth_price': el}
-                                       for el
-                                       in eth_series)
-                                 for eth_series
-                                 in eth_series_list)
+                                        for el
+                                        in eth_series)
+                                  for eth_series
+                                  in eth_series_list)
 
     # TODO run notebook template
 
@@ -130,8 +129,7 @@ def extrapolate_signals(signal_params: FitParams,
 
 
 def extrapolate_data(signals: object,
-                     backtesting_data: BacktestingData,
-                     backtest_results: DataFrame,
+                     backtest_results: tuple[DataFrame, DataFrame, DataFrame],
                      governance_events,
                      N_t: int = 10,
                      N_samples: int = 3,
@@ -198,32 +196,32 @@ def extrapolate_data(signals: object,
     return sim_df
 
 
-def extrapolation_cycle(BASE_PATH: str = None,
-                        HISTORICAL_INTERVAL_IN_DAYS: int = 14,
-                        PRICE_SAMPLES: int = 3,
-                        EXTRAPOLATION_SAMPLES: int = 1,
-                        EXTRAPOLATION_INTERVAL_IN_TS: int = 14 * 24,
+def extrapolation_cycle(base_path: str = None,
+                        historical_interval: Days = 14,
+                        price_samples: int = 3,
+                        extrapolation_samples: int = 1,
+                        extrapolation_timesteps: int = 14 * 24,
                         use_last_data=False) -> object:
 
     t1 = time()
     print("0. Retrieving Data\n---")
-    if BASE_PATH is None:
-        BASE_PATH = Path('~/repos/bsci/reflexer-digital-twin/data/runs')
+    if base_path is None:
+        working_path = Path('~/repos/bsci/reflexer-digital-twin/data/runs')
     else:
-        BASE_PATH = Path(BASE_PATH)
+        working_path = Path(base_path)
     if use_last_data is False:
         runtime = datetime.utcnow()
-        data_start = runtime - timedelta(days=HISTORICAL_INTERVAL_IN_DAYS)
+        data_start = runtime - timedelta(days=historical_interval)
         date_range = (data_start, runtime)
 
-        data_path = BASE_PATH / f'{runtime}_historical-data.csv.gz'
+        data_path = working_path / f'{runtime}_historical-data.csv.gz'
         retrieve_data(data_path,
                       date_range)
     else:
-        files = listdir(BASE_PATH.expanduser())
+        files = listdir(working_path.expanduser())
         files = sorted(
             file for file in files if 'historical-data.csv.gz' in file)
-        data_path = BASE_PATH / f'{files[-1]}'
+        data_path = working_path / f'{files[-1]}'
 
     print(f"Data located at {data_path}")
 
@@ -237,8 +235,8 @@ def extrapolation_cycle(BASE_PATH: str = None,
     stochastic_params = stochastic_fit(backtesting_df.exogenous_data)
 
     print("4. Extrapolating Exogenous Signals\n---")
-    N_t = EXTRAPOLATION_INTERVAL_IN_TS
-    N_price_samples = PRICE_SAMPLES
+    N_t = extrapolation_timesteps
+    N_price_samples = price_samples
     initial_price = backtest_results[0].iloc[-1].eth_price
     extrapolated_signals = extrapolate_signals(stochastic_params,
                                                N_t + 10,
@@ -246,9 +244,8 @@ def extrapolation_cycle(BASE_PATH: str = None,
                                                N_price_samples)
 
     print("5. Extrapolating Future Data\n---")
-    N_extrapolation_samples = EXTRAPOLATION_SAMPLES
+    N_extrapolation_samples = extrapolation_samples
     future_data = extrapolate_data(extrapolated_signals,
-                                   backtesting_df,
                                    backtest_results,
                                    governance_events,
                                    N_t,

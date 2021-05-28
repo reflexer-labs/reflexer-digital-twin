@@ -35,10 +35,11 @@ def yield_hourly_stats() -> Iterable[dict]:
 
 def retrieve_hourly_stats() -> DataFrame:
     # Retrieve all hourly stats batches and transform into a single list of dicts
-    batches: list[tuple[dict]] = []
-    for iter_hourly in tqdm(yield_hourly_stats(), desc='Retrieving hourly stats'):
-        batches.append(iter_hourly)
-    hourly_records = sum(batches, [])
+    gen_expr = (iter_hourly for
+                iter_hourly
+                in tqdm(yield_hourly_stats,
+                        desc='Retrieving hourly stats'))
+    hourly_records: list[dict] = sum(gen_expr, [])
 
     # Clean-up to a pandas data frame
     hourlyStats = (pd.DataFrame
