@@ -1,4 +1,5 @@
 from time import time
+from typing import Any
 from pandas.core.frame import DataFrame
 import pandas as pd
 from datetime import datetime, timedelta
@@ -6,6 +7,9 @@ from os import listdir
 from pathlib import Path
 from cadCAD_tools import easy_run
 from cadCAD_tools.preparation import prepare_params, Param, ParamSweep
+from json import dump
+import papermill as pm
+import os
 
 # Module dependencies
 from .retrieve_data import download_data
@@ -19,17 +23,20 @@ from rai_digital_twin.types import GovernanceEvent, Timestep, USD_per_ETH
 GOVERNANCE_EVENTS_PATH = '~/repos/bsci/reflexer-digital-twin/data/controller_params.csv'
 
 
-def retrieve_data(output_path, date_range):
+def retrieve_data(output_path: str,
+                  date_range: tuple[Any, Any]) -> DataFrame:
+    """
+    Download all requried data
+    """
     df = download_data(date_range=date_range)
     df.to_csv(output_path, compression='gzip')
     return df
 
 
-def prepare(input_path,
-            report_path: str = None) -> tuple[BacktestingData,
-                                              dict[Timestep, GovernanceEvent]]:
+def prepare(input_path: str) -> tuple[BacktestingData,
+                                      dict[Timestep, GovernanceEvent]]:
     """
-    Retrieves all required historical and prior data.
+    Clean-up required historical and prior data.
     """
     backtesting_data = load_backtesting_data(input_path)
 
@@ -43,6 +50,10 @@ def prepare(input_path,
 
 def backtest_model(backtesting_data: BacktestingData,
                    governance_events) -> tuple[DataFrame, DataFrame, DataFrame]:
+    """
+    Perform historical backtesting by using the past controller state
+    and token states.
+    """
 
     initial_state = default_model.initial_state
 
@@ -85,30 +96,23 @@ def backtest_model(backtesting_data: BacktestingData,
     loss = simulation_loss(sim_df, test_df)
     print(f"Backtesting loss: {loss :.2%}")
 
-    # TODO run notebook template
-
     return (sim_df, test_df, raw_sim_df)
 
 
-def stochastic_fit(input_data: object,
-                   report_path: str = None) -> FitParams:
+def stochastic_fit(input_data: object) -> FitParams:
     """
     Acquire parameters for the stochastic input signals.
     """
 
     X = pd.DataFrame(input_data).T.eth_price
     params = fit_eth_price(X)
-
-    # TODO run notebook template
-
     return params
 
 
 def extrapolate_signals(signal_params: FitParams,
                         timesteps: int,
                         initial_price: USD_per_ETH,
-                        N_samples=3,
-                        report_path: str = None) -> tuple[ExogenousData, ...]:
+                        N_samples=3) -> tuple[ExogenousData, ...]:
     """
     Generate input signals from given parameters.
     """
@@ -117,13 +121,12 @@ def extrapolate_signals(signal_params: FitParams,
                                            N_samples,
                                            initial_price)
 
+    # Clean-up data for injecting on the cadCAD model
     exogenous_data_sweep = tuple(tuple({'eth_price': el}
-                                        for el
-                                        in eth_series)
-                                  for eth_series
-                                  in eth_series_list)
-
-    # TODO run notebook template
+                                       for el
+                                       in eth_series)
+                                 for eth_series
+                                 in eth_series_list)
 
     return exogenous_data_sweep
 
@@ -132,21 +135,19 @@ def extrapolate_data(signals: object,
                      backtest_results: tuple[DataFrame, DataFrame, DataFrame],
                      governance_events,
                      N_t: int = 10,
-                     N_samples: int = 3,
-                     report_path: str = None) -> object:
+                     N_samples: int = 3) -> DataFrame:
     """
     Generate a extrapolation dataset.
-    # TODO: use governance events on the extrapolation itself
     """
     (sim_df, test_df, raw_sim_df) = backtest_results
 
     # Index for the last available data points
     last_row = raw_sim_df.iloc[-1]
+    last_historical_row = test_df.iloc[-1]
 
     initial_state = default_model.initial_state
-    # TODO use test_df pid state
-    initial_pid_state = ControllerState(last_row.pid_state.redemption_price,
-                                        last_row.pid_state.redemption_rate,
+    initial_pid_state = ControllerState(last_historical_row.redemption_price,
+                                        last_historical_row.redemption_rate,
                                         0.0,
                                         0.0)
 
@@ -168,6 +169,7 @@ def extrapolate_data(signals: object,
     params.update(perform_backtesting=Param(False, bool))
     params.update(heights=Param(None, bool))
     params.update(backtesting_data=Param(None, bool))
+    # TODO: use governance events on the extrapolation itself
     params.update(governance_events=Param({}, dict))
     params.update(exogenous_data=ParamSweep(signals, None))
     params.update(backtesting_action_states=Param(past_action_states, None))
@@ -178,6 +180,7 @@ def extrapolate_data(signals: object,
                          pid_params=initial_pid_params,
                          token_state=last_row.token_state,
                          eth_price=last_row.eth_price,
+                         spot_price=last_row.spot_price,
                          market_price=last_row.market_price)  # TODO use test df state
 
     # Run extrapolation simulation
@@ -192,50 +195,73 @@ def extrapolate_data(signals: object,
     # Clean-up
     sim_df = default_model.post_processing(sim_df)
 
-    # TODO run notebook template
-
     return sim_df
 
 
 def extrapolation_cycle(base_path: str = None,
                         historical_interval: Days = 14,
-                        price_samples: int = 3,
+                        historical_lag: Days = 0,
+                        price_samples: int = 10,
                         extrapolation_samples: int = 1,
                         extrapolation_timesteps: int = 14 * 24,
-                        use_last_data=False) -> object:
+                        use_last_data=True,
+                        generate_reports=True) -> object:
     """
     Perform a entire extrapolation cycle.
     """
     t1 = time()
     print("0. Retrieving Data\n---")
+    runtime = datetime.utcnow()
+
     if base_path is None:
-        working_path = Path('~/repos/bsci/reflexer-digital-twin/data/runs')
+        working_path = Path('~/repos/bsci/reflexer-digital-twin')
+        data_path = working_path / 'data/runs'
     else:
         working_path = Path(base_path)
+        data_path = working_path / 'data/runs'
     if use_last_data is False:
-        runtime = datetime.utcnow()
-        data_start = runtime - timedelta(days=historical_interval)
-        date_range = (data_start, runtime)
+        date_end = runtime - timedelta(days=historical_lag)
+        date_start = date_end - timedelta(days=historical_interval)
+        date_range = (date_start, date_end)
 
-        data_path = working_path / f'{runtime}_historical-data.csv.gz'
-        retrieve_data(data_path,
+        historical_data_path = data_path / f'{runtime}_retrieval.csv.gz'
+        retrieve_data(str(historical_data_path),
                       date_range)
     else:
-        files = listdir(working_path.expanduser())
+        files = listdir(data_path.expanduser())
         files = sorted(
-            file for file in files if 'historical-data.csv.gz' in file)
-        data_path = working_path / f'{files[-1]}'
+            file for file in files if 'retrieval.csv.gz' in file)
+        historical_data_path = data_path / f'{files[-1]}'
 
     print(f"Data located at {data_path}")
 
     print("1. Preparing Data\n---")
-    backtesting_df, governance_events = prepare(data_path)
+    backtesting_data, governance_events = prepare(str(historical_data_path))
 
     print("2. Backtesting Model\n---")
-    backtest_results = backtest_model(backtesting_df, governance_events)
+    backtest_results = backtest_model(backtesting_data, governance_events)
+
+    backtest_results[0].to_csv(data_path / f'{runtime}-backtesting.csv.gz',
+                               compression='gzip',
+                               index=False)
+
+    backtest_results[1].to_csv(data_path / f'{runtime}-historical.csv.gz',
+                               compression='gzip',
+                               index=False)
+
+    timestamps = sorted([el['timestamp']
+                         for (timestep, el)
+                         in backtesting_data.exogenous_data.items()])
+
+    metadata = {'createdAt': str(runtime),
+                'initial_backtesting_timestamp': str(timestamps[0]),
+                'final_backtesting_timestamp': str(timestamps[-1])}
+
+    with open(data_path.expanduser() / f"{runtime}-meta.json", 'w') as fid:
+        dump(metadata, fid)
 
     print("3. Fitting Stochastic Processes\n---")
-    stochastic_params = stochastic_fit(backtesting_df.exogenous_data)
+    stochastic_params = stochastic_fit(backtesting_data.exogenous_data)
 
     print("4. Extrapolating Exogenous Signals\n---")
     N_t = extrapolation_timesteps
@@ -248,14 +274,32 @@ def extrapolation_cycle(base_path: str = None,
 
     print("5. Extrapolating Future Data\n---")
     N_extrapolation_samples = extrapolation_samples
-    future_data = extrapolate_data(extrapolated_signals,
-                                   backtest_results,
-                                   governance_events,
-                                   N_t,
-                                   N_extrapolation_samples)
+    extrapolation_df = extrapolate_data(extrapolated_signals,
+                                        backtest_results,
+                                        governance_events,
+                                        N_t,
+                                        N_extrapolation_samples)
+
+    extrapolation_df.to_csv(data_path / f'{runtime}-extrapolation.csv.gz',
+                            compression='gzip',
+                            index=False)
+
+    print("6. Exporting results\n---")
+    if generate_reports == True:
+        path = str((data_path / f'{runtime}-').expanduser())
+        input_nb_path = (working_path / 'rai_digital_twin/templates/extrapolation.ipynb').expanduser()
+        output_nb_path = (working_path / f'reports/{runtime}-extrapolation.ipynb').expanduser()
+        output_html_path = (working_path / f'reports/{runtime}-extrapolation.html').expanduser()
+        pm.execute_notebook(
+            input_nb_path,
+            output_nb_path,
+            parameters=dict(base_path=path)
+        )
+        export_cmd = f"jupyter nbconvert --to html '{output_nb_path}'"
+        os.system(export_cmd)
+        os.system(f"rm '{output_nb_path}'")
     t2 = time()
-    print(f"6. Done! {t2 - t1 :.2f}s\n---")
+    print(f"7. Done! {t2 - t1 :.2f}s\n---")
 
-    # TODO report template
-
-    return backtest_results, future_data
+    output = (backtest_results, extrapolation_df, stochastic_params)
+    return output

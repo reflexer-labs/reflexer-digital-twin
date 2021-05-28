@@ -6,8 +6,8 @@ from google.cloud import bigquery
 from typing import Iterable
 import pandas as pd
 
-SUBGRAPH_URL = 'https://api.thegraph.com/subgraphs/name/reflexer-labs/rai-mainnet'
-
+PRAI_SUBGRAPH_URL = 'https://api.thegraph.com/subgraphs/name/reflexer-labs/prai-mainnet'
+RAI_SUBGRAPH_URL = 'https://api.thegraph.com/subgraphs/name/reflexer-labs/rai-mainnet'
 
 def yield_hourly_stats() -> Iterable[dict]:
     query_header = '''
@@ -25,7 +25,7 @@ def yield_hourly_stats() -> Iterable[dict]:
     n = 0
     while True:
         query = query_header.format(n*1000) + query_body + query_tail
-        r = requests.post(SUBGRAPH_URL, json={'query': query})
+        r = requests.post(RAI_SUBGRAPH_URL, json={'query': query})
         s = json.loads(r.content)['data']['hourlyStats']
         n += 1
         if len(s) < 1:
@@ -37,7 +37,7 @@ def retrieve_hourly_stats() -> DataFrame:
     # Retrieve all hourly stats batches and transform into a single list of dicts
     gen_expr = (iter_hourly for
                 iter_hourly
-                in tqdm(yield_hourly_stats,
+                in tqdm(yield_hourly_stats(),
                         desc='Retrieving hourly stats'))
     hourly_records: list[dict] = sum(gen_expr, [])
 
@@ -60,15 +60,11 @@ def retrieve_system_states(block_numbers: list[int]) -> DataFrame:
         {
       systemState(block: {number:%s},id:"current") { 
         coinUniswapPair {
-          label
           reserve0
           reserve1
           token0Price
           token1Price
           totalSupply
-        }
-        currentCoinMedianizerUpdate{
-          value
         }
         currentRedemptionRate {
           eightHourlyRate
@@ -94,7 +90,7 @@ def retrieve_system_states(block_numbers: list[int]) -> DataFrame:
       }
     }
     ''' % i
-        r = requests.post(SUBGRAPH_URL, json={'query': query})
+        r = requests.post(PRAI_SUBGRAPH_URL, json={'query': query})
         s = json.loads(r.content)['data']['systemState']
         state.append(s)
     systemState = pd.DataFrame(state)
@@ -144,7 +140,7 @@ def retrieve_safe_history(block_numbers: list[int]) -> DataFrame:
         }
         }
         ''' % i
-        r = requests.post(SUBGRAPH_URL, json={'query': query})
+        r = requests.post(RAI_SUBGRAPH_URL, json={'query': query})
         s = json.loads(r.content)['data']['safes']
         t = pd.DataFrame(s)
         t['collateral'] = t['collateral'].astype(float)
@@ -194,22 +190,35 @@ def retrieve_eth_price(limit=None,
 
 def download_data(limit=None,
                   date_range=None) -> DataFrame:
+    """
+    Retrieve all historical data required for backtesting & extrapolation
+    """
+    # Get hourly stats from The Graph
     hourly_stats = retrieve_hourly_stats()
 
+    # Filter hourly date if requested, else, use everything
     if date_range is not None:
         QUERY = f'timestamp >= "{date_range[0]}" & timestamp < "{date_range[1]}"'
         hourly_stats = hourly_stats.query(QUERY)
     else:
         pass
 
+    # Get the first hourly results if requested
     if limit is not None:
         hourly_stats = hourly_stats.head(limit)
     else:
         pass
 
+    # Retrieve block numbers
     block_numbers = hourly_stats.index
+    
+    # Get associated system states & safe state for each block numbers
     dfs = (retrieve_system_states(block_numbers),
            retrieve_safe_history(block_numbers),
            hourly_stats)
+
+    # Join everything together
     historical_df = pd.concat(dfs, join='inner', axis=1)
+
+    # Return Data Frame
     return historical_df.reset_index(drop=False)

@@ -24,7 +24,8 @@ def extract_exogenous_data(df: pd.DataFrame) -> dict[Timestep, dict[str, float]]
     Extract exogenous variables from historical dataframe.
     """
     EXOGENOUS_MAP = {'eth_price': 'eth_price',
-                     'marketPriceUsd': 'market_price'}
+                     'marketPriceUsd': 'market_price',
+                     'timestamp': 'timestamp'}
 
     exogenous_data = (df.loc[:, EXOGENOUS_MAP.keys()]
                       .rename(columns=EXOGENOUS_MAP)
@@ -112,3 +113,7 @@ def load_governance_events(path: str,
         return events
     else:
         return {}
+
+
+def clean_up_output():
+    pass
