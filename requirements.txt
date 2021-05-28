@@ -11,3 +11,5 @@ pymc3
 pyarrow
 requests
 google-cloud-bigquery-storage
+papermill
+nbconvert
