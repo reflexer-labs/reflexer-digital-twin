@@ -151,5 +151,3 @@ data/.ipynb_checkpoints
 
 *.pickle
 *.gitkeep
-
-data/runs

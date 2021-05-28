@@ -8,8 +8,6 @@ The backtesting and extrapolation components are powered by cadCAD, a framework 
 
 ![RAI Digital Twin Components Diagram](assets/dt-components.png)
 
-
-
 Specifically, it accomplishes the following functions:
 
 - Data Interface: The DT has integration with the same live data that the RAI controller, as well as integrations with Data Lakes for exporting result sets.
@@ -20,7 +18,17 @@ Specifically, it accomplishes the following functions:
 
 ## Usage 
 
-`python -m rai_digital_twin`
+Clone the repo and pass: `python -m rai_digital_twin`
+
+This will retrieve, prepare, backtest, fit and extrapolate over the existing data.
+
+The generated data will be located at `data/runs`, while any reports will be located at `reports/`
+
+As of now, it is possible to configure the DT parameters by directly modified the `rai_digital_twin/__main__.py` call on the `extrapolation_cycle()` call. Options can include:
+
+- Number of Monte Carlo runs for the USD/ETH price
+- Interval for retrieving and backtesting data
+- Re-utilize existing past data rather than retrieving
 
 ### Execution
 
