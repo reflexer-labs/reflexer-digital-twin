@@ -13,3 +13,4 @@ requests
 google-cloud-bigquery-storage
 papermill
 nbconvert
+scikit-learn
