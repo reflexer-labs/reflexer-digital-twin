@@ -6,3 +6,10 @@ cadCAD-tools
 matplotlib
 plotly
 pandas
+statsmodels
+pymc3
+pyarrow
+requests
+google-cloud-bigquery-storage
+papermill
+nbconvert

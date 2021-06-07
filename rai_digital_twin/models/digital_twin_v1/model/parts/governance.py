@@ -23,11 +23,11 @@ def p_governance_events(params, _1, _2, state):
     """
     Policy to decode governance events.
     """
-    events = params['governance_events']
+    events: dict = params['governance_events']
     t = state['timestep']
 
     action = {}
-    if t in events:
+    if t in events.keys():
         event = events[t]
         action = decode_event(event)
     else:
