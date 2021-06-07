@@ -20,8 +20,6 @@ from rai_digital_twin import default_model
 from rai_digital_twin.types import ActionState, BacktestingData, ControllerParams, ControllerState, Days, ExogenousData
 from rai_digital_twin.types import GovernanceEvent, Timestep, USD_per_ETH
 
-GOVERNANCE_EVENTS_PATH = '~/repos/bsci/reflexer-digital-twin/data/controller_params.csv'
-
 
 def retrieve_data(output_path: str,
                   date_range: tuple[Any, Any]) -> DataFrame:
@@ -33,14 +31,15 @@ def retrieve_data(output_path: str,
     return df
 
 
-def prepare(input_path: str) -> tuple[BacktestingData,
-                                      dict[Timestep, GovernanceEvent]]:
+def prepare(input_path: str,
+            governance_input_path) -> tuple[BacktestingData,
+                                            dict[Timestep, GovernanceEvent]]:
     """
     Clean-up required historical and prior data.
     """
     backtesting_data = load_backtesting_data(input_path)
 
-    governance_events = load_governance_events(GOVERNANCE_EVENTS_PATH,
+    governance_events = load_governance_events(governance_input_path,
                                                backtesting_data.heights)
 
     # TODO run notebook template
@@ -203,8 +202,8 @@ def extrapolation_cycle(base_path: str = None,
                         historical_lag: Days = 0,
                         price_samples: int = 10,
                         extrapolation_samples: int = 1,
-                        extrapolation_timesteps: int = 14 * 24,
-                        use_last_data=True,
+                        extrapolation_timesteps: int = 7 * 24,
+                        use_last_data=False,
                         generate_reports=True) -> object:
     """
     Perform a entire extrapolation cycle.
@@ -214,11 +213,14 @@ def extrapolation_cycle(base_path: str = None,
     runtime = datetime.utcnow()
 
     if base_path is None:
-        working_path = Path('~/repos/bsci/reflexer-digital-twin')
+        working_path = Path(os.getcwd())
         data_path = working_path / 'data/runs'
     else:
         working_path = Path(base_path)
         data_path = working_path / 'data/runs'
+
+    governance_data_path = working_path / 'data/controller_params.csv'
+    
     if use_last_data is False:
         date_end = runtime - timedelta(days=historical_lag)
         date_start = date_end - timedelta(days=historical_interval)
@@ -227,16 +229,18 @@ def extrapolation_cycle(base_path: str = None,
         historical_data_path = data_path / f'{runtime}_retrieval.csv.gz'
         retrieve_data(str(historical_data_path),
                       date_range)
+        print(f"Data written at {historical_data_path}")
     else:
         files = listdir(data_path.expanduser())
         files = sorted(
             file for file in files if 'retrieval.csv.gz' in file)
         historical_data_path = data_path / f'{files[-1]}'
-
-    print(f"Data located at {data_path}")
+        print(f"Using last data at {historical_data_path}")
 
     print("1. Preparing Data\n---")
-    backtesting_data, governance_events = prepare(str(historical_data_path))
+    backtesting_data, governance_events = prepare(str(historical_data_path),
+                                                  str(governance_data_path)
+                                                  )
 
     print("2. Backtesting Model\n---")
     backtest_results = backtest_model(backtesting_data, governance_events)
@@ -287,9 +291,12 @@ def extrapolation_cycle(base_path: str = None,
     print("6. Exporting results\n---")
     if generate_reports == True:
         path = str((data_path / f'{runtime}-').expanduser())
-        input_nb_path = (working_path / 'rai_digital_twin/templates/extrapolation.ipynb').expanduser()
-        output_nb_path = (working_path / f'reports/{runtime}-extrapolation.ipynb').expanduser()
-        output_html_path = (working_path / f'reports/{runtime}-extrapolation.html').expanduser()
+        input_nb_path = (
+            working_path / 'rai_digital_twin/templates/extrapolation.ipynb').expanduser()
+        output_nb_path = (
+            working_path / f'reports/{runtime}-extrapolation.ipynb').expanduser()
+        output_html_path = (
+            working_path / f'reports/{runtime}-extrapolation.html').expanduser()
         pm.execute_notebook(
             input_nb_path,
             output_nb_path,

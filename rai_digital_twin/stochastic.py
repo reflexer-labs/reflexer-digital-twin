@@ -169,13 +169,18 @@ def generate_eth_samples(fit_params: FitParams,
 
 
 def fit_eth_price(X: np.ndarray) -> FitParams:
+    """
+    Perform Bayesian Inference on the ETH time series
+    """
     model = pm.Model()
     with model:
         alpha = pm.Exponential('alpha', lam=2)
         beta = pm.Exponential('beta', lam=.1)
         g = pm.Gamma('g', alpha=alpha, beta=beta, observed=X)
         # BUG: we're limited for 1 core for now
-        trace = pm.sample(2000, return_inferencedata=True, cores=1)
+        trace = pm.sample(5000, return_inferencedata=True, cores=1)
+
+    
     a = np.mean(trace.posterior.alpha)
     b = np.mean(trace.posterior.beta)
 

@@ -1,40 +1,59 @@
 import json
 import requests
+import logging
+from itertools import count
 from tqdm.auto import tqdm
 from pandas.core.frame import DataFrame
-from google.cloud import bigquery
 from typing import Iterable
 import pandas as pd
 
-PRAI_SUBGRAPH_URL = 'https://api.thegraph.com/subgraphs/name/reflexer-labs/prai-mainnet'
 RAI_SUBGRAPH_URL = 'https://api.thegraph.com/subgraphs/name/reflexer-labs/rai-mainnet'
 
-def yield_hourly_stats() -> Iterable[dict]:
+def yield_hourly_stats(feed_size: int=1000) -> Iterable[dict]:
+    """
+    Generate a feed of hourly stats with timestamp, blockNumber, 
+    and price fields.
+    """
+
+    # Query template
     query_header = '''
     query {{
-        hourlyStats(first: 1000, skip:{}) {{'''
+        hourlyStats(first: {}, skip:{}) {{'''
+
     query_tail = '''    
     }
     }'''
+
     query_body = '''
         timestamp
         blockNumber
         marketPriceUsd # price of COIN in USD (uni pool price * ETH median price)
         marketPriceEth # Price of COIN in ETH (uni pool price)
     '''
-    n = 0
+
+    # Iterate until there's no yielded data
+    counter = count(0)
     while True:
-        query = query_header.format(n*1000) + query_body + query_tail
+        position = next(counter) * feed_size
+
+        # Prepare query
+        query = query_header.format(feed_size, position)
+        query += query_body
+        query += query_tail
+
+        # Send a POST request and parse
         r = requests.post(RAI_SUBGRAPH_URL, json={'query': query})
         s = json.loads(r.content)['data']['hourlyStats']
-        n += 1
-        if len(s) < 1:
+
+        # Yield if there's data, else break
+        if len(s) > 0:
+            yield s
+        else:
             break
-        yield s
 
 
 def retrieve_hourly_stats() -> DataFrame:
-    # Retrieve all hourly stats batches and transform into a single list of dicts
+    # Retrieve hourly stats batches and transform into a single list of dicts
     gen_expr = (iter_hourly for
                 iter_hourly
                 in tqdm(yield_hourly_stats(),
@@ -54,17 +73,24 @@ def retrieve_hourly_stats() -> DataFrame:
 
 
 def retrieve_system_states(block_numbers: list[int]) -> DataFrame:
-    state = []
-    for i in tqdm(block_numbers, desc='Retrieving System States'):
-        query = '''
-        {
+    """
+    Retrieve a DataFrame representing the system state for all ETH
+    block heights given as a input.
+    """
+
+    QUERY_TEMPLATE = """
+    {
       systemState(block: {number:%s},id:"current") { 
         coinUniswapPair {
+          label
           reserve0
           reserve1
           token0Price
           token1Price
           totalSupply
+        }
+        currentCoinMedianizerUpdate{
+          value
         }
         currentRedemptionRate {
           eightHourlyRate
@@ -89,14 +115,35 @@ def retrieve_system_states(block_numbers: list[int]) -> DataFrame:
         createdAtBlock
       }
     }
-    ''' % i
-        r = requests.post(PRAI_SUBGRAPH_URL, json={'query': query})
+    """
+
+    # Loop through system states
+    state = []
+    null_count = count(0)
+    for block_number in tqdm(block_numbers, desc='Retrieving System States'):
+        # Execute query
+        query = QUERY_TEMPLATE % block_number
+        r = requests.post(RAI_SUBGRAPH_URL, json={'query': query})
         s = json.loads(r.content)['data']['systemState']
-        state.append(s)
+        s['block_number'] = block_number
+
+        # Append if the row is valid, drop if coinUniswapPair info is missing
+        if s['coinUniswapPair'] is not None:
+            state.append(s)
+        else:
+            next(null_count)
+    
+    # Warn if there are null rows
+    null_rows = next(null_count) - 1
+    if null_rows > 0:
+        logging.warning(f"There are null coinUniswapPair rows, they were dropped. ({null_rows} null rows, {null_rows / (len(state) + null_rows): .2%} of total)")
+
+
+    # Transform output into a DataFrame
     systemState = pd.DataFrame(state)
-    systemState['block_number'] = block_numbers
     systemState = systemState.set_index('block_number')
 
+    # Extract nested data
     systemState['RedemptionRateAnnualizedRate'] = systemState.currentRedemptionRate.apply(
         lambda x: x['annualizedRate'])
     systemState['RedemptionRateHourlyRate'] = systemState.currentRedemptionRate.apply(
@@ -110,10 +157,12 @@ def retrieve_system_states(block_numbers: list[int]) -> DataFrame:
     systemState['RaiInUniswap'] = systemState.coinUniswapPair.apply(
         lambda x: x['reserve0'])
     systemState['RaiDrawnFromSAFEs'] = systemState['erc20CoinTotalSupply']
-    #systemState['RAIInUniswapV2(RAI/ETH)'] = systemState.coinUniswapPair.apply(lambda x: x['reserve0'])
+
+    # Remove nested columns
     del systemState['currentRedemptionRate']
     del systemState['currentRedemptionPrice']
 
+    # Filter columns
     systemState = systemState[['debtAvailableToSettle',
                                'globalDebt',
                                'globalDebtCeiling',
@@ -152,40 +201,6 @@ def retrieve_safe_history(block_numbers: list[int]) -> DataFrame:
                     .set_index('block_number')
                     )
     return safe_history
-
-
-def retrieve_eth_price(limit=None,
-                       date_range=None) -> DataFrame:
-
-    if limit is not None:
-        limit_subquery = f'LIMIT {limit}'
-    else:
-        limit_subquery = ''
-
-    if date_range is not None:
-        range_subquery = f"WHERE block_timestamp >= '{date_range[0]}' AND block_timestamp < '{date_range[1]}'"
-    else:
-        range_subquery = ''
-
-    # BUG It seems that the OSM_event_UpdateResult has no updates since 2021-05-07
-    sql = f"""
-    SELECT 
-    * 
-    FROM `blockchain-etl.ethereum_rai.OSM_event_UpdateResult`
-    {range_subquery}
-    ORDER By block_timestamp DESC
-    {limit_subquery}
-    """
-
-    constant = 1000000000000000000
-    client = bigquery.Client()
-    raw_df = client.query(sql).to_dataframe()
-    eth_price_OSM = raw_df
-    eth_price_OSM['eth_price'] = eth_price_OSM['newMedian'].astype(
-        float)/constant
-    eth_price_OSM = eth_price_OSM[[
-        'block_number', 'eth_price', 'block_timestamp']]
-    return eth_price_OSM.set_index("block_number")
 
 
 def download_data(limit=None,
