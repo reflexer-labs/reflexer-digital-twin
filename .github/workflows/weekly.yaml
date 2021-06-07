@@ -6,4 +6,5 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
+      - run: python -m pip install -r requirements.txt
       - run: python -m rai_digital_twin
