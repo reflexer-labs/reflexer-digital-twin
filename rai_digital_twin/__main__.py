@@ -3,8 +3,10 @@ import click
 import os 
 
 
-def main() -> None:
-    extrapolation_cycle()
+@click.command()
+@click.option('-l', '--use-last-data', 'use_last_data', is_flag=True)
+def main(use_last_data) -> None:
+    extrapolation_cycle(use_last_data=use_last_data)
 
     # %%
 

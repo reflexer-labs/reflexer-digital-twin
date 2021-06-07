@@ -204,7 +204,7 @@ def extrapolation_cycle(base_path: str = None,
                         price_samples: int = 10,
                         extrapolation_samples: int = 1,
                         extrapolation_timesteps: int = 14 * 24,
-                        use_last_data=True,
+                        use_last_data=False,
                         generate_reports=True) -> object:
     """
     Perform a entire extrapolation cycle.
@@ -227,13 +227,13 @@ def extrapolation_cycle(base_path: str = None,
         historical_data_path = data_path / f'{runtime}_retrieval.csv.gz'
         retrieve_data(str(historical_data_path),
                       date_range)
+        print(f"Data written at {historical_data_path}")
     else:
         files = listdir(data_path.expanduser())
         files = sorted(
             file for file in files if 'retrieval.csv.gz' in file)
         historical_data_path = data_path / f'{files[-1]}'
-
-    print(f"Data located at {data_path}")
+        print(f"Using last data at {historical_data_path}")
 
     print("1. Preparing Data\n---")
     backtesting_data, governance_events = prepare(str(historical_data_path))
