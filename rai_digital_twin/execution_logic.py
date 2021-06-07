@@ -203,7 +203,7 @@ def extrapolation_cycle(base_path: str = None,
                         historical_lag: Days = 0,
                         price_samples: int = 10,
                         extrapolation_samples: int = 1,
-                        extrapolation_timesteps: int = 14 * 24,
+                        extrapolation_timesteps: int = 7 * 24,
                         use_last_data=False,
                         generate_reports=True) -> object:
     """
