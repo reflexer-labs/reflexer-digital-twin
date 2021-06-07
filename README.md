@@ -60,6 +60,12 @@ TODO
 ### Future State Extrapolation
 
 TODO
+
+## Notebooks
+* [data_acquisition.ipynb](notebooks/data_acquisition.ipynb) shows how the data was obtained and from which sources
+* [Systems_Identification_Fitting.ipynb](notebooks/Systems_Identification_Fitting.ipynb) documents the iterative process of constructing the systems identification model at the heart of the Digital Twin
+* [VAR_vs_VARMAX_evaluation.ipynb](notebooks/VAR_vs_VARMAX_evaluation.ipynb)is an experimental notebook determining if VAR or VARMAX was a better fit for 
+
 ## References
 
 - Scope document: https://hackmd.io/NXJNI2YVQziB3STBNH2Wjw
