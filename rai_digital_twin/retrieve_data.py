@@ -137,7 +137,7 @@ def retrieve_system_states(block_numbers: list[int]) -> DataFrame:
     # Warn if there are null rows
     null_rows = next(null_count) - 1
     if null_rows > 0:
-        logging.warning(f"There are null coinUniswapPair rows, they were dropped. ({null_rows} null rows, {null_rows / len(state): .2%} of total)")
+        logging.warning(f"There are null coinUniswapPair rows, they were dropped. ({null_rows} null rows, {null_rows / (len(state) + null_rows): .2%} of total)")
 
 
     # Transform output into a DataFrame
