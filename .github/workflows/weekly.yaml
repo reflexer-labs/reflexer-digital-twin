@@ -1,0 +1,9 @@
+name: weekly
+on: [push]
+jobs:
+  run-digital-twin:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+      - run: python -m rai_digital_twin
