@@ -4,7 +4,6 @@ import logging
 from itertools import count
 from tqdm.auto import tqdm
 from pandas.core.frame import DataFrame
-from google.cloud import bigquery
 from typing import Iterable
 import pandas as pd
 
@@ -202,40 +201,6 @@ def retrieve_safe_history(block_numbers: list[int]) -> DataFrame:
                     .set_index('block_number')
                     )
     return safe_history
-
-
-def retrieve_eth_price(limit=None,
-                       date_range=None) -> DataFrame:
-
-    if limit is not None:
-        limit_subquery = f'LIMIT {limit}'
-    else:
-        limit_subquery = ''
-
-    if date_range is not None:
-        range_subquery = f"WHERE block_timestamp >= '{date_range[0]}' AND block_timestamp < '{date_range[1]}'"
-    else:
-        range_subquery = ''
-
-    # BUG It seems that the OSM_event_UpdateResult has no updates since 2021-05-07
-    sql = f"""
-    SELECT 
-    * 
-    FROM `blockchain-etl.ethereum_rai.OSM_event_UpdateResult`
-    {range_subquery}
-    ORDER By block_timestamp DESC
-    {limit_subquery}
-    """
-
-    constant = 1000000000000000000
-    client = bigquery.Client()
-    raw_df = client.query(sql).to_dataframe()
-    eth_price_OSM = raw_df
-    eth_price_OSM['eth_price'] = eth_price_OSM['newMedian'].astype(
-        float)/constant
-    eth_price_OSM = eth_price_OSM[[
-        'block_number', 'eth_price', 'block_timestamp']]
-    return eth_price_OSM.set_index("block_number")
 
 
 def download_data(limit=None,
