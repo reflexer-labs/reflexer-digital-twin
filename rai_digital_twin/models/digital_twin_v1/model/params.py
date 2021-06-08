@@ -36,6 +36,7 @@ params: dict[str, Union[Param, ParamSweep]] = {
     'extrapolation_timedelta': Param(60 * 60, Seconds),
     'ewm_alpha': Param(0.8, float),
     'var_lag': Param(15, int),
+    'convergence_swap_intensity': Param([None], Percentage),
 
     # Misc
     'perform_backtesting': Param(True, bool)

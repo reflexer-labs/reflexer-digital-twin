@@ -17,7 +17,7 @@ from .prepare_data import load_backtesting_data, load_governance_events
 from .backtesting import simulation_loss
 from .stochastic import FitParams, fit_eth_price, generate_eth_samples
 from rai_digital_twin import default_model
-from rai_digital_twin.types import ActionState, BacktestingData, ControllerParams, ControllerState, Days, ExogenousData
+from rai_digital_twin.types import ActionState, BacktestingData, ControllerParams, ControllerState, Days, ExogenousData, Percentage
 from rai_digital_twin.types import GovernanceEvent, Timestep, USD_per_ETH
 
 
@@ -172,7 +172,8 @@ def extrapolate_data(signals: object,
     params.update(governance_events=Param({}, dict))
     params.update(exogenous_data=ParamSweep(signals, None))
     params.update(backtesting_action_states=Param(past_action_states, None))
-    prepared_params = prepare_params(params)
+    params.update(convergence_swap_intensity=ParamSweep([None, 0.05], Percentage))
+    prepared_params = prepare_params(params, cartesian_sweep=True)
 
     # Update initial state for extrapolation
     initial_state.update(pid_state=initial_pid_state,

@@ -1,9 +1,11 @@
 
 
 from rai_digital_twin.system_identification import fit_predict_action
-from rai_digital_twin.types import ActionState, TokenState
+from rai_digital_twin.types import ActionState, ControllerState, TokenState
 from cadCAD_tools.types import History, Params, Signal, State, VariableUpdate
 from random import random
+from math import sqrt
+
 
 def state_to_action_state(state: State) -> ActionState:
     return ActionState(state['token_state'],
@@ -39,12 +41,30 @@ def p_user_action(params, _1, history, state) -> Signal:
         states = prepare_action_state_history(params,
                                               history,
                                               state)
+
         new_action = fit_predict_action(states,
                                         params['user_action_params'],
                                         params['ewm_alpha'],
                                         params['var_lag'])
+        if new_action is None:
+            new_action = TokenState(0, 0, 0, 0)
 
-        new_state = state['token_state'] + new_action
+        intensity = params['convergence_swap_intensity']
+        if intensity is not None:
+            token_state: TokenState = state['token_state']
+            pid_state: ControllerState = state['pid_state']
+            optimal_rai_swap = token_state.rai_reserve
+            eth_rai = (token_state.eth_reserve / token_state.rai_reserve)
+            sqrt_term = eth_rai / pid_state.redemption_price
+            sqrt_term = sqrt(sqrt_term)
+            optimal_rai_swap *= (sqrt_term - 1)
+            actual_rai_swap = optimal_rai_swap * intensity * random()
+            actual_eth_swap = -1 * actual_rai_swap * eth_rai
+            arb_action = TokenState(actual_rai_swap, actual_eth_swap, 0, 0)
+        else:
+            arb_action = TokenState(0, 0, 0, 0)
+
+        new_state = state['token_state'] + new_action + arb_action
 
         return {'token_state': new_state}
     else:
