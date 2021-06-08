@@ -13,14 +13,10 @@ import os
 @click.option('-l', '--use-last-data', 'use_last_data',
               is_flag=True,
               help="Use last retrieved data rather than downloading it")
-@click.option('-r', '--run-only', 'run_only',
-              is_flag=True,
-              help="Run Digital Twin without generating reports")
-def main(use_last_data, past_days, extrapolation_timesteps, run_only) -> None:
+def main(use_last_data, past_days, extrapolation_timesteps) -> None:
     extrapolation_cycle(use_last_data=use_last_data,
                         historical_interval=past_days,
-                        extrapolation_timesteps=extrapolation_timesteps,
-                        generate_reports=~run_only)
+                        extrapolation_timesteps=extrapolation_timesteps)
 
     # %%
 
