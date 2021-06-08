@@ -58,8 +58,8 @@ def p_user_action(params, _1, history, state) -> Signal:
             sqrt_term = eth_rai / pid_state.redemption_price
             sqrt_term = sqrt(sqrt_term)
             optimal_rai_swap *= (sqrt_term - 1)
-            actual_rai_swap = optimal_rai_swap * intensity * random()
-            actual_eth_swap = -1 * actual_rai_swap * eth_rai
+            actual_rai_swap = -1 * optimal_rai_swap * intensity * random()
+            actual_eth_swap = actual_rai_swap * eth_rai
             arb_action = TokenState(actual_rai_swap, actual_eth_swap, 0, 0)
         else:
             arb_action = TokenState(0, 0, 0, 0)

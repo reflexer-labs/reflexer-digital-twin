@@ -1,3 +1,4 @@
+from rai_digital_twin.models.digital_twin_v1.model.params import NUMERICAL_PARAMS
 from time import time
 from typing import Any
 from pandas.core.frame import DataFrame
@@ -190,7 +191,7 @@ def extrapolate_data(signals: object,
                       N_t,
                       N_samples,
                       drop_substeps=True,
-                      assign_params=False)
+                      assign_params=NUMERICAL_PARAMS)
 
     # Clean-up
     sim_df = default_model.post_processing(sim_df)

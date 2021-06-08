@@ -18,13 +18,19 @@ PI_BOUND_PARAMS = PIBoundParams(
     negative_rate_limit=0.1
 )
 
+NUMERICAL_PARAMS = {'ewm_alpha',
+                    'var_lag',
+                    'convergence_swap_intensity',
+                    'extrapolation_timedelta',
+                    'block_time'}
+
 
 params: dict[str, Union[Param, ParamSweep]] = {
     # System wide parameters
     'governance_events': Param({}, dict[Timestep, GovernanceEvent]),
     'pi_bound_params': Param(PI_BOUND_PARAMS, PIBoundParams),
     'exogenous_data': Param(None, TimestepDict),
-    
+
     # Backtesting specific parameters
     'heights': Param(None, dict[Timestep, Height]),
     'backtesting_data': Param({}, TimestepDict),
