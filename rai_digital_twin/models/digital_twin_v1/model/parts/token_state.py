@@ -54,11 +54,12 @@ def p_user_action(params, _1, history, state) -> Signal:
 
         intensity = params['convergence_swap_intensity']
         if intensity is not None:
+            market_price = state['market_price']
             token_state: TokenState = state['token_state']
             pid_state: ControllerState = state['pid_state']
             optimal_rai_swap = token_state.rai_reserve
             eth_rai = (token_state.eth_reserve / token_state.rai_reserve)
-            sqrt_term = eth_rai / pid_state.redemption_price
+            sqrt_term = market_price / pid_state.redemption_price
             sqrt_term = sqrt(sqrt_term)
             optimal_rai_swap *= (sqrt_term - 1)
             actual_rai_swap = optimal_rai_swap * intensity * random()
