@@ -173,6 +173,7 @@ def extrapolate_data(signals: object,
     params.update(governance_events=Param({}, dict))
     params.update(exogenous_data=ParamSweep(signals, None))
     params.update(backtesting_action_states=Param(past_action_states, None))
+    params.update(use_ewm_model=ParamSweep([False, True], Percentage))
     params.update(convergence_swap_intensity=ParamSweep([None, 0.05], Percentage))
     prepared_params = prepare_params(params, cartesian_sweep=True)
 
