@@ -18,6 +18,8 @@ Specifically, it accomplishes the following functions:
 
 ## Usage 
 
+The Reflexer Digital Twin requires **Python 3.9** and all the dependencies at `requirements.txt` installed.
+
 Clone the repo and pass: `python -m rai_digital_twin`
 
 This will retrieve, prepare, backtest, fit and extrapolate over the existing data.
