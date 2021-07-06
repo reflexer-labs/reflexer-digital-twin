@@ -10,4 +10,7 @@ pymc3==3.11.2
 click==8.0.1
 cadCAD_tools==0.0.1.4
 scikit_learn==0.24.2
-nbconvert
+nbconvert==6.0.7
+ipython_autotime==0.2.0
+jupyterlab==3.0.16
+plotly==5.1.0

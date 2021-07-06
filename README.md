@@ -18,11 +18,30 @@ Specifically, it accomplishes the following functions:
 
 ## Usage 
 
-The Reflexer Digital Twin requires **Python 3.9** and all the dependencies at `requirements.txt` installed.
+### Installation
 
-Clone the repo and pass: `python -m rai_digital_twin`
+The Reflexer Digital Twin requires **Python 3.9** and all the dependencies at `requirements.txt` installed. 
 
-This will retrieve, prepare, backtest, fit and extrapolate over the existing data.
+On a linux machine, this is achievable by (thanks @bkellerman)
+
+```
+$ python -V
+Python 3.9.6
+
+$ python -m venv venv
+$ source venv/bin/activate
+$ python -m pip install -r requirements.txt 
+```
+
+THe setup can be tested by making an restricted run of the digital twin:
+
+`python -m rai_digital_twin -l -e 5`
+
+### Execution
+
+The standard execution flow can be invoked by passing `python -m rai_digital_twin`. Custom execution arguments are available, with an description given by the `--help` option.
+
+The standard execution flow will retrieve, prepare, backtest, fit and extrapolate over the existing data.
 
 The generated data will be located at `data/runs`, while any reports will be located at `reports/`
 
@@ -32,8 +51,6 @@ As of now, it is possible to configure the DT parameters by directly modified th
 - Interval for retrieving and backtesting data
 - Re-utilize existing past data rather than retrieving
 
-### Execution
-
 ### Result Analysis
 
 ### Testing
@@ -41,27 +58,25 @@ As of now, it is possible to configure the DT parameters by directly modified th
 The Reflexer Digital Twin uses `pytest` for unit and integration testing. In order to make use of it, just pass:
 
 ``python -m pytest``
-
-
 ## Components
 
 ### Reports
 
-TODO
+#TODO
 
 ### Data interface
 
-TODO
+#TODO
 
 ### Backtesting
 
-TODO
+#TODO
 ### System Identification
 
-TODO
+#TODO
 ### Future State Extrapolation
 
-TODO
+#TODO
 
 ## Notebooks
 * [data_acquisition.ipynb](notebooks/data_acquisition.ipynb) shows how the data was obtained and from which sources
