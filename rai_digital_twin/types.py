@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any
+from typing import Any, Union
 import pandas as pd
 
 # Units
@@ -60,6 +60,26 @@ class ControllerState():
     redemption_rate: Percentage_Per_Hour
     proportional_error: USD_per_RAI
     integral_error: USD_Seconds_per_RAI
+
+    def __sub__(self, x):
+        return ControllerState(self.redemption_price - x.redemption_price,
+                            self.redemption_rate - x.redemption_rate,
+                            self.proportional_error - x.proportional_error,
+                            self.integral_error - x.integral_error)
+   
+
+    def __add__(self, x):
+        return ControllerState(self.redemption_price + x.redemption_price,
+                            self.redemption_rate + x.redemption_rate,
+                            self.proportional_error + x.proportional_error,
+                            self.integral_error + x.integral_error)
+
+
+    def __mul__(self, x):
+        return ControllerState(self.redemption_price * x,
+                            self.redemption_rate * x,
+                            self.proportional_error * x,
+                            self.integral_error * x)
 
 
 @dataclass(frozen=True)
@@ -121,7 +141,37 @@ class TransformedTokenState():
                                         self.rai_reserve_scaled - x.rai_reserve_scaled,
                                         self.eth_reserve_scaled - x.eth_reserve_scaled)
 
+@dataclass(frozen=True)
+class TransformedTokenStatePlus():
+    # (delta_rai / debt_ceiling), or 'alpha'
+    rai_debt_scaled: Percentage
+    # (delta_liq_surplus / total_liq_surplus), or 'beta'
+    liquidation_surplus: Percentage
+    # 'gamma'
+    rai_reserve_scaled: Percentage
+    # 'delta'
+    eth_reserve_scaled: Percentage
 
+    eth : float
+    rp : float
+    rp_error : float
+    mp : float
+    """
+    df['eth'] = states['ETH Price (OSM)']
+    df['rp'] = states['RedemptionPrice']
+    df['rp_error'] = states['RedemptionPriceError']
+    df['rp_eth'] = states['RedemptionPriceinEth']
+    """
+
+    def __sub__(self, x):
+        return TransformedTokenStatePlus(self.rai_debt_scaled - x.rai_debt_scaled,
+                                        self.liquidation_surplus - x.liquidation_surplus,
+                                        self.rai_reserve_scaled - x.rai_reserve_scaled,
+                                        self.eth_reserve_scaled - x.eth_reserve_scaled,
+                                        self.eth - x.eth,
+                                        self.rp - x.rp,
+                                        self.rp_error - x.rp_error,
+                                        self.rp_eth - x.rp_eth)
 
 @dataclass(frozen=True)
 class BacktestingData():
@@ -142,6 +192,17 @@ class ActionState():
     pid_state: ControllerState
     market_price: USD_per_RAI
     eth_price: USD_per_ETH
+
+    def __sub__(self, x):
+        return ActionState(self.token_state - x.token_state,
+                           self.pid_state - x.pid_state,
+                           self.market_price - x.market_price,
+                           self.eth_price - x.eth_price)
+    def __add__(self, x):
+        return ActionState(self.token_state + x.token_state,
+                           self.pid_state + x.pid_state,
+                           self.market_price + x.market_price,
+                           self.eth_price + x.eth_price)
 
 
 @dataclass(frozen=True)
@@ -177,8 +238,39 @@ def coordinate_transform(delta_state: TokenState,
                                  gamma,
                                  delta)
 
+def coordinate_transform_plus(delta_state: ActionState,
+                         global_state: ActionState,
+                         params: UserActionParams) -> TransformedTokenStatePlus:
 
-def reverse_coordinate_transform(transformed_state: TransformedTokenState,
+    alpha = delta_state.token_state.rai_debt / params.debt_ceiling
+
+    liquidation_price = params.liquidation_ratio
+    liquidation_price *= (global_state.pid_state.redemption_price / global_state.eth_price)
+
+    global_liquidation_surplus = liquidation_price * global_state.token_state.rai_debt
+    global_liquidation_surplus -= global_state.token_state.eth_locked
+
+    delta_liquidation_surplus = liquidation_price * delta_state.token_state.rai_debt
+    delta_liquidation_surplus -= delta_state.token_state.eth_locked
+
+    beta = delta_liquidation_surplus / global_liquidation_surplus
+
+    gamma = delta_state.token_state.rai_reserve / global_state.token_state.rai_reserve
+    delta = delta_state.token_state.eth_reserve / global_state.token_state.eth_reserve
+
+    #market_price = global_state.rai_reserve/global_state.eth_reserve * eth_price
+
+    return TransformedTokenStatePlus(alpha,
+                                     beta,
+                                     gamma,
+                                     delta,
+                                     delta_state.eth_price, #eth diff
+                                     delta_state.pid_state.redemption_price, #rp diff
+                                     delta_state.pid_state.redemption_price - delta_state.market_price, #rp error diff
+                                     delta_state.market_price)
+
+
+def reverse_coordinate_transform(transformed_state: Union[TransformedTokenState, TransformedTokenStatePlus],
                                  global_state: TokenState,
                                  controller_state: ControllerState,
                                  params: UserActionParams,

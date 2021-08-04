@@ -6,10 +6,10 @@ from rai_digital_twin.types import USD_per_RAI, Seconds, Height, USD_per_ETH
 INITIAL_ETH_PRICE: USD_per_ETH = 565.32
 INITIAL_MARKET_PRICE: USD_per_RAI = 3.22
 
-INITIAL_CONTROLLER_PARAMS = ControllerParams(ki=4e-8,
-                                             kp=0.0,
+INITIAL_CONTROLLER_PARAMS = ControllerParams(ki=0,
+                                             kp=5e-8,
                                              leaky_factor=0.0,
-                                             period=4 * 60 * 60,
+                                             period=8 * 60 * 60,
                                              enabled=True)
 
 INITIAL_CONTROLLER_STATE = ControllerState(redemption_price=3.14,

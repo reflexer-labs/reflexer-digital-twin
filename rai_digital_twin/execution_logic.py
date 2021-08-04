@@ -173,8 +173,12 @@ def extrapolate_data(signals: object,
     params.update(governance_events=Param({}, dict))
     params.update(exogenous_data=ParamSweep(signals, None))
     params.update(backtesting_action_states=Param(past_action_states, None))
-    params.update(use_ewm_model=ParamSweep([False, True], Percentage))
-    params.update(convergence_swap_intensity=ParamSweep([None, 0.25], Percentage))
+    #params.update(ewm_model=ParamSweep(['var', 'rf', 'rf2'], str))
+    params.update(ewm_model=ParamSweep(['var'], str))
+    params.update(var_lag=ParamSweep([1, 3, 5, 7], int))
+    #params.update(var_lag=ParamSweep([1], int))
+    #params.update(ewm_model=ParamSweep(['var'], str))
+    #params.update(convergence_swap_intensity=ParamSweep([None, 0.25, 0.75], Percentage))
     prepared_params = prepare_params(params, cartesian_sweep=True)
 
     # Update initial state for extrapolation
@@ -203,7 +207,7 @@ def extrapolate_data(signals: object,
 def extrapolation_cycle(base_path: str = None,
                         historical_interval: Days = 14,
                         historical_lag: Days = 0,
-                        price_samples: int = 10,
+                        price_samples: int = 5,
                         extrapolation_samples: int = 1,
                         extrapolation_timesteps: int = 7 * 24,
                         use_last_data=False,

@@ -42,6 +42,10 @@ def load_backtesting_data(path: str) -> BacktestingData:
             .sort_values('block_number', ascending=True)
             .reset_index(drop=True)
             .assign(RedemptionRateHourlyRate=lambda df: df.RedemptionRateHourlyRate))
+
+    # hack to simulate TWAP; need to switch to TWAP
+    df['marketPriceUsd'] = df['marketPriceUsd'].rolling(window=4, min_periods=1).mean().rolling(window=4, min_periods=1).mean()
+
     # Retrieve historical info
     token_states = df.apply(row_to_token_state, axis=1).to_dict()
     exogenous_data = extract_exogenous_data(df)

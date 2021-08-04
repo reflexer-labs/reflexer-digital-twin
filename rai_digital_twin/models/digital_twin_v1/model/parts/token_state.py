@@ -29,6 +29,8 @@ def prepare_action_state_history(params: Params,
     # Last action state
     states_3 = [state_to_action_state(state)]
 
+
+    # last two action states have the same TokenState
     return states_1 + states_2 + states_3
 
 
@@ -38,13 +40,25 @@ def p_user_action(params, _1, history, state) -> Signal:
         # Retrieve data on the last substep and on each point of history,
         # except for the last one.
 
-        if params['use_ewm_model'] is True:
+        if params['ewm_model'] == 'var':
             states = prepare_action_state_history(params,
                                                 history,
                                                 state)
 
             ewm_action = fit_predict_action(states,
                                             params['user_action_params'],
+                                            params['ewm_model'],
+                                            params['ewm_alpha'],
+                                            params['var_lag'])
+            if ewm_action is None:
+                ewm_action = TokenState(0, 0, 0, 0)
+        elif params['ewm_model'] == 'rf' or params['ewm_model'] == 'rf2':
+            states = prepare_action_state_history(params,
+                                                history,
+                                                state)
+            ewm_action = fit_predict_action(states,
+                                            params['user_action_params'],
+                                            params['ewm_model'],
                                             params['ewm_alpha'],
                                             params['var_lag'])
             if ewm_action is None:

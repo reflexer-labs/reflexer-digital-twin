@@ -22,7 +22,7 @@ NUMERICAL_PARAMS = {'ewm_alpha',
                     'var_lag',
                     'convergence_swap_intensity',
                     'extrapolation_timedelta',
-                    'use_ewm_model',
+                    'ewm_model',
                     'block_time'}
 
 
@@ -42,9 +42,9 @@ params: dict[str, Union[Param, ParamSweep]] = {
     'user_action_params': Param(USER_ACTION_PARAMS, UserActionParams),
     'extrapolation_timedelta': Param(60 * 60, Seconds),
     'ewm_alpha': Param(0.8, float),
-    'var_lag': Param(15, int),
+    'var_lag': Param(3, int),
     'convergence_swap_intensity': Param(None, Percentage),
-    'use_ewm_model': Param(True, bool),
+    'ewm_model': Param('rf2', str),
 
     # Misc
     'perform_backtesting': Param(True, bool)
