@@ -144,10 +144,3 @@ and probabilities.
 * [data_acquisition.ipynb](notebooks/data_acquisition.ipynb) shows how the data was obtained and from which sources
 * [Systems_Identification_Fitting.ipynb](notebooks/Systems_Identification_Fitting.ipynb) documents the iterative process of constructing the systems identification model at the heart of the Digital Twin
 * [VAR_vs_VARMAX_evaluation.ipynb](notebooks/VAR_vs_VARMAX_evaluation.ipynb)is an experimental notebook determining if VAR or VARMAX was a better fit for 
-
-## References
-
-- Scope document: https://hackmd.io/NXJNI2YVQziB3STBNH2Wjw
-- Lucid chart: https://lucid.app/lucidchart/invitations/accept/inv_20c6ce89-4331-4cad-b6f7-4486fc5b3937
-- Backtesting scope: https://hackmd.io/G8YvwPAHSq-bDw_rtrJTrQ
-- Data sources: https://hackmd.io/r-Wwag4rT5K3U6OuKricXg
